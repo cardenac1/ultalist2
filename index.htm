@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bold &amp; Underline Headings</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      margin-bottom: 1em;
+    }
+    #output {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 1em;
+      background: #f9f9f9;
+    }
+    /* default bold for all headings */
+    .heading {
+      font-weight: bold;
+    }
+    /* additional underline for these four */
+    .uline {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Paste your note below:</h2>
+  <textarea id="inputText" placeholder="CC: …&#10;HPI: …&#10;Subjective: …"></textarea>
+  <button onclick="formatHeadings()">Format Headings</button>
+
+  <h2>Formatted Output:</h2>
+  <div id="output">—</div>
+
+  <script>
+    function formatHeadings() {
+      // the full list of headings to bold
+      const headings = [
+        "CC:", "HPI:", "ROS:", "Meds:", "All:", "Surghx:",
+        "FamHx:", "VS:", "PE:", "Physical Exam:", "Mech:",
+        "Primary Survey:", "Secondary Survey:", "FAST:",
+        "CXR:", "Pelvic XR:", "Injuries:", "Labs/imaging:",
+        "Subjective:", "Objective:", "Assessment:", "Plan:"
+      ];
+      // these four get an extra underline class
+      const underlineOnly = new Set([
+        "Subjective:", "Objective:", "Assessment:", "Plan:"
+      ]);
+
+      let text = document.getElementById("inputText").value;
+
+      // escape for regex
+      const esc = s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+      // for each heading, wrap it in a <span>
+      headings.forEach(h => {
+        const pattern = new RegExp("(^|\\n)(" + esc(h) + ")", "g");
+        text = text.replace(pattern, (match, nl, hd) => {
+          // decide classes
+          const classes = ["heading"];
+          if (underlineOnly.has(h)) classes.push("uline");
+          return nl + `<span class="${classes.join(" ")}">${hd}</span>`;
+        });
+      });
+
+      document.getElementById("output").innerHTML = text;
+    }
+  </script>
+
+</body>
+</html>
