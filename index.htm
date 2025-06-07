@@ -12,19 +12,21 @@
       width: 100%;
       height: 200px;
       font-family: monospace;
-      margin-bottom: 1em;
+      margin-bottom: 0.5em;
     }
-    #output {
+    pre#output {
       white-space: pre-wrap;
       border: 1px solid #ccc;
       padding: 1em;
       background: #f9f9f9;
+      margin-top: 0.5em;
     }
-    /* default bold for all headings */
+    button {
+      margin-right: 0.5em;
+    }
     .heading {
       font-weight: bold;
     }
-    /* additional underline for these four */
     .uline {
       text-decoration: underline;
     }
@@ -34,14 +36,15 @@
 
   <h2>Paste your note below:</h2>
   <textarea id="inputText" placeholder="CC: …&#10;HPI: …&#10;Subjective: …"></textarea>
+  <br>
   <button onclick="formatHeadings()">Format Headings</button>
+  <button onclick="copyOutput()">Copy Output</button>
 
   <h2>Formatted Output:</h2>
-  <div id="output">—</div>
+  <pre id="output">—</pre>
 
   <script>
     function formatHeadings() {
-      // the full list of headings to bold
       const headings = [
         "CC:", "HPI:", "ROS:", "Meds:", "All:", "Surghx:",
         "FamHx:", "VS:", "PE:", "Physical Exam:", "Mech:",
@@ -49,21 +52,16 @@
         "CXR:", "Pelvic XR:", "Injuries:", "Labs/imaging:",
         "Subjective:", "Objective:", "Assessment:", "Plan:"
       ];
-      // these four get an extra underline class
       const underlineOnly = new Set([
         "Subjective:", "Objective:", "Assessment:", "Plan:"
       ]);
 
       let text = document.getElementById("inputText").value;
 
-      // escape for regex
       const esc = s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-
-      // for each heading, wrap it in a <span>
       headings.forEach(h => {
-        const pattern = new RegExp("(^|\\n)(" + esc(h) + ")", "g");
-        text = text.replace(pattern, (match, nl, hd) => {
-          // decide classes
+        const re = new RegExp("(^|\\n)(" + esc(h) + ")", "g");
+        text = text.replace(re, (match, nl, hd) => {
           const classes = ["heading"];
           if (underlineOnly.has(h)) classes.push("uline");
           return nl + `<span class="${classes.join(" ")}">${hd}</span>`;
@@ -71,6 +69,22 @@
       });
 
       document.getElementById("output").innerHTML = text;
+    }
+
+    function copyOutput() {
+      const output = document.getElementById("output");
+      const range = document.createRange();
+      range.selectNodeContents(output);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      if (document.execCommand('copy')) {
+        alert('Formatted output copied to clipboard!');
+      } else {
+        alert('Copy failed — try selecting manually.');
+      }
+      sel.removeAllRanges();
     }
   </script>
 
