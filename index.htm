@@ -2,43 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bold &amp; Underline Headings</title>
+  <title>Bold &amp; Underline Headings → RTF Export</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 2em;
-    }
-    textarea {
-      width: 100%;
-      height: 200px;
-      font-family: monospace;
-      margin-bottom: 0.5em;
-    }
+    body { font-family: sans-serif; margin: 2em; }
+    textarea { width:100%; height:200px; font-family: monospace; }
     pre#output {
-      white-space: pre-wrap;
-      border: 1px solid #ccc;
-      padding: 1em;
-      background: #f9f9f9;
-      margin-top: 0.5em;
+      white-space: pre-wrap; border:1px solid #ccc;
+      padding:1em; background:#f9f9f9; margin-top:0.5em;
     }
-    button {
-      margin-right: 0.5em;
-    }
-    .heading {
-      font-weight: bold;
-    }
-    .uline {
-      text-decoration: underline;
-    }
+    button { margin-top:0.5em; margin-right:0.5em; }
+    .heading { font-weight: bold; }
+    .uline   { text-decoration: underline; }
   </style>
 </head>
 <body>
 
   <h2>Paste your note below:</h2>
-  <textarea id="inputText" placeholder="CC: …&#10;HPI: …&#10;Subjective: …"></textarea>
+  <textarea id="inputText"
+    placeholder="CC: …&#10;HPI: …&#10;Subjective: …"></textarea>
   <br>
   <button onclick="formatHeadings()">Format Headings</button>
-  <button onclick="copyOutput()">Copy Output</button>
+  <button onclick="copyOutput()">Copy HTML</button>
+  <button onclick="downloadRTF()">Download as RTF</button>
 
   <h2>Formatted Output:</h2>
   <pre id="output">—</pre>
@@ -57,11 +42,11 @@
       ]);
 
       let text = document.getElementById("inputText").value;
-
       const esc = s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
       headings.forEach(h => {
         const re = new RegExp("(^|\\n)(" + esc(h) + ")", "g");
-        text = text.replace(re, (match, nl, hd) => {
+        text = text.replace(re, (_, nl, hd) => {
           const classes = ["heading"];
           if (underlineOnly.has(h)) classes.push("uline");
           return nl + `<span class="${classes.join(" ")}">${hd}</span>`;
@@ -72,19 +57,42 @@
     }
 
     function copyOutput() {
-      const output = document.getElementById("output");
+      const out = document.getElementById("output");
       const range = document.createRange();
-      range.selectNodeContents(output);
+      range.selectNodeContents(out);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-
-      if (document.execCommand('copy')) {
-        alert('Formatted output copied to clipboard!');
-      } else {
-        alert('Copy failed — try selecting manually.');
-      }
+      document.execCommand('copy');
       sel.removeAllRanges();
+      alert('HTML formatting copied to clipboard.');
+    }
+
+    function downloadRTF() {
+      // 1) Grab the formatted HTML and convert to RTF control words
+      let html = document.getElementById("output").innerHTML;
+      // 2) Replace our spans with RTF tags
+      html = html
+        .replace(/<span class="heading uline">(.*?)<\/span>/g, '\\b\\ul $1 \\ul0\\b0')
+        .replace(/<span class="heading">(.*?)<\/span>/g, '\\b $1 \\b0')
+        .replace(/<br\s*\/?>/g, '\\line ')
+        .replace(/<\/?[^>]+>/g, ''); // strip any other tags
+      
+      // 3) Wrap in RTF header/footer
+      const rtf = [
+        '{\\rtf1\\ansi',
+        html.split('\n').map(line => line + '\\line').join('\n'),
+        '}'
+      ].join('\n');
+
+      // 4) Trigger download
+      const blob = new Blob([rtf], { type: 'application/rtf' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'note.rtf';
+      a.click();
+      URL.revokeObjectURL(url);
     }
   </script>
 
