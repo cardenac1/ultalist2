@@ -1323,46 +1323,78 @@ input[type="text"],
             document.getElementById('setupModal').style.display = 'block';
         }
 
-        function initGoogleDrive() {
-            if (!GOOGLE_CONFIG.CLIENT_ID) {
-                console.log('No Google credentials configured');
-                updateSyncIndicator(false);
-                return;
+       function initGoogleDrive() {
+    if (!GOOGLE_CONFIG.CLIENT_ID) {
+        console.log('No Google credentials configured');
+        updateSyncIndicator(false);
+        return;
+    }
+    
+    console.log('Initializing Google Drive with Client ID:', GOOGLE_CONFIG.CLIENT_ID);
+    
+    if (typeof gapi === 'undefined') {
+        console.error('Google API library not loaded');
+        setTimeout(() => initGoogleDrive(), 1000); // Retry after 1 second
+        return;
+    }
+    
+    gapi.load('client:auth2', () => {
+        const initConfig = {
+            clientId: GOOGLE_CONFIG.CLIENT_ID,
+            discoveryDocs: GOOGLE_CONFIG.DISCOVERY_DOCS,
+            scope: GOOGLE_CONFIG.SCOPES
+        };
+        
+        if (GOOGLE_CONFIG.API_KEY) {
+            initConfig.apiKey = GOOGLE_CONFIG.API_KEY;
+        }
+        
+        console.log('Initializing with config:', initConfig);
+        
+        gapi.client.init(initConfig).then(() => {
+            console.log('Google API initialized successfully');
+            googleAuth = gapi.auth2.getAuthInstance();
+            
+            googleAuth.isSignedIn.listen(updateSigninStatus);
+            updateSigninStatus(googleAuth.isSignedIn.get());
+            
+            gapi.signin2.render('googleSignInButton', {
+                'scope': GOOGLE_CONFIG.SCOPES,
+                'width': 240,
+                'height': 50,
+                'longtitle': true,
+                'theme': 'dark',
+                'onsuccess': onSignIn,
+                'onfailure': onSignInError
+            });
+        }).catch(error => {
+            console.error('Error details:', error);
+            if (error.error && error.error.message) {
+                console.error('Error message:', error.error.message);
             }
             
-            gapi.load('client:auth2', () => {
-                const initConfig = {
-                    clientId: GOOGLE_CONFIG.CLIENT_ID,
-                    discoveryDocs: GOOGLE_CONFIG.DISCOVERY_DOCS,
-                    scope: GOOGLE_CONFIG.SCOPES
-                };
-                
-                if (GOOGLE_CONFIG.API_KEY) {
-                    initConfig.apiKey = GOOGLE_CONFIG.API_KEY;
+            // Show specific error messages
+            let errorMessage = 'Error initializing Google Drive:\n\n';
+            
+            if (error.error && error.error.message) {
+                if (error.error.message.includes('API key not valid')) {
+                    errorMessage += 'Invalid API Key. Please check your API key in Google Cloud Console.';
+                } else if (error.error.message.includes('Invalid origin')) {
+                    errorMessage += `Invalid origin. Add "${window.location.origin}" to authorized JavaScript origins in Google Cloud Console.`;
+                } else if (error.error.message.includes('client_id')) {
+                    errorMessage += 'Invalid Client ID. Please check your OAuth 2.0 Client ID.';
+                } else {
+                    errorMessage += error.error.message;
                 }
-                
-                gapi.client.init(initConfig).then(() => {
-                    googleAuth = gapi.auth2.getAuthInstance();
-                    
-                    googleAuth.isSignedIn.listen(updateSigninStatus);
-                    updateSigninStatus(googleAuth.isSignedIn.get());
-                    
-                    gapi.signin2.render('googleSignInButton', {
-                        'scope': GOOGLE_CONFIG.SCOPES,
-                        'width': 240,
-                        'height': 50,
-                        'longtitle': true,
-                        'theme': 'dark',
-                        'onsuccess': onSignIn,
-                        'onfailure': onSignInError
-                    });
-                }).catch(error => {
-                    console.error('Error initializing Google API:', error);
-                    alert('Error initializing Google Drive. Please check your credentials.');
-                    showGoogleSetup();
-                });
-            });
-        }
+            } else {
+                errorMessage += 'Please check your credentials and domain settings.';
+            }
+            
+            alert(errorMessage);
+            showGoogleSetup();
+        });
+    });
+}
 
         function onSignIn(googleUser) {
             console.log('User signed in');
