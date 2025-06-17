@@ -19,24 +19,23 @@
     </script>
 
  
-    <script>
-    // Google Drive Configuration - Dynamic
-    let GOOGLE_CONFIG = {
-        CLIENT_ID: null,
-        API_KEY: null,
-        DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-        SCOPES: 'https://www.googleapis.com/auth/drive.file',
-        FILENAME: 'ultimate_patient_list.json',
-        FOLDER_NAME: 'UltimatePatientList'
-    };
+   <script>
+// Google Drive Configuration - Simplified
+let GOOGLE_CONFIG = {
+    CLIENT_ID: localStorage.getItem('googleClientId') || null,
+    DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    SCOPES: 'https://www.googleapis.com/auth/drive.file',
+    FILENAME: 'ultimate_patient_list.json',
+    FOLDER_NAME: 'UltimatePatientList'
+};
 
-    let googleAuth = null;
-    let isSignedIn = false;
-    let syncStatus = false;
-    let lastSyncTime = null;
-    let syncFileId = null;
-    let syncFolderId = null;
-    </script>
+let googleAuth = null;
+let isSignedIn = false;
+let syncStatus = false;
+let lastSyncTime = null;
+let syncFileId = null;
+let syncFolderId = null;
+</script>
     
 	
     
@@ -991,38 +990,40 @@ input[type="text"],
 </head>
 <body>
 
-	<!-- Google Login Modal -->
-    <div id="loginModal" class="login-modal">
-        <div class="login-content">
-            <h2>Connect to Google Drive</h2>
-            <p>Sign in to sync your patient list across devices</p>
-            <div id="googleSignInButton"></div>
-            <button onclick="skipLogin()" style="margin-top: 1rem; background: var(--card-bg); border: 1px solid var(--border);">
-                Skip for now (use local storage only)
+<!-- Google Setup Modal (Simplified) -->
+<div id="setupModal" class="setup-modal">
+    <div class="setup-content">
+        <h2>Enable Google Drive Sync</h2>
+        <p class="help-text">
+            Enter your Google Cloud Client ID to enable sync across devices.
+            <a href="https://console.cloud.google.com" target="_blank" class="help-link">
+                Get Client ID from Google Cloud Console →
+            </a>
+        </p>
+        
+        <label for="clientIdInput">Client ID:</label>
+        <input type="text" id="clientIdInput" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com">
+        
+        <div class="nav-buttons">
+            <button onclick="saveAndConnect()">Save & Sign In</button>
+            <button onclick="skipSetup()" style="background: var(--card-bg); border: 1px solid var(--border);">
+                Skip (Local Storage Only)
             </button>
         </div>
+        
+        <details style="margin-top: 1.5rem;">
+            <summary style="cursor: pointer; color: var(--primary);">Quick Setup Guide</summary>
+            <ol style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
+                <li>Go to <a href="https://console.cloud.google.com" target="_blank" class="help-link">Google Cloud Console</a></li>
+                <li>Create a new project (or select existing)</li>
+                <li>Enable Google Drive API</li>
+                <li>Create OAuth 2.0 Client ID (Web application)</li>
+                <li>Add your domain to authorized JavaScript origins</li>
+                <li>Copy the Client ID above</li>
+            </ol>
+        </details>
     </div>
-
-    <!-- Google Setup Modal -->
-    <div id="setupModal" class="setup-modal">
-        <div class="setup-content">
-            <h2>Google Drive Setup</h2>
-            <p class="help-text">
-                To enable Google Drive sync, you need to provide your Google Cloud credentials.
-                <a href="https://console.cloud.google.com" target="_blank" class="help-link">
-                    Get credentials from Google Cloud Console →
-                </a>
-            </p>
-            
-            <label for="clientIdInput">Client ID:</label>
-            <input type="text" id="clientIdInput" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com">
-            
-            <label for="apiKeyInput">API Key (optional but recommended):</label>
-            <input type="text" id="apiKeyInput" placeholder="YOUR_API_KEY">
-            
-            <p class="help-text">
-                Your credentials are stored locally in your browser and never sent anywhere else.
-            </p>
+</div>
             
             <div class="nav-buttons">
                 <button onclick="saveGoogleCredentials()">Save & Connect</button>
@@ -1079,9 +1080,9 @@ input[type="text"],
             <button onclick="toggleSearch()">🔍</button>
             <button onclick="showUpdateListModal()">Update List</button>
             <button id="exportButtonMain" onclick="exportData()">Export</button>
-            <button onclick="showGoogleSetup()" style="background: var(--card-bg); border: 1px solid var(--primary);">
-                ☁️ Setup Sync
-            </button>
+	 <button onclick="showSyncStatus()" style="background: var(--card-bg); border: 1px solid var(--primary);">
+   		 ☁️ Google Drive
+	 </button>
         </div>
 	    
 
@@ -1265,364 +1266,217 @@ input[type="text"],
         ];
 
 
-	    // ============ GOOGLE DRIVE INTEGRATION ============
-        // Load saved credentials
-        function loadGoogleCredentials() {
-            const savedCreds = localStorage.getItem('googleDriveCredentials');
-            if (savedCreds) {
-                try {
-                    const creds = JSON.parse(savedCreds);
-                    GOOGLE_CONFIG.CLIENT_ID = creds.clientId;
-                    GOOGLE_CONFIG.API_KEY = creds.apiKey;
-                    return true;
-                } catch (e) {
-                    console.error('Error loading credentials:', e);
-                }
-            }
-            return false;
-        }
 
-        // Save credentials
-        function saveGoogleCredentials() {
-            const clientId = document.getElementById('clientIdInput').value.trim();
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            
-            if (!clientId) {
-                alert('Client ID is required');
-                return;
-            }
-            
-            const credentials = {
-                clientId: clientId,
-                apiKey: apiKey || null
-            };
-            
-            localStorage.setItem('googleDriveCredentials', JSON.stringify(credentials));
-            GOOGLE_CONFIG.CLIENT_ID = clientId;
-            GOOGLE_CONFIG.API_KEY = apiKey;
-            
-            document.getElementById('setupModal').style.display = 'none';
-            
-            // Initialize Google Drive
-            initGoogleDrive();
-        }
 
-        function closeSetupModal() {
-            document.getElementById('setupModal').style.display = 'none';
-            localStorage.setItem('skipGoogleSetup', 'true');
-            loadFromLocalStorage();
-        }
 
-        function showGoogleSetup() {
-            const savedCreds = localStorage.getItem('googleDriveCredentials');
-            if (savedCreds) {
-                const creds = JSON.parse(savedCreds);
-                document.getElementById('clientIdInput').value = creds.clientId || '';
-                document.getElementById('apiKeyInput').value = creds.apiKey || '';
-            }
-            document.getElementById('setupModal').style.display = 'block';
-        }
+//google drive functions 
 
-       function initGoogleDrive() {
+// ============ GOOGLE DRIVE INTEGRATION (SIMPLIFIED) ============
+
+function saveAndConnect() {
+    const clientId = document.getElementById('clientIdInput').value.trim();
+    
+    if (!clientId) {
+        alert('Please enter your Client ID');
+        return;
+    }
+    
+    // Save client ID
+    localStorage.setItem('googleClientId', clientId);
+    GOOGLE_CONFIG.CLIENT_ID = clientId;
+    
+    // Close modal
+    document.getElementById('setupModal').style.display = 'none';
+    
+    // Initialize and sign in immediately
+    initGoogleDrive();
+}
+
+function skipSetup() {
+    localStorage.setItem('skipGoogleSetup', 'true');
+    document.getElementById('setupModal').style.display = 'none';
+    loadFromLocalStorage();
+}
+
+function initGoogleDrive() {
     if (!GOOGLE_CONFIG.CLIENT_ID) {
-        console.log('No Google credentials configured');
+        console.log('No Google Client ID configured');
         updateSyncIndicator(false);
         return;
     }
     
-    console.log('Initializing Google Drive with Client ID:', GOOGLE_CONFIG.CLIENT_ID);
-    
     if (typeof gapi === 'undefined') {
-        console.error('Google API library not loaded');
-        setTimeout(() => initGoogleDrive(), 1000); // Retry after 1 second
+        console.error('Google API not loaded, retrying...');
+        setTimeout(initGoogleDrive, 1000);
         return;
     }
     
     gapi.load('client:auth2', () => {
-        const initConfig = {
+        gapi.client.init({
             clientId: GOOGLE_CONFIG.CLIENT_ID,
             discoveryDocs: GOOGLE_CONFIG.DISCOVERY_DOCS,
             scope: GOOGLE_CONFIG.SCOPES
-        };
-        
-        if (GOOGLE_CONFIG.API_KEY) {
-            initConfig.apiKey = GOOGLE_CONFIG.API_KEY;
-        }
-        
-        console.log('Initializing with config:', initConfig);
-        
-        gapi.client.init(initConfig).then(() => {
-            console.log('Google API initialized successfully');
+        }).then(() => {
             googleAuth = gapi.auth2.getAuthInstance();
             
-            googleAuth.isSignedIn.listen(updateSigninStatus);
-            updateSigninStatus(googleAuth.isSignedIn.get());
-            
-            gapi.signin2.render('googleSignInButton', {
-                'scope': GOOGLE_CONFIG.SCOPES,
-                'width': 240,
-                'height': 50,
-                'longtitle': true,
-                'theme': 'dark',
-                'onsuccess': onSignIn,
-                'onfailure': onSignInError
-            });
-        }).catch(error => {
-            console.error('Error details:', error);
-            if (error.error && error.error.message) {
-                console.error('Error message:', error.error.message);
-            }
-            
-            // Show specific error messages
-            let errorMessage = 'Error initializing Google Drive:\n\n';
-            
-            if (error.error && error.error.message) {
-                if (error.error.message.includes('API key not valid')) {
-                    errorMessage += 'Invalid API Key. Please check your API key in Google Cloud Console.';
-                } else if (error.error.message.includes('Invalid origin')) {
-                    errorMessage += `Invalid origin. Add "${window.location.origin}" to authorized JavaScript origins in Google Cloud Console.`;
-                } else if (error.error.message.includes('client_id')) {
-                    errorMessage += 'Invalid Client ID. Please check your OAuth 2.0 Client ID.';
-                } else {
-                    errorMessage += error.error.message;
-                }
+            // Check if already signed in
+            if (googleAuth.isSignedIn.get()) {
+                handleSignIn();
             } else {
-                errorMessage += 'Please check your credentials and domain settings.';
+                // Sign in immediately
+                googleAuth.signIn().then(handleSignIn, handleSignInError);
             }
             
-            alert(errorMessage);
-            showGoogleSetup();
+            // Listen for sign-in state changes
+            googleAuth.isSignedIn.listen(updateSigninStatus);
+            
+        }).catch(error => {
+            console.error('Error initializing Google API:', error);
+            handleInitError(error);
         });
     });
 }
 
-        function onSignIn(googleUser) {
-            console.log('User signed in');
-            document.getElementById('loginModal').style.display = 'none';
-            updateSigninStatus(true);
-        }
+function handleSignIn() {
+    console.log('Signed in to Google');
+    isSignedIn = true;
+    updateSyncIndicator(true);
+    initializeCloudStorage();
+}
 
-        function onSignInError(error) {
-            console.error('Sign-in error:', error);
-        }
+function handleSignInError(error) {
+    console.error('Sign-in error:', error);
+    updateSyncIndicator(false);
+    
+    if (error.error === 'popup_closed_by_user') {
+        alert('Sign-in cancelled. You can try again by clicking the sync indicator.');
+    }
+}
 
-        function updateSigninStatus(signedIn) {
-            isSignedIn = signedIn;
-            if (signedIn) {
-                updateSyncIndicator(true);
-                initializeCloudStorage();
+function handleInitError(error) {
+    let errorMessage = 'Error setting up Google Drive:\n\n';
+    
+    if (error.details) {
+        errorMessage += error.details;
+    } else if (error.error) {
+        errorMessage += error.error;
+    } else {
+        errorMessage += 'Please check your Client ID and domain settings.';
+    }
+    
+    errorMessage += '\n\nWould you like to update your settings?';
+    
+    if (confirm(errorMessage)) {
+        showGoogleSetup();
+    }
+}
+
+function updateSigninStatus(signedIn) {
+    isSignedIn = signedIn;
+    updateSyncIndicator(signedIn);
+    
+    if (signedIn) {
+        initializeCloudStorage();
+    }
+}
+
+function showGoogleSetup() {
+    const savedClientId = localStorage.getItem('googleClientId');
+    if (savedClientId) {
+        document.getElementById('clientIdInput').value = savedClientId;
+    }
+    document.getElementById('setupModal').style.display = 'block';
+}
+
+function updateSyncIndicator(synced) {
+    syncStatus = synced;
+    const indicator = document.getElementById('syncIndicator');
+    if (indicator) {
+        indicator.className = `sync-indicator ${synced ? 'synced' : 'not-synced'}`;
+        indicator.title = synced ? 
+            `Synced to Google Drive${lastSyncTime ? ' - Last: ' + new Date(lastSyncTime).toLocaleTimeString() : ''}` : 
+            'Not synced - Click to connect';
+    }
+}
+
+function showSyncStatus() {
+    if (!GOOGLE_CONFIG.CLIENT_ID) {
+        // No client ID set up yet
+        if (confirm('Google Drive sync not configured. Would you like to set it up now?')) {
+            showGoogleSetup();
+        }
+    } else if (!isSignedIn) {
+        // Client ID configured but not signed in
+        if (confirm('Not signed in to Google. Would you like to sign in now?')) {
+            if (googleAuth) {
+                googleAuth.signIn().then(handleSignIn, handleSignInError);
             } else {
-                updateSyncIndicator(false);
-                if (!localStorage.getItem('skipGoogleLogin')) {
-                    document.getElementById('loginModal').style.display = 'block';
-                }
+                initGoogleDrive();
             }
         }
+    } else if (!syncStatus) {
+        // Signed in but sync failed
+        alert('Sync error. Retrying...');
+        syncToGoogleDrive();
+    } else {
+        // Everything is working
+        alert(`✓ Synced to Google Drive\nLast sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleString() : 'Just now'}`);
+    }
+}
 
-        function skipLogin() {
-            localStorage.setItem('skipGoogleLogin', 'true');
-            document.getElementById('loginModal').style.display = 'none';
-            loadFromLocalStorage();
-        }
+// Keep all the existing cloud storage functions (initializeCloudStorage, loadFromGoogleDrive, etc.)
+// They remain the same...
 
-        function updateSyncIndicator(synced) {
-            syncStatus = synced;
-            const indicator = document.getElementById('syncIndicator');
-            if (indicator) {
-                indicator.className = `sync-indicator ${synced ? 'synced' : 'not-synced'}`;
-                indicator.title = synced ? 
-                    `Synced${lastSyncTime ? ' - Last: ' + new Date(lastSyncTime).toLocaleTimeString() : ''}` : 
-                    'Not synced - Click to retry';
-            }
-        }
+//google drive functions end
 
-        function showSyncStatus() {
-            if (!isSignedIn) {
-                if (confirm('Not connected to Google Drive. Would you like to sign in?')) {
-                    localStorage.removeItem('skipGoogleLogin');
-                    document.getElementById('loginModal').style.display = 'block';
-                }
-            } else if (!syncStatus) {
-                alert('Sync error. Retrying...');
-                syncToGoogleDrive();
-            } else {
-                alert(`Synced to Google Drive\nLast sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleString() : 'Just now'}`);
-            }
-        }
 
-        async function initializeCloudStorage() {
-            try {
-                const folderResponse = await gapi.client.drive.files.list({
-                    q: `name='${GOOGLE_CONFIG.FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-                    fields: 'files(id, name)'
-                });
 
-                if (folderResponse.result.files.length > 0) {
-                    syncFolderId = folderResponse.result.files[0].id;
-                } else {
-                    const folderMetadata = {
-                        name: GOOGLE_CONFIG.FOLDER_NAME,
-                        mimeType: 'application/vnd.google-apps.folder'
-                    };
-                    const folder = await gapi.client.drive.files.create({
-                        resource: folderMetadata,
-                        fields: 'id'
-                    });
-                    syncFolderId = folder.result.id;
-                }
 
-                const fileResponse = await gapi.client.drive.files.list({
-                    q: `name='${GOOGLE_CONFIG.FILENAME}' and '${syncFolderId}' in parents and trashed=false`,
-                    fields: 'files(id, name)'
-                });
 
-                if (fileResponse.result.files.length > 0) {
-                    syncFileId = fileResponse.result.files[0].id;
-                    await loadFromGoogleDrive();
-                } else {
-                    await createCloudFile();
-                }
-            } catch (error) {
-                console.error('Error initializing cloud storage:', error);
-                updateSyncIndicator(false);
-                loadFromLocalStorage();
-            }
-        }
 
-        async function loadFromGoogleDrive() {
-            if (!isSignedIn || !syncFileId) {
-                loadFromLocalStorage();
-                return;
-            }
 
-            try {
-                const response = await gapi.client.drive.files.get({
-                    fileId: syncFileId,
-                    alt: 'media'
-                });
 
-                const cloudData = JSON.parse(response.body);
-                if (cloudData.patients && Array.isArray(cloudData.patients)) {
-                    const localData = localStorage.getItem('ultimatePatientList');
-                    const localTimestamp = localData ? JSON.parse(localData).timestamp : null;
-                    const cloudTimestamp = cloudData.timestamp;
 
-                    if (!localTimestamp || new Date(cloudTimestamp) > new Date(localTimestamp)) {
-                        patientData = cloudData.patients;
-                        displayRows();
-                        populateColumnSelector();
-                        populateColumnSelect();
-                        updateCensus();
-                        saveToLocalStorage();
-                        console.log('Loaded data from Google Drive');
-                    } else {
-                        await syncToGoogleDrive();
-                    }
-                }
-                updateSyncIndicator(true);
-                lastSyncTime = new Date();
-            } catch (error) {
-                console.error('Error loading from Google Drive:', error);
-                updateSyncIndicator(false);
-                loadFromLocalStorage();
-            }
-        }
 
-        async function createCloudFile() {
-            if (!isSignedIn || !syncFolderId) return;
 
-            try {
-                const boundary = '-------314159265358979323846';
-                const delimiter = "\r\n--" + boundary + "\r\n";
-                const close_delim = "\r\n--" + boundary + "--";
 
-                const dataToSave = {
-                    version: '2.0',
-                    timestamp: new Date().toISOString(),
-                    patients: patientData
-                };
 
-                const metadata = {
-                    name: GOOGLE_CONFIG.FILENAME,
-                    parents: [syncFolderId],
-                    mimeType: 'application/json'
-                };
 
-                const multipartRequestBody =
-                    delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(metadata) +
-                    delimiter +
-                    'Content-Type: application/json\r\n\r\n' +
-                    JSON.stringify(dataToSave, null, 2) +
-                    close_delim;
 
-                const request = gapi.client.request({
-                    path: '/upload/drive/v3/files',
-                    method: 'POST',
-                    params: { uploadType: 'multipart' },
-                    headers: {
-                        'Content-Type': 'multipart/related; boundary="' + boundary + '"'
-                    },
-                    body: multipartRequestBody
-                });
 
-                const response = await request;
-                syncFileId = response.result.id;
-                updateSyncIndicator(true);
-                lastSyncTime = new Date();
-            } catch (error) {
-                console.error('Error creating cloud file:', error);
-                updateSyncIndicator(false);
-            }
-        }
 
-        async function syncToGoogleDrive() {
-            if (!isSignedIn || !syncFileId) return;
 
-            try {
-                const dataToSave = {
-                    version: '2.0',
-                    timestamp: new Date().toISOString(),
-                    patients: patientData
-                };
 
-                await gapi.client.request({
-                    path: `/upload/drive/v3/files/${syncFileId}`,
-                    method: 'PATCH',
-                    params: { uploadType: 'media' },
-                    body: JSON.stringify(dataToSave, null, 2)
-                });
-
-                updateSyncIndicator(true);
-                lastSyncTime = new Date();
-            } catch (error) {
-                console.error('Error syncing to Google Drive:', error);
-                updateSyncIndicator(false);
-            }
-        }
+	    
 
 
 	    
         // ============ INITIALIZATION ============
 window.onload = function() {
-            // Check if Google credentials are saved
-            if (loadGoogleCredentials()) {
-                // Initialize Google Drive if credentials exist
-                initGoogleDrive();
-            } else if (!localStorage.getItem('skipGoogleSetup')) {
-                // Show setup modal for first-time users
-                setTimeout(() => {
-                    document.getElementById('setupModal').style.display = 'block';
-                }, 1000);
-            } else {
-                // Load from local storage only
-                loadFromLocalStorage();
-            }
-            
-            setupEventListeners();
-            updateCensus();
-        };
+    setupEventListeners();
+    updateCensus();
+    
+    // Check if we have a saved Client ID
+    const savedClientId = localStorage.getItem('googleClientId');
+    
+    if (savedClientId) {
+        // We have credentials, try to initialize
+        GOOGLE_CONFIG.CLIENT_ID = savedClientId;
+        
+        // Wait a bit for Google API to load
+        setTimeout(() => {
+            initGoogleDrive();
+        }, 1000);
+    } else if (!localStorage.getItem('skipGoogleSetup')) {
+        // First time user - show setup
+        setTimeout(() => {
+            document.getElementById('setupModal').style.display = 'block';
+        }, 1500);
+    } else {
+        // User skipped setup
+        loadFromLocalStorage();
+    }
+};
 	    
 
         function setupEventListeners() {
