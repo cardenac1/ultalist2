@@ -1746,21 +1746,24 @@ function showCredentialSettings() {
 // These functions MUST be in the global scope for Google to find them
 window.handleGoogleApiLoad = function() {
     console.log('Google API loaded');
-    // Initialize the API client when it loads
-    if (window.gapi) {
-        gapi.load('client:auth2', function() {
-            console.log('GAPI client loaded, ready to initialize');
-            // Check if we should initialize
-            if (document.readyState === 'complete') {
-                initializeGoogleDrive();
-            }
-        });
-    }
+    gapi.load('client:auth2', function() {
+        console.log('GAPI client loaded');
+        // Only initialize if both APIs are loaded
+        if (window.gsiLoaded) {
+            initializeGoogleDrive();
+        } else {
+            window.gapiReady = true;
+        }
+    });
 };
 
 window.handleGoogleIdentityLoad = function() {
     console.log('Google Identity loaded');
-    // Google Identity Services loaded
+    window.gsiLoaded = true;
+    // Only initialize if GAPI is also ready
+    if (window.gapiReady) {
+        initializeGoogleDrive();
+    }
 };
 
 
@@ -5862,9 +5865,6 @@ function extractDoseInfo(line) {
 
     </script>
 
-<!-- Google API Client - Add these right before </body> -->
-<script async defer src="https://apis.google.com/js/api.js" onload="handleGoogleApiLoad()"></script>
-<script async defer src="https://accounts.google.com/gsi/client" onload="handleGoogleIdentityLoad()"></script>
 
 
 
