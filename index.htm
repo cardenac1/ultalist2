@@ -3,9 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<!-- Google API Scripts - Updated with callbacks -->
-<script src="https://apis.google.com/js/api.js?onload=handleGoogleApiLoad"></script>
-<script src="https://accounts.google.com/gsi/client?onload=handleGoogleIdentityLoad"></script>
+<!-- Google API Scripts - Fixed loading sequence -->
+<script>
+    // Initialize flags
+    window.gapiLoaded = false;
+    window.gsiLoaded = false;
+    
+    // Callback for Google API
+    function handleGoogleApiLoad() {
+        console.log('Google API loaded');
+        window.gapiLoaded = true;
+        if (window.gsiLoaded) {
+            initializeGoogleDriveWhenReady();
+        }
+    }
+    
+    // Callback for Google Identity
+    function handleGoogleIdentityLoad() {
+        console.log('Google Identity loaded');
+        window.gsiLoaded = true;
+        if (window.gapiLoaded) {
+            initializeGoogleDriveWhenReady();
+        }
+    }
+    
+    // Initialize when both are ready
+    function initializeGoogleDriveWhenReady() {
+        // Small delay to ensure everything is fully loaded
+        setTimeout(function() {
+            if (typeof initializeGoogleDrive === 'function') {
+                initializeGoogleDrive();
+            }
+        }, 100);
+    }
+</script>
+<script src="https://apis.google.com/js/api.js?onload=handleGoogleApiLoad" async defer></script>
+<script src="https://accounts.google.com/gsi/client?onload=handleGoogleIdentityLoad" async defer></script>
 
     <title>Ultimate Patient List</title>
     
@@ -1253,10 +1286,23 @@ input[type="text"],
     <script>
 // Add at the very top of your script section
 window.addEventListener('error', function(e) {
-    // Ignore errors from extensions
-    if (e.filename && (e.filename.includes('extension://') || 
+    // Ignore errors from extensions and external scripts
+    if (e.filename && (
+        e.filename.includes('extension://') || 
         e.filename.includes('popup.js') || 
-        e.filename.includes('background.js'))) {
+        e.filename.includes('background.js') ||
+        e.filename.includes('add_in_batch.js') ||
+        e.filename.includes('ankiconnect') ||
+        e.filename.includes('localhost:8765')
+    )) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Also add unhandledrejection handler
+window.addEventListener('unhandledrejection', function(e) {
+    if (e.reason && e.reason.toString().includes('extension://')) {
         e.preventDefault();
         return false;
     }
@@ -1385,11 +1431,27 @@ function skipSetup() {
 }
 
 // ============ GOOGLE DRIVE FUNCTIONS ============
+
+
+
+
+
+
+
+
+
+
+
 async function initializeGoogleDrive() {
+    // Check if gapi is loaded
+    if (typeof gapi === 'undefined') {
+        console.log('GAPI not loaded yet, waiting...');
+        return;
+    }
+    
     const credentials = getStoredCredentials();
     
     if (!credentials) {
-        // Show setup modal if no credentials stored
         if (!localStorage.getItem('skipGoogleDrive')) {
             document.getElementById('setupContainer').style.display = 'flex';
         }
@@ -1397,14 +1459,26 @@ async function initializeGoogleDrive() {
     }
     
     try {
-        await new Promise((resolve) => gapi.load('client:auth2', resolve));
+        // Load the client library
+        await new Promise((resolve, reject) => {
+            gapi.load('client:auth2', {
+                callback: resolve,
+                onerror: reject
+            });
+        });
         
+        // Initialize the client
         await gapi.client.init({
             apiKey: credentials.apiKey,
             clientId: credentials.clientId,
             discoveryDocs: [DISCOVERY_DOC],
             scope: SCOPES
         });
+
+        // Check if auth2 is available
+        if (!gapi.auth2) {
+            throw new Error('Google Auth2 not available');
+        }
 
         // Listen for sign-in state changes
         gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
@@ -1415,18 +1489,40 @@ async function initializeGoogleDrive() {
     } catch (error) {
         console.error('Error initializing Google Drive:', error);
         
-        // Check if it's a credential error
-        if (error.error && error.error.message && error.error.message.includes('API key')) {
-            alert('Invalid API Key or Client ID. Please check your credentials.');
-            // Clear bad credentials
+        // More specific error handling
+        if (error.error && error.error.code === 400) {
+            alert('Invalid Google API credentials. Please check your API Key and Client ID.');
+            localStorage.removeItem('gDriveCreds');
+            document.getElementById('setupContainer').style.display = 'flex';
+        } else if (error.message && error.message.includes('API key not valid')) {
+            alert('Invalid API Key. Please check your credentials.');
             localStorage.removeItem('gDriveCreds');
             document.getElementById('setupContainer').style.display = 'flex';
         } else {
+            // For other errors, just disable sync
             document.getElementById('loginContainer').style.display = 'none';
             updateSyncIndicator('error', 'Failed to initialize Google Drive');
+            loadFromLocalStorage(); // Load local data as fallback
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function updateSigninStatus(isSignedIn) {
     if (isSignedIn) {
@@ -1742,31 +1838,6 @@ function showCredentialSettings() {
 
 
 
-// ============ GOOGLE API CALLBACKS ============
-// These functions MUST be in the global scope for Google to find them
-window.handleGoogleApiLoad = function() {
-    console.log('Google API loaded');
-    gapi.load('client:auth2', function() {
-        console.log('GAPI client loaded');
-        // Only initialize if both APIs are loaded
-        if (window.gsiLoaded) {
-            initializeGoogleDrive();
-        } else {
-            window.gapiReady = true;
-        }
-    });
-};
-
-window.handleGoogleIdentityLoad = function() {
-    console.log('Google Identity loaded');
-    window.gsiLoaded = true;
-    // Only initialize if GAPI is also ready
-    if (window.gapiReady) {
-        initializeGoogleDrive();
-    }
-};
-
-
 
 
         // ============ INITIALIZATION ============
@@ -1777,8 +1848,11 @@ window.onload = function() {
     // Load from localStorage first
     loadFromLocalStorage();
     
-    // Google Drive will initialize via callback when ready
-    // No need to call initializeGoogleDrive here
+    // Google Drive will initialize via callbacks when ready
+    // Check if both APIs are already loaded (in case onload fired late)
+    if (window.gapiLoaded && window.gsiLoaded) {
+        initializeGoogleDriveWhenReady();
+    }
 };
 
 
