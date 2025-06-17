@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<!-- Google API Scripts - Updated with callbacks -->
+<script src="https://apis.google.com/js/api.js?onload=handleGoogleApiLoad"></script>
+<script src="https://accounts.google.com/gsi/client?onload=handleGoogleIdentityLoad"></script>
+
     <title>Ultimate Patient List</title>
     
     <!-- Check if running as extension -->
@@ -1247,6 +1251,19 @@ input[type="text"],
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <script>
+// Add at the very top of your script section
+window.addEventListener('error', function(e) {
+    // Ignore errors from extensions
+    if (e.filename && (e.filename.includes('extension://') || 
+        e.filename.includes('popup.js') || 
+        e.filename.includes('background.js'))) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+
+
         // ============ GLOBAL VARIABLES ============
         let patientData = [];
         let currentPatientIndex = -1;
@@ -1722,21 +1739,43 @@ function showCredentialSettings() {
             'colored-text-4', 'colored-text-5'
         ];
 
+
+
+
+// ============ GOOGLE API CALLBACKS ============
+// These functions MUST be in the global scope for Google to find them
+window.handleGoogleApiLoad = function() {
+    console.log('Google API loaded');
+    // Initialize the API client when it loads
+    if (window.gapi) {
+        gapi.load('client:auth2', function() {
+            console.log('GAPI client loaded, ready to initialize');
+            // Check if we should initialize
+            if (document.readyState === 'complete') {
+                initializeGoogleDrive();
+            }
+        });
+    }
+};
+
+window.handleGoogleIdentityLoad = function() {
+    console.log('Google Identity loaded');
+    // Google Identity Services loaded
+};
+
+
+
+
         // ============ INITIALIZATION ============
 window.onload = function() {
-    // Initialize Google Drive first
-    initializeGoogleDrive().then(() => {
-        // If not signed in, load from local storage while showing login
-        if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
-            loadFromLocalStorage();
-        }
-    }).catch(error => {
-        console.error('Failed to initialize Google Drive, falling back to local storage:', error);
-        loadFromLocalStorage();
-    });
-    
     setupEventListeners();
     updateCensus();
+    
+    // Load from localStorage first
+    loadFromLocalStorage();
+    
+    // Google Drive will initialize via callback when ready
+    // No need to call initializeGoogleDrive here
 };
 
 
