@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+	<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' https://*.google.com https://*.googleapis.com https://*.gstatic.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com https://*.gstatic.com https://apis.google.com;
+    connect-src 'self' https://*.google.com https://*.googleapis.com https://accounts.google.com;
+    frame-src 'self' https://accounts.google.com https://content.googleapis.com;
+">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <!-- Google API Scripts - Fixed loading sequence -->
 <script>
@@ -1544,6 +1550,18 @@ function updateSigninStatus(isSignedIn) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 function handleGoogleSignIn() {
     const credentials = getStoredCredentials();
     if (!credentials) {
@@ -1552,11 +1570,53 @@ function handleGoogleSignIn() {
         return;
     }
     
-    gapi.auth2.getAuthInstance().signIn().catch(error => {
-        console.error('Sign in error:', error);
-        alert('Failed to sign in. You can continue without sync.');
+    // Check if gapi.auth2 exists
+    if (!gapi || !gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+        console.error('Google Auth not properly initialized');
+        alert('Google authentication not ready. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Use signIn without the .catch() initially to see the actual error
+    gapi.auth2.getAuthInstance().signIn({
+        'scope': SCOPES,
+        'prompt': 'consent'  // Change from 'select_account' to 'consent'
+    }).then(function(googleUser) {
+        console.log('Sign in successful');
+        // Success is handled by updateSigninStatus
+    }, function(error) {
+        console.error('Sign in error details:', error);
+        
+        // More specific error handling
+        if (error.error === 'popup_closed_by_user') {
+            // User closed the popup - don't show alert
+            return;
+        } else if (error.error === 'access_denied') {
+            alert('Access denied. Please make sure:\n1. You are added as a test user\n2. You clicked "Allow" for all permissions');
+        } else {
+            alert('Sign-in failed. Please try again.\nError: ' + (error.error || 'Unknown error'));
+        }
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	    
 
 function skipLogin() {
     localStorage.setItem('skipGoogleDrive', 'true');
