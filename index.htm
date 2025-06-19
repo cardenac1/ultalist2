@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Ultimate Patient List</title>
-	    <!-- Google API Client Library -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
     
     <!-- Check if running as extension -->
     <script>
@@ -16,27 +13,85 @@
     } catch (e) {
         IS_EXTENSION = false;
     }
+
+	    // Chrome Storage Helper Functions
+const CHUNK_SIZE = 8000; // Stay under 8KB limit per item
+
+async function saveToChromeSyncStorage(data) {
+    if (!IS_EXTENSION) return false;
+    
+    try {
+        const jsonString = JSON.stringify(data);
+        const chunks = [];
+        
+        // Split data into chunks if needed
+        for (let i = 0; i < jsonString.length; i += CHUNK_SIZE) {
+            chunks.push(jsonString.slice(i, i + CHUNK_SIZE));
+        }
+        
+        // Clear old data
+        await chrome.storage.sync.clear();
+        
+        // Save metadata and chunks
+        const storageData = {
+            'patientList_meta': {
+                version: '2.0',
+                chunks: chunks.length,
+                timestamp: new Date().toISOString()
+            }
+        };
+        
+        // Add each chunk
+        chunks.forEach((chunk, index) => {
+            storageData[`patientList_chunk_${index}`] = chunk;
+        });
+        
+        await chrome.storage.sync.set(storageData);
+        console.log('Saved to Chrome sync storage');
+        return true;
+    } catch (error) {
+        console.error('Chrome sync storage error:', error);
+        return false;
+    }
+}
+
+async function loadFromChromeSyncStorage() {
+    if (!IS_EXTENSION) return null;
+    
+    try {
+        const result = await chrome.storage.sync.get(null);
+        
+        if (!result.patientList_meta) return null;
+        
+        const meta = result.patientList_meta;
+        let jsonString = '';
+        
+        // Reconstruct from chunks
+        for (let i = 0; i < meta.chunks; i++) {
+            jsonString += result[`patientList_chunk_${i}`] || '';
+        }
+        
+        return JSON.parse(jsonString);
+    } catch (error) {
+        console.error('Chrome sync storage load error:', error);
+        return null;
+    }
+}
+
+	    function updateSyncStatus(message) {
+    const statusEl = document.getElementById('syncStatus');
+    if (statusEl) {
+        statusEl.textContent = message;
+        setTimeout(() => {
+            statusEl.textContent = '';
+        }, 3000);
+    }
+}
+	    
     </script>
 
- 
-   <script>
-// Google Drive Configuration - Simplified
-let GOOGLE_CONFIG = {
-    CLIENT_ID: localStorage.getItem('googleClientId') || null,
-    DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-    SCOPES: 'https://www.googleapis.com/auth/drive.file',
-    FILENAME: 'ultimate_patient_list.json',
-    FOLDER_NAME: 'UltimatePatientList'
-};
 
-let googleAuth = null;
-let isSignedIn = false;
-let syncStatus = false;
-let lastSyncTime = null;
-let syncFileId = null;
-let syncFolderId = null;
-</script>
-    
+
 	
     
     <style>
@@ -845,227 +900,22 @@ input[type="text"],
 
 
 
-	    .census-number {
-            font-size: 2rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-/* Sync Status Indicator */
-        .sync-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-left: 15px;
-            vertical-align: middle;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .sync-indicator.synced {
-            background-color: #10b981;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-        }
-
-        .sync-indicator.not-synced {
-            background-color: #ef4444;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-        }
-
-        .sync-indicator:hover::after {
-            content: attr(title);
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card-bg);
-            color: var(--text-primary);
-            padding: 5px 10px;
-            border-radius: 4px;
-            white-space: nowrap;
-            font-size: 12px;
-            z-index: 1000;
-        }
-
-        /* Login Modal */
-        .login-modal {
-            display: none;
-            position: fixed;
-            z-index: 3000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .login-content {
-            background: var(--card-bg);
-            margin: 10% auto;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            animation: slideIn 0.3s ease;
-        }
-
-        .login-content h2 {
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-        }
-
-        .login-content p {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-        }
-
-        #googleSignInButton {
-            margin: 1rem auto;
-        }
-        
-        /* Setup Modal */
-        .setup-modal {
-            display: none;
-            position: fixed;
-            z-index: 3000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-        }
-
-        .setup-content {
-            background: var(--card-bg);
-            margin: 5% auto;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .setup-content h2 {
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-
-        .setup-content input {
-            width: 100%;
-            padding: 0.75rem;
-            margin: 0.5rem 0 1rem;
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            border-radius: 0.25rem;
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
-
-        .setup-content .help-text {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-        }
-
-        .setup-content .help-link {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .setup-content .help-link:hover {
-            text-decoration: underline;
-        }
-
 	
     </style>
 </head>
 <body>
-
-<!-- Google Setup Modal (Simplified) -->
-<div id="setupModal" class="setup-modal">
-    <div class="setup-content">
-        <h2>Enable Google Drive Sync</h2>
-        <p class="help-text">
-            Enter your Google Cloud Client ID to enable sync across devices.
-            <a href="https://console.cloud.google.com" target="_blank" class="help-link">
-                Get Client ID from Google Cloud Console →
-            </a>
-        </p>
-        
-        <label for="clientIdInput">Client ID:</label>
-        <input type="text" id="clientIdInput" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com">
-        
-        <div class="nav-buttons">
-            <button onclick="saveAndConnect()">Save & Sign In</button>
-            <button onclick="skipSetup()" style="background: var(--card-bg); border: 1px solid var(--border);">
-                Skip (Local Storage Only)
-            </button>
-        </div>
-        
-        <details style="margin-top: 1.5rem;">
-            <summary style="cursor: pointer; color: var(--primary);">Quick Setup Guide</summary>
-            <ol style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
-                <li>Go to <a href="https://console.cloud.google.com" target="_blank" class="help-link">Google Cloud Console</a></li>
-                <li>Create a new project (or select existing)</li>
-                <li>Enable Google Drive API</li>
-                <li>Create OAuth 2.0 Client ID (Web application)</li>
-                <li>Add your domain to authorized JavaScript origins</li>
-                <li>Copy the Client ID above</li>
-            </ol>
-        </details>
-    </div>
-</div>
-            
-            <div class="nav-buttons">
-                <button onclick="saveGoogleCredentials()">Save & Connect</button>
-                <button onclick="closeSetupModal()" style="background: var(--card-bg); border: 1px solid var(--border);">
-                    Skip Setup
-                </button>
-            </div>
-            
-            <details style="margin-top: 1.5rem;">
-                <summary style="cursor: pointer; color: var(--primary);">Setup Instructions</summary>
-                <ol style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.85rem;">
-                    <li>Go to Google Cloud Console</li>
-                    <li>Create a new project</li>
-                    <li>Enable Google Drive API</li>
-                    <li>Create OAuth 2.0 credentials</li>
-                    <li>Add your domain to authorized origins</li>
-                    <li>Copy the Client ID here</li>
-                    <li>(Optional) Create and restrict an API key</li>
-                </ol>
-            </details>
-        </div>
-    </div>
-
-
-	
-<!-- Header with Census -->
+    <!-- Header with Census -->
     <div class="header">
         <div class="header-content">
             <div class="census">
                 Census: <span class="census-number" id="censusCount">0</span>
-                <span 
-                    class="sync-indicator not-synced" 
-                    id="syncIndicator" 
-                    title="Not synced"
-                    onclick="showSyncStatus()"
-                ></span>
+		    <div id="syncStatus" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;"></div>
             </div>
         </div>
     </div>
 
     <div class="container">
-<!-- Controls -->
+        <!-- Controls -->
         <div class="controls">
             <div class="file-input-wrapper">
                 <input type="file" id="fileInput" accept=".json">
@@ -1080,11 +930,7 @@ input[type="text"],
             <button onclick="toggleSearch()">🔍</button>
             <button onclick="showUpdateListModal()">Update List</button>
             <button id="exportButtonMain" onclick="exportData()">Export</button>
-	 <button onclick="showSyncStatus()" style="background: var(--card-bg); border: 1px solid var(--primary);">
-   		 ☁️ Google Drive
-	 </button>
         </div>
-	    
 
         <!-- Column Dropdown -->
         <div id="columnDropdown" style="display: none;">
@@ -1265,219 +1111,15 @@ input[type="text"],
             'colored-text-4', 'colored-text-5'
         ];
 
-
-
-
-
-//google drive functions 
-
-// ============ GOOGLE DRIVE INTEGRATION (SIMPLIFIED) ============
-
-function saveAndConnect() {
-    const clientId = document.getElementById('clientIdInput').value.trim();
-    
-    if (!clientId) {
-        alert('Please enter your Client ID');
-        return;
-    }
-    
-    // Save client ID
-    localStorage.setItem('googleClientId', clientId);
-    GOOGLE_CONFIG.CLIENT_ID = clientId;
-    
-    // Close modal
-    document.getElementById('setupModal').style.display = 'none';
-    
-    // Initialize and sign in immediately
-    initGoogleDrive();
-}
-
-function skipSetup() {
-    localStorage.setItem('skipGoogleSetup', 'true');
-    document.getElementById('setupModal').style.display = 'none';
-    loadFromLocalStorage();
-}
-
-function initGoogleDrive() {
-    if (!GOOGLE_CONFIG.CLIENT_ID) {
-        console.log('No Google Client ID configured');
-        updateSyncIndicator(false);
-        return;
-    }
-    
-    if (typeof gapi === 'undefined') {
-        console.error('Google API not loaded, retrying...');
-        setTimeout(initGoogleDrive, 1000);
-        return;
-    }
-    
-    gapi.load('client:auth2', () => {
-        gapi.client.init({
-            clientId: GOOGLE_CONFIG.CLIENT_ID,
-            discoveryDocs: GOOGLE_CONFIG.DISCOVERY_DOCS,
-            scope: GOOGLE_CONFIG.SCOPES
-        }).then(() => {
-            googleAuth = gapi.auth2.getAuthInstance();
-            
-            // Check if already signed in
-            if (googleAuth.isSignedIn.get()) {
-                handleSignIn();
-            } else {
-                // Sign in immediately
-                googleAuth.signIn().then(handleSignIn, handleSignInError);
-            }
-            
-            // Listen for sign-in state changes
-            googleAuth.isSignedIn.listen(updateSigninStatus);
-            
-        }).catch(error => {
-            console.error('Error initializing Google API:', error);
-            handleInitError(error);
-        });
-    });
-}
-
-function handleSignIn() {
-    console.log('Signed in to Google');
-    isSignedIn = true;
-    updateSyncIndicator(true);
-    initializeCloudStorage();
-}
-
-function handleSignInError(error) {
-    console.error('Sign-in error:', error);
-    updateSyncIndicator(false);
-    
-    if (error.error === 'popup_closed_by_user') {
-        alert('Sign-in cancelled. You can try again by clicking the sync indicator.');
-    }
-}
-
-function handleInitError(error) {
-    let errorMessage = 'Error setting up Google Drive:\n\n';
-    
-    if (error.details) {
-        errorMessage += error.details;
-    } else if (error.error) {
-        errorMessage += error.error;
-    } else {
-        errorMessage += 'Please check your Client ID and domain settings.';
-    }
-    
-    errorMessage += '\n\nWould you like to update your settings?';
-    
-    if (confirm(errorMessage)) {
-        showGoogleSetup();
-    }
-}
-
-function updateSigninStatus(signedIn) {
-    isSignedIn = signedIn;
-    updateSyncIndicator(signedIn);
-    
-    if (signedIn) {
-        initializeCloudStorage();
-    }
-}
-
-function showGoogleSetup() {
-    const savedClientId = localStorage.getItem('googleClientId');
-    if (savedClientId) {
-        document.getElementById('clientIdInput').value = savedClientId;
-    }
-    document.getElementById('setupModal').style.display = 'block';
-}
-
-function updateSyncIndicator(synced) {
-    syncStatus = synced;
-    const indicator = document.getElementById('syncIndicator');
-    if (indicator) {
-        indicator.className = `sync-indicator ${synced ? 'synced' : 'not-synced'}`;
-        indicator.title = synced ? 
-            `Synced to Google Drive${lastSyncTime ? ' - Last: ' + new Date(lastSyncTime).toLocaleTimeString() : ''}` : 
-            'Not synced - Click to connect';
-    }
-}
-
-function showSyncStatus() {
-    if (!GOOGLE_CONFIG.CLIENT_ID) {
-        // No client ID set up yet
-        if (confirm('Google Drive sync not configured. Would you like to set it up now?')) {
-            showGoogleSetup();
-        }
-    } else if (!isSignedIn) {
-        // Client ID configured but not signed in
-        if (confirm('Not signed in to Google. Would you like to sign in now?')) {
-            if (googleAuth) {
-                googleAuth.signIn().then(handleSignIn, handleSignInError);
-            } else {
-                initGoogleDrive();
-            }
-        }
-    } else if (!syncStatus) {
-        // Signed in but sync failed
-        alert('Sync error. Retrying...');
-        syncToGoogleDrive();
-    } else {
-        // Everything is working
-        alert(`✓ Synced to Google Drive\nLast sync: ${lastSyncTime ? new Date(lastSyncTime).toLocaleString() : 'Just now'}`);
-    }
-}
-
-// Keep all the existing cloud storage functions (initializeCloudStorage, loadFromGoogleDrive, etc.)
-// They remain the same...
-
-//google drive functions end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	    
-
-
-	    
         // ============ INITIALIZATION ============
-window.onload = function() {
+ window.onload = async function() {
+    await loadFromLocalStorage();
     setupEventListeners();
     updateCensus();
-    
-    // Check if we have a saved Client ID
-    const savedClientId = localStorage.getItem('googleClientId');
-    
-    if (savedClientId) {
-        // We have credentials, try to initialize
-        GOOGLE_CONFIG.CLIENT_ID = savedClientId;
-        
-        // Wait a bit for Google API to load
-        setTimeout(() => {
-            initGoogleDrive();
-        }, 1000);
-    } else if (!localStorage.getItem('skipGoogleSetup')) {
-        // First time user - show setup
-        setTimeout(() => {
-            document.getElementById('setupModal').style.display = 'block';
-        }, 1500);
-    } else {
-        // User skipped setup
-        loadFromLocalStorage();
-    }
-};
-	    
+}; 
+            
+           
+        };
 
         function setupEventListeners() {
             document.getElementById('fileInput').addEventListener('change', handleFileUpload);
@@ -1485,42 +1127,78 @@ window.onload = function() {
 
         // ============ DATA MANAGEMENT ============
 function saveToLocalStorage() {
-            try {
-                const dataToSave = {
-                    version: '2.0',
-                    timestamp: new Date().toISOString(),
-                    patients: patientData
-                };
-                localStorage.setItem('ultimatePatientList', JSON.stringify(dataToSave));
-                
-                // Also sync to Google Drive if connected
-                if (isSignedIn && syncFileId) {
-                    syncToGoogleDrive();
+    try {
+        const dataToSave = {
+            version: '2.0',
+            timestamp: new Date().toISOString(),
+            patients: patientData
+        };
+        
+        // Save to localStorage as before
+        localStorage.setItem('ultimatePatientList', JSON.stringify(dataToSave));
+        
+        // Also save to Chrome sync if available
+        if (IS_EXTENSION) {
+            saveToChromeSyncStorage(dataToSave).then(success => {
+                if (success) {
+                    console.log('Data synced to Chrome storage');
                 }
-            } catch (e) {
-                console.error('Error saving to localStorage:', e);
-            }
+            });
         }
-
+        
+    } catch (e) {
+        console.error('Error saving:', e);
+    }
+}
 	    
 
-        function loadFromLocalStorage() {
-            try {
-                const saved = localStorage.getItem('ultimatePatientList');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.patients && Array.isArray(parsed.patients)) {
-                        patientData = parsed.patients;
-                        displayRows();
-                        populateColumnSelector();
-                        populateColumnSelect();
-                        updateCensus();
-                    }
-                }
-            } catch (e) {
-                console.error('Error loading from localStorage:', e);
+ async function loadFromLocalStorage() {
+    try {
+        let dataToLoad = null;
+        let loadedFrom = '';
+        
+        // Try Chrome sync storage first if available
+        if (IS_EXTENSION) {
+            const chromeData = await loadFromChromeSyncStorage();
+            if (chromeData && chromeData.patients) {
+                dataToLoad = chromeData;
+                loadedFrom = 'Chrome sync';
             }
         }
+        
+        // Fall back to localStorage
+        if (!dataToLoad) {
+            const saved = localStorage.getItem('ultimatePatientList');
+            if (saved) {
+                dataToLoad = JSON.parse(saved);
+                loadedFrom = 'Local storage';
+            }
+        }
+        
+        // Load the data if found
+        if (dataToLoad && dataToLoad.patients && Array.isArray(dataToLoad.patients)) {
+            patientData = dataToLoad.patients;
+            displayRows();
+            populateColumnSelector();
+            populateColumnSelect();
+            updateCensus();
+            
+            console.log(`Data loaded from: ${loadedFrom}`);
+            
+            // If loaded from Chrome sync, also update localStorage
+            if (loadedFrom === 'Chrome sync' && !IS_EXTENSION) {
+                localStorage.setItem('ultimatePatientList', JSON.stringify(dataToLoad));
+            }
+        }
+    } catch (e) {
+        console.error('Error loading:', e);
+    }
+}
+
+
+
+
+	    
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
