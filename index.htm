@@ -834,19 +834,20 @@ input[type="text"],
     <div class="container">
         <!-- Controls -->
         <div class="controls">
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept=".json">
-                <label for="fileInput" class="file-input-label">
-                    📁 Import
-                </label>
-            </div>
+           <div class="file-input-wrapper">
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    <label for="fileInput" class="file-input-label" onclick="showImportMenu(event)">
+        📁 Import
+    </label>
+		</div> 
             <button onclick="toggleColumnDropdown()">Column Options</button>
             <select id="columnSelect" onchange="sortRows()">
                 <option value="">Sort by</option>
             </select>
             <button onclick="toggleSearch()">🔍</button>
             <button onclick="showUpdateListModal()">Update List</button>
-            <button id="exportButtonMain" onclick="exportData()">Export</button>
+            <button id="exportButtonMain" onclick="showExportMenu()">Export</button>
+
         </div>
 
         <!-- Column Dropdown -->
@@ -5148,6 +5149,134 @@ function extractDoseInfo(line) {
             const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
             return medsMatch ? medsMatch[1] : '';
         }
+
+
+
+
+
+
+
+	    function showImportMenu(event) {
+    event.preventDefault(); // Prevent default file input
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 style="margin-bottom: 1rem;">Import Options</h2>
+            <div class="nav-buttons" style="display: flex; flex-direction: column; gap: 1rem;">
+                <button onclick="document.getElementById('fileInput').click(); closeImportMenu();">
+                    💾 Import from Computer
+                </button>
+                <button onclick="openGoogleDriveImport(); closeImportMenu();">
+                    ☁️ Import from Google Drive
+                </button>
+                <button onclick="showPasteImport(); closeImportMenu();">
+                    📋 Paste from Clipboard
+                </button>
+                <button onclick="closeImportMenu();">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    modal.id = 'importMenuModal';
+    modal.onclick = function(e) {
+        if (e.target === modal) closeImportMenu();
+    };
+    document.body.appendChild(modal);
+}
+
+function closeImportMenu() {
+    const modal = document.getElementById('importMenuModal');
+    if (modal) modal.remove();
+}
+
+// Paste import function (add this too)
+function showPasteImport() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2>Paste JSON Data</h2>
+            <textarea id="pasteImportData" class="import-textarea" 
+                placeholder="Paste your JSON data here..." 
+                style="min-height: 300px; width: 100%; margin: 1rem 0;"></textarea>
+            <div class="nav-buttons">
+                <button onclick="processPasteImport()">Import Data</button>
+                <button onclick="closePasteImportModal()">Cancel</button>
+            </div>
+        </div>
+    `;
+    modal.id = 'pasteImportModal';
+    document.body.appendChild(modal);
+}
+
+function closePasteImportModal() {
+    const modal = document.getElementById('pasteImportModal');
+    if (modal) modal.remove();
+}
+
+function processPasteImport() {
+    const textArea = document.getElementById('pasteImportData');
+    if (!textArea) return;
+    
+    try {
+        const jsonData = JSON.parse(textArea.value);
+        
+        if (jsonData.patients && Array.isArray(jsonData.patients)) {
+            patientData = jsonData.patients;
+        } else if (Array.isArray(jsonData)) {
+            patientData = jsonData;
+        } else {
+            alert('Invalid JSON format');
+            return;
+        }
+        
+        displayRows();
+        populateColumnSelector();
+        populateColumnSelect();
+        saveToLocalStorage();
+        updateCensus();
+        closePasteImportModal();
+        alert('Data imported successfully!');
+    } catch (error) {
+        alert('Error parsing JSON: ' + error.message);
+    }
+}
+
+// Copy to clipboard function
+function copyToClipboard() {
+    if (patientData.length === 0) {
+        alert('No data to copy');
+        return;
+    }
+    
+    const dataToExport = {
+        version: '2.0',
+        exportDate: new Date().toISOString(),
+        patients: patientData
+    };
+    
+    const jsonString = JSON.stringify(dataToExport, null, 2);
+    
+    navigator.clipboard.writeText(jsonString).then(() => {
+        alert('Data copied to clipboard!');
+    }).catch(err => {
+        // Fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = jsonString;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Data copied to clipboard!');
+    });
+}
 
     </script>
 </body>
