@@ -2273,12 +2273,18 @@ if (header === 'VIOLIN') {
     input.className = 'violin-field';
 }
 
+
+
+
+
+		
 // Set initial content
 if (header === 'VIOLIN') {
     const content = patient[header] || '';
-    // Only apply red styling if content already contains red HTML spans
-    if (content.includes('<span style="color: var(--danger)')) {
-        input.innerHTML = content; // Preserve existing HTML formatting
+    // Apply red styling if content has asterisks AND looks like fishbone data
+    if (content.includes('*') && (content.includes('HR ') || content.includes('T ') || content.includes('UOP:') || content.includes('WBC'))) {
+        const redContent = content.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
+        input.innerHTML = redContent;
     } else {
         input.textContent = content; // Plain text for normal content
     }
