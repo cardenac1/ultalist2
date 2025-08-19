@@ -4740,95 +4740,6 @@ if (data.ventModeRaw && !data.o2therapyCode) {
 
 
 
-// TRY 24-HOUR FILTERED VITALS FIRST
-const now = new Date();
-const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
-
-function isWithin24Hours(dateStr, timeStr) {
-    try {
-        const [month, day, year] = dateStr.split('/').map(n => parseInt(n));
-        const [hour, minute, second] = timeStr.split(':').map(n => parseInt(n));
-        const vitalTime = new Date(2000 + year, month - 1, day, hour, minute, second);
-        return vitalTime >= twentyFourHoursAgo && vitalTime <= now;
-    } catch (e) {
-        return false;
-    }
-}
-
-// Try timestamped vitals first
-let foundTimestampedVitals = false;
-
-// Temperature with timestamps
-const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
-let tempMatch;
-const recentTemps = [];
-while ((tempMatch = tempRegex.exec(text)) !== null) {
-    if (isWithin24Hours(tempMatch[2], tempMatch[3])) {
-        recentTemps.push(parseFloat(tempMatch[1]));
-        foundTimestampedVitals = true;
-    }
-}
-if (recentTemps.length > 0) {
-    data.vitals.temp = recentTemps;
-}
-
-// Heart rate with timestamps
-const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
-let hrMatch;
-const recentHR = [];
-while ((hrMatch = hrRegex.exec(text)) !== null) {
-    if (isWithin24Hours(hrMatch[2], hrMatch[3])) {
-        recentHR.push(parseInt(hrMatch[1]));
-        foundTimestampedVitals = true;
-    }
-}
-if (recentHR.length > 0) {
-    data.vitals.hr = recentHR;
-}
-
-// Blood pressure with timestamps
-const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
-let sbpMatch;
-const recentSBP = [];
-while ((sbpMatch = sbpRegex.exec(text)) !== null) {
-    if (isWithin24Hours(sbpMatch[2], sbpMatch[3])) {
-        recentSBP.push(parseInt(sbpMatch[1]));
-        foundTimestampedVitals = true;
-    }
-}
-if (recentSBP.length > 0) {
-    data.vitals.sbp = recentSBP;
-}
-
-const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
-let dbpMatch;
-const recentDBP = [];
-while ((dbpMatch = dbpRegex.exec(text)) !== null) {
-    if (isWithin24Hours(dbpMatch[2], dbpMatch[3])) {
-        recentDBP.push(parseInt(dbpMatch[1]));
-        foundTimestampedVitals = true;
-    }
-}
-if (recentDBP.length > 0) {
-    data.vitals.dbp = recentDBP;
-}
-
-// O2 saturation with timestamps
-const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
-let o2Match;
-const recentO2 = [];
-while ((o2Match = o2Regex.exec(text)) !== null) {
-    if (isWithin24Hours(o2Match[2], o2Match[3])) {
-        recentO2.push(parseInt(o2Match[1]));
-        foundTimestampedVitals = true;
-    }
-}
-if (recentO2.length > 0) {
-    data.vitals.o2 = recentO2;
-}
-
-// If no timestamped vitals found, fall back to original method
-if (!foundTimestampedVitals) {
 	// Extract vitals
 const tempMatches = text.match(/Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+)/gi);
 if (tempMatches) {
@@ -4854,13 +4765,6 @@ const o2Matches = text.match(/O2 Saturation.*?:\s*(\d+)/gi);
 if (o2Matches) {
     data.vitals.o2 = o2Matches.map(match => parseInt(match.match(/\d+$/)[0]));
 } 
-}
-
-
-
-
-
-
 
 
 
