@@ -4740,31 +4740,87 @@ if (data.ventModeRaw && !data.o2therapyCode) {
 
 
 
-	// Extract vitals
-const tempMatches = text.match(/Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+)/gi);
-if (tempMatches) {
-    data.vitals.temp = tempMatches.map(match => parseFloat(match.match(/[\d.]+/)[0]));
-}
-
-const hrMatches = text.match(/(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+)/gi);
-if (hrMatches) {
-    data.vitals.hr = hrMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-}
-
-const sbpMatches = text.match(/Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)/gi);
-if (sbpMatches) {
-    data.vitals.sbp = sbpMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-}
-
-const dbpMatches = text.match(/Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)/gi);
-if (dbpMatches) {
-    data.vitals.dbp = dbpMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-}
-
-const o2Matches = text.match(/O2 Saturation.*?:\s*(\d+)/gi);
-if (o2Matches) {
-    data.vitals.o2 = o2Matches.map(match => parseInt(match.match(/\d+$/)[0]));
-} 
+		// Extract vitals (only from last 24 hours)
+            // Helper function to check if entry is within 24 hours
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
+            
+            function isWithin24Hours(dateTimeStr) {
+                const parts = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+                if (!parts) return false;
+                const dt = new Date(`20${parts[3]}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${parts[6]}`);
+                return dt >= twentyFourHoursAgo && dt <= now;
+            }
+            
+            // Extract temperature with timestamps
+            const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const tempValues = [];
+            let tempMatch;
+            while ((tempMatch = tempRegex.exec(text)) !== null) {
+                const timeKey = `${tempMatch[2]} ${tempMatch[3]}`;
+                if (isWithin24Hours(timeKey)) {
+                    tempValues.push(parseFloat(tempMatch[1]));
+                }
+            }
+            if (tempValues.length > 0) {
+                data.vitals.temp = tempValues;
+            }
+            
+            // Extract heart rate with timestamps
+            const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const hrValues = [];
+            let hrMatch;
+            while ((hrMatch = hrRegex.exec(text)) !== null) {
+                const timeKey = `${hrMatch[2]} ${hrMatch[3]}`;
+                if (isWithin24Hours(timeKey)) {
+                    hrValues.push(parseInt(hrMatch[1]));
+                }
+            }
+            if (hrValues.length > 0) {
+                data.vitals.hr = hrValues;
+            }
+            
+            // Extract systolic BP with timestamps
+            const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const sbpValues = [];
+            let sbpMatch;
+            while ((sbpMatch = sbpRegex.exec(text)) !== null) {
+                const timeKey = `${sbpMatch[2]} ${sbpMatch[3]}`;
+                if (isWithin24Hours(timeKey)) {
+                    sbpValues.push(parseInt(sbpMatch[1]));
+                }
+            }
+            if (sbpValues.length > 0) {
+                data.vitals.sbp = sbpValues;
+            }
+            
+            // Extract diastolic BP with timestamps
+            const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const dbpValues = [];
+            let dbpMatch;
+            while ((dbpMatch = dbpRegex.exec(text)) !== null) {
+                const timeKey = `${dbpMatch[2]} ${dbpMatch[3]}`;
+                if (isWithin24Hours(timeKey)) {
+                    dbpValues.push(parseInt(dbpMatch[1]));
+                }
+            }
+            if (dbpValues.length > 0) {
+                data.vitals.dbp = dbpValues;
+            }
+            
+            // Extract O2 saturation with timestamps
+            const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const o2Values = [];
+            let o2Match;
+            while ((o2Match = o2Regex.exec(text)) !== null) {
+                const timeKey = `${o2Match[2]} ${o2Match[3]}`;
+                if (isWithin24Hours(timeKey)) {
+                    o2Values.push(parseInt(o2Match[1]));
+                }
+            }
+            if (o2Values.length > 0) {
+                data.vitals.o2 = o2Values;
+            }
 
 
 
