@@ -1418,18 +1418,22 @@ select,
         </div>
     </div>
 
-<!-- Import Data Modal -->
+
+
+	<!-- Import Data Modal -->
 <div id="importModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeImportModal()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
         <h2>Import Lab Data</h2>
-        <textarea id="importData" class="import-textarea" placeholder="Paste your vitals, labs, and meds data here..."></textarea>
-        <div class="nav-buttons">
+        <div class="nav-buttons" style="margin-bottom: 1rem;">
             <button onclick="pasteFromClipboard()">📋⚡ Paste & Process</button>
             <button onclick="processImportedData()">Process Data</button>
         </div>
+        <textarea id="importData" class="import-textarea" placeholder="Paste your vitals, labs, and meds data here..."></textarea>
     </div>
 </div>
+
+	
 
 
 	
