@@ -2197,50 +2197,45 @@ if (helpContent[header]) {
             };
             label.appendChild(podBtn);
         } else if (header === 'VIOLIN') {
-            // Add warning messages before VIOLIN field
-            const warningDiv = document.createElement('div');
-            warningDiv.id = 'warningMessages';
-            warningDiv.className = 'warning-messages hidden';
-            leftPanel.appendChild(warningDiv);
-            
-            const btnContainer = document.createElement('span');
-            btnContainer.style.marginLeft = '10px';
-            
-            const importBtn = document.createElement('button');
-            importBtn.textContent = '⬇️';
-            importBtn.style.margin = '0 2px';
-            importBtn.style.padding = '0.3rem 0.6rem';
-            importBtn.style.fontSize = '0.8rem';
-            importBtn.onclick = function(e) {
-                e.preventDefault();
-                showImportModal();
-            };
-            
-            const tableBtn = document.createElement('button');
-            tableBtn.textContent = 'Labs 📊';
-            tableBtn.style.margin = '0 2px';
-            tableBtn.style.padding = '0.3rem 0.6rem';
-            tableBtn.style.fontSize = '0.8rem';
-            tableBtn.onclick = function(e) {
-                e.preventDefault();
-                showTableView();
-            };
-            
-            const graphBtn = document.createElement('button');
-            graphBtn.textContent = 'Vitals 📊';
-            graphBtn.style.margin = '0 2px';
-            graphBtn.style.padding = '0.3rem 0.6rem';
-            graphBtn.style.fontSize = '0.8rem';
-            graphBtn.onclick = function(e) {
-                e.preventDefault();
-                showVitalsTable();
-            };
-            
-            btnContainer.appendChild(importBtn);
-            btnContainer.appendChild(tableBtn);
-            btnContainer.appendChild(graphBtn);
-            label.appendChild(btnContainer);
-        } else if (header === 'ORDERS') {
+    // Add warning messages before VIOLIN field
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'warningMessages';
+    warningDiv.className = 'warning-messages hidden';
+    leftPanel.appendChild(warningDiv);
+    
+    // Create button container with special class for mobile styling
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'violin-button-container';
+    btnContainer.style.marginLeft = '10px';
+    
+    const importBtn = document.createElement('button');
+    importBtn.textContent = '⬇️ Import';
+    importBtn.onclick = function(e) {
+        e.preventDefault();
+        showImportModal();
+    };
+    
+    const tableBtn = document.createElement('button');
+    tableBtn.textContent = '📊 Labs';
+    tableBtn.onclick = function(e) {
+        e.preventDefault();
+        showTableView();
+    };
+    
+    const graphBtn = document.createElement('button');
+    graphBtn.textContent = '📊 Vitals';
+    graphBtn.onclick = function(e) {
+        e.preventDefault();
+        showVitalsTable();
+    };
+    
+    btnContainer.appendChild(importBtn);
+    btnContainer.appendChild(tableBtn);
+    btnContainer.appendChild(graphBtn);
+    label.appendChild(btnContainer);
+}
+		
+		else if (header === 'ORDERS') {
             const btnContainer = document.createElement('span');
             btnContainer.style.marginLeft = '10px';
             
@@ -2452,53 +2447,49 @@ if (currentViewMode === 'consult' && CONSULT_MODE_LABELS[header]) {
                             updatePOD();
                         };
                         label.appendChild(podBtn);
-                    } else if (header === 'VIOLIN') {
-                        // Add warning messages before VIOLIN field
-                        const warningDiv = document.createElement('div');
-                        warningDiv.id = 'warningMessages';
-                        warningDiv.className = 'warning-messages hidden';
-                        form.appendChild(warningDiv);
-                        
-                        const btnContainer = document.createElement('span');
-                        btnContainer.style.marginLeft = '10px';
-                        
-                        const importBtn = document.createElement('button');
-                        importBtn.textContent = '⬇️';
-                        importBtn.style.margin = '0 2px';
-                        importBtn.style.padding = '0.3rem 0.6rem';
-                        importBtn.style.fontSize = '0.8rem';
-                        importBtn.onclick = function(e) {
-                            e.preventDefault();
-                            showImportModal();
-                        };
-                        
-                        const tableBtn = document.createElement('button');
-                        tableBtn.textContent = 'Labs 📊';
-                        tableBtn.style.margin = '0 2px';
-                        tableBtn.style.padding = '0.3rem 0.6rem';
-                        tableBtn.style.fontSize = '0.8rem';
-                        tableBtn.onclick = function(e) {
-                            e.preventDefault();
-                            showTableView();
-                        };
-                        
-                           const graphBtn = document.createElement('button');
-                        graphBtn.textContent = 'Vitals 📊';
-                        graphBtn.style.margin = '0 2px';
-                        graphBtn.style.padding = '0.3rem 0.6rem';
-                        graphBtn.style.fontSize = '0.8rem';
-                        graphBtn.onclick = function(e) {
-                            e.preventDefault();
-                            showVitalsTable();
-                        };
-
-
-                        
-                        btnContainer.appendChild(importBtn);
-                        btnContainer.appendChild(tableBtn);
-                        btnContainer.appendChild(graphBtn);
-                        label.appendChild(btnContainer);
-                    } else if (header === 'ORDERS') {
+                    
+						
+					
+					} else if (header === 'VIOLIN') {
+    // Add warning messages before VIOLIN field
+    const warningDiv = document.createElement('div');
+    warningDiv.id = 'warningMessages';
+    warningDiv.className = 'warning-messages hidden';
+    leftPanel.appendChild(warningDiv);
+    
+    // Create button container with special class for mobile styling
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'violin-button-container';
+    btnContainer.style.marginLeft = '10px';
+    
+    const importBtn = document.createElement('button');
+    importBtn.textContent = '⬇️ Import';
+    importBtn.onclick = function(e) {
+        e.preventDefault();
+        showImportModal();
+    };
+    
+    const tableBtn = document.createElement('button');
+    tableBtn.textContent = '📊 Labs';
+    tableBtn.onclick = function(e) {
+        e.preventDefault();
+        showTableView();
+    };
+    
+    const graphBtn = document.createElement('button');
+    graphBtn.textContent = '📊 Vitals';
+    graphBtn.onclick = function(e) {
+        e.preventDefault();
+        showVitalsTable();
+    };
+    
+    btnContainer.appendChild(importBtn);
+    btnContainer.appendChild(tableBtn);
+    btnContainer.appendChild(graphBtn);
+    label.appendChild(btnContainer);
+}
+					
+					else if (header === 'ORDERS') {
                         const btnContainer = document.createElement('span');
                         btnContainer.style.marginLeft = '10px';
                         
