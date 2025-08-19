@@ -4809,10 +4809,10 @@ if (data.ventModeRaw && !data.o2therapyCode) {
             }
             
             // Extract O2 saturation with timestamps
-            const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const o2SatRegex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
             const o2Values = [];
             let o2Match;
-            while ((o2Match = o2Regex.exec(text)) !== null) {
+            while ((o2Match = o2SatRegex.exec(text)) !== null) {
                 const timeKey = `${o2Match[2]} ${o2Match[3]}`;
                 if (isWithin24Hours(timeKey)) {
                     o2Values.push(parseInt(o2Match[1]));
