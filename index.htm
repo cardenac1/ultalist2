@@ -3323,12 +3323,14 @@ function updatePOD() {
 
 
 
-
 function showImportModal() {
     document.getElementById('importModal').style.display = 'block';
     
     // Always clear the textarea - don't load any existing data
     document.getElementById('importData').value = '';
+    
+    // Reset the paste button to its original state
+    resetPasteButton();
     
     // Also clear any existing warnings when opening the import modal
     const warningDiv = document.getElementById('warningMessages');
@@ -3337,7 +3339,6 @@ function showImportModal() {
         warningDiv.classList.add('hidden');
     }
 }
-
 
 
         function closeImportModal() {
@@ -7242,6 +7243,18 @@ function pasteFromClipboard() {
 
 
 
+
+		function resetPasteButton() {
+    const button = document.querySelector('#importModal button[onclick="pasteFromClipboard()"]');
+    if (button) {
+        button.textContent = '📋⚡ Paste & Process';
+        button.style.background = '';
+        button.style.color = '';
+        button.disabled = false;
+    }
+}
+
+		
 		
 
 		
