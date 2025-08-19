@@ -2281,12 +2281,11 @@ if (header === 'VIOLIN') {
 // Set initial content
 if (header === 'VIOLIN') {
     const content = patient[header] || '';
-    // Apply red styling if content has asterisks AND looks like fishbone data
-    if (content.includes('*') && (content.includes('HR ') || content.includes('T ') || content.includes('UOP:') || content.includes('WBC'))) {
-        const redContent = content.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
-        input.innerHTML = redContent;
+    // If content has HTML spans, use innerHTML to preserve red formatting
+    if (content.includes('<span')) {
+        input.innerHTML = content;
     } else {
-        input.textContent = content; // Plain text for normal content
+        input.textContent = content;
     }
 } else {
     input.value = patient[header] || '';
@@ -2535,12 +2534,11 @@ else {
 // Set initial content
 if (header === 'VIOLIN') {
     const content = patient[header] || '';
-    // Only apply red styling if it was just imported (flag is true)
-    if (violinRedStylingApplied) {
-        const redContent = content.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
-        input.innerHTML = redContent;
+    // If content has HTML spans, use innerHTML to preserve red formatting
+    if (content.includes('<span')) {
+        input.innerHTML = content;
     } else {
-        input.textContent = content; // Plain text for normal editing
+        input.textContent = content;
     }
 } else {
     input.value = patient[header] || '';
@@ -3374,26 +3372,27 @@ function processImportedData() {
     
     const fishbone = generateFishbone(labData);
     const warnings = generateWarnings(labData);
+
+
+
+
+
+	
     
 // Update VIOLIN field
 const violinField = document.getElementById('field_VIOLIN');
 if (violinField) {
-    // Set the flag to indicate red styling should be applied
-    violinRedStylingApplied = true;
+    const redContent = fishbone.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
     
     if (violinField.contentEditable === 'true') {
-        const redContent = fishbone.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
         violinField.innerHTML = redContent;
     } else {
         violinField.value = fishbone;
         autoResizeTextarea(violinField);
     }
-    patient.VIOLIN = fishbone;
     
-    // Reset the flag after a short delay so subsequent field loads don't get red styling
-    setTimeout(() => {
-        violinRedStylingApplied = false;
-    }, 1000);
+    // Save the RED HTML version permanently
+    patient.VIOLIN = redContent;
 }
 
 
