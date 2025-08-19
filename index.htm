@@ -1425,12 +1425,14 @@ select,
         <h2>Import Lab Data</h2>
         <textarea id="importData" class="import-textarea" placeholder="Paste your vitals, labs, and meds data here..."></textarea>
         <div class="nav-buttons">
-            <button onclick="pasteFromClipboard()">📋 and process data</button>
+            <button onclick="pasteFromClipboard()">📋⚡ Paste & Process</button>
             <button onclick="processImportedData()">Process Data</button>
         </div>
     </div>
 </div>
 
+
+	
     <!-- Table View Modal -->
     <div id="tableModal" class="modal">
         <div class="modal-content">
@@ -7176,55 +7178,40 @@ function parseCSVLine(line) {
 
 
 
-
-
-		function pasteFromClipboard() {
+function pasteFromClipboard() {
     const textarea = document.getElementById('importData');
-    const button = event.target; // Get the button that was clicked
+    const button = event.target;
     const originalText = button.textContent;
     
-    // Show loading state
-    button.textContent = '⏳ Pasting...';
+    button.textContent = '⚡ Paste & Process...';
     button.disabled = true;
     
-    // Check if the Clipboard API is supported
     if (navigator.clipboard && navigator.clipboard.readText) {
         navigator.clipboard.readText()
             .then(text => {
                 if (text.trim()) {
                     // Paste the content
                     textarea.value = text;
-                    textarea.focus();
-                    // Auto-resize the textarea if needed
-                    textarea.style.height = 'auto';
-                    textarea.style.height = Math.min(textarea.scrollHeight, 400) + 'px';
                     
-                    // Show processing state
-                    button.textContent = '⚡ Processing...';
-                    
-                    // Small delay to show the pasted content before processing
-                    setTimeout(() => {
-                        try {
-                            // Automatically process the data
-                            processImportedData();
-                            
-                            // Show success feedback
-                            button.textContent = '✅ Done!';
-                            setTimeout(() => {
-                                button.textContent = originalText;
-                                button.disabled = false;
-                            }, 1500);
-                        } catch (error) {
-                            console.error('Error processing data:', error);
-                            button.textContent = '❌ Error';
-                            setTimeout(() => {
-                                button.textContent = originalText;
-                                button.disabled = false;
-                            }, 2000);
-                            alert('Error processing the pasted data: ' + error.message);
-                        }
-                    }, 300); // Small delay to show the pasted content
-                    
+                    try {
+                        // Immediately process the data
+                        processImportedData();
+                        
+                        // Success feedback
+                        button.textContent = '✅ Complete!';
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.disabled = false;
+                        }, 1500);
+                    } catch (error) {
+                        console.error('Error processing data:', error);
+                        button.textContent = '❌ Error';
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.disabled = false;
+                        }, 2000);
+                        alert('Error processing the pasted data: ' + error.message);
+                    }
                 } else {
                     button.textContent = originalText;
                     button.disabled = false;
@@ -7238,7 +7225,6 @@ function parseCSVLine(line) {
                 alert('Failed to read from clipboard. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
             });
     } else {
-        // Fallback for older browsers
         button.textContent = originalText;
         button.disabled = false;
         alert('Clipboard API not supported. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
