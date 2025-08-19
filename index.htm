@@ -4737,31 +4737,106 @@ if (data.ventModeRaw && !data.o2therapyCode) {
                 data.age = parseInt(ageMatch[1], 10);
             }
 
-            // Extract vitals
-            const tempMatches = text.match(/Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+)/gi);
-            if (tempMatches) {
-                data.vitals.temp = tempMatches.map(match => parseFloat(match.match(/[\d.]+/)[0]));
-            }
 
-            const hrMatches = text.match(/(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+)/gi);
-            if (hrMatches) {
-                data.vitals.hr = hrMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-            }
 
-            const sbpMatches = text.match(/Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)/gi);
-            if (sbpMatches) {
-                data.vitals.sbp = sbpMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-            }
 
-            const dbpMatches = text.match(/Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)/gi);
-            if (dbpMatches) {
-                data.vitals.dbp = dbpMatches.map(match => parseInt(match.match(/\d+$/)[0]));
-            }
 
-            const o2Matches = text.match(/O2 Saturation.*?:\s*(\d+)/gi);
-            if (o2Matches) {
-                data.vitals.o2 = o2Matches.map(match => parseInt(match.match(/\d+$/)[0]));
-            }
+
+// Replace the existing vitals extraction section in extractLabValues function with this:
+
+// Calculate 24 hours ago
+const now = new Date();
+const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+// Helper function to check if timestamp is within last 24 hours
+function isWithin24Hours(dateStr, timeStr) {
+    try {
+        const [month, day, year] = dateStr.split('/').map(n => parseInt(n));
+        const [hour, minute, second] = timeStr.split(':').map(n => parseInt(n));
+        const vitalTime = new Date(2000 + year, month - 1, day, hour, minute, second);
+        return vitalTime >= twentyFourHoursAgo && vitalTime <= now;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Extract temperature with timestamp filtering
+const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+let tempMatch;
+const recentTemps = [];
+while ((tempMatch = tempRegex.exec(text)) !== null) {
+    if (isWithin24Hours(tempMatch[2], tempMatch[3])) {
+        recentTemps.push(parseFloat(tempMatch[1]));
+    }
+}
+if (recentTemps.length > 0) {
+    data.vitals.temp = recentTemps;
+}
+
+// Extract heart rate with timestamp filtering
+const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+let hrMatch;
+const recentHR = [];
+while ((hrMatch = hrRegex.exec(text)) !== null) {
+    if (isWithin24Hours(hrMatch[2], hrMatch[3])) {
+        recentHR.push(parseInt(hrMatch[1]));
+    }
+}
+if (recentHR.length > 0) {
+    data.vitals.hr = recentHR;
+}
+
+// Extract systolic BP with timestamp filtering
+const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+let sbpMatch;
+const recentSBP = [];
+while ((sbpMatch = sbpRegex.exec(text)) !== null) {
+    if (isWithin24Hours(sbpMatch[2], sbpMatch[3])) {
+        recentSBP.push(parseInt(sbpMatch[1]));
+    }
+}
+if (recentSBP.length > 0) {
+    data.vitals.sbp = recentSBP;
+}
+
+// Extract diastolic BP with timestamp filtering
+const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+let dbpMatch;
+const recentDBP = [];
+while ((dbpMatch = dbpRegex.exec(text)) !== null) {
+    if (isWithin24Hours(dbpMatch[2], dbpMatch[3])) {
+        recentDBP.push(parseInt(dbpMatch[1]));
+    }
+}
+if (recentDBP.length > 0) {
+    data.vitals.dbp = recentDBP;
+}
+
+// Extract O2 saturation with timestamp filtering
+const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+let o2Match;
+const recentO2 = [];
+while ((o2Match = o2Regex.exec(text)) !== null) {
+    if (isWithin24Hours(o2Match[2], o2Match[3])) {
+        recentO2.push(parseInt(o2Match[1]));
+    }
+}
+if (recentO2.length > 0) {
+    data.vitals.o2 = recentO2;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+			
 
             // Extract lab values with dates
             const extractLabValue = (pattern, name) => {
