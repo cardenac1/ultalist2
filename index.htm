@@ -7197,35 +7197,43 @@ function pasteFromClipboard() {
                         // Immediately process the data
                         processImportedData();
                         
-                        // Success feedback
-                        button.textContent = '✅ Complete!';
-                        setTimeout(() => {
-                            button.textContent = originalText;
-                            button.disabled = false;
-                        }, 1500);
+                        // Success feedback - turn green and say "Completed"
+                        button.textContent = '✅ Completed';
+                        button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+                        button.style.color = 'white';
+                        button.disabled = false; // Re-enable so they can click again if needed
+                        
                     } catch (error) {
                         console.error('Error processing data:', error);
                         button.textContent = '❌ Error';
-                        setTimeout(() => {
-                            button.textContent = originalText;
-                            button.disabled = false;
-                        }, 2000);
+                        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                        button.style.color = 'white';
+                        button.disabled = false;
                         alert('Error processing the pasted data: ' + error.message);
                     }
                 } else {
+                    // Reset button if clipboard is empty
                     button.textContent = originalText;
+                    button.style.background = '';
+                    button.style.color = '';
                     button.disabled = false;
                     alert('Clipboard is empty or contains no text.');
                 }
             })
             .catch(err => {
                 console.error('Failed to read clipboard: ', err);
+                // Reset button on error
                 button.textContent = originalText;
+                button.style.background = '';
+                button.style.color = '';
                 button.disabled = false;
                 alert('Failed to read from clipboard. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
             });
     } else {
+        // Reset button for unsupported browsers
         button.textContent = originalText;
+        button.style.background = '';
+        button.style.color = '';
         button.disabled = false;
         alert('Clipboard API not supported. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
         textarea.focus();
