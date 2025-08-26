@@ -1313,8 +1313,6 @@ select,
     line-height: 1.6;
     white-space: pre-wrap;
     color: var(--text-primary);
-    max-height: 400px;
-    overflow-y: auto;
 }
 
 .fishbone-display.hidden {
@@ -1330,10 +1328,13 @@ select,
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .fishbone-display {
-        max-height: 300px;
+        /* Remove this line too: */
+        /* max-height: 300px; */
         font-size: 0.85rem;
         padding: 0.75rem;
     }
+
+	
 }
 
 		
@@ -7165,101 +7166,154 @@ function pasteFromClipboard() {
     // Clear any existing content first
     textarea.value = '';
     
-    button.textContent = '⚡ Reading clipboard...';
+    button.textContent = 'Reading clipboard...';
     button.disabled = true;
     
-    if (navigator.clipboard && navigator.clipboard.readText) {
-        navigator.clipboard.readText()
-            .then(text => {
-                if (text && text.trim()) {
-                    // Paste the content
-                    textarea.value = text;
-                    button.textContent = '⚡ Processing data...';
-                    
-                    // Add a small delay to show the pasted content
-                    setTimeout(() => {
-                        try {
-                            // Process the data
-                            processImportedData();
-                            
-                            // Success feedback
-                            button.textContent = '✅ Completed!';
-                            button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
-                            button.style.color = 'white';
-                            button.disabled = false;
-                            
-                            // Auto-reset button after 3 seconds
-                            setTimeout(() => {
-                                button.textContent = originalText;
-                                button.style.background = originalBackground;
-                                button.style.color = originalColor;
-                            }, 3000);
-                            
-                        } catch (error) {
-                            console.error('Error processing data:', error);
-                            button.textContent = '❌ Processing Error';
-                            button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-                            button.style.color = 'white';
-                            button.disabled = false;
-                            alert('Error processing the pasted data: ' + error.message);
-                            
-                            // Reset button after error
-                            setTimeout(() => {
-                                button.textContent = originalText;
-                                button.style.background = originalBackground;
-                                button.style.color = originalColor;
-                            }, 3000);
-                        }
-                    }, 100);
-                    
-                } else {
-                    // Reset button if clipboard is empty
-                    button.textContent = '📋 Clipboard Empty';
-                    button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-                    button.style.color = 'white';
-                    button.disabled = false;
-                    
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.style.background = originalBackground;
-                        button.style.color = originalColor;
-                    }, 2000);
-                }
-            })
-            .catch(err => {
-                console.error('Failed to read clipboard: ', err);
-                button.textContent = '❌ Clipboard Error';
-                button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-                button.style.color = 'white';
-                button.disabled = false;
-                
-                // Show helpful message
-                setTimeout(() => {
-                    alert('Failed to read from clipboard. Please:\n1. Make sure you have data copied\n2. Grant clipboard permissions when prompted\n3. Try pasting manually with Ctrl+V');
-                    
-                    button.textContent = originalText;
-                    button.style.background = originalBackground;
-                    button.style.color = originalColor;
-                    textarea.focus(); // Focus textarea for manual paste
-                }, 500);
-            });
-    } else {
+    // Check if clipboard API is available
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
         // Fallback for browsers without clipboard API
-        button.textContent = '❌ Not Supported';
-        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+        button.textContent = 'Manual paste required';
+        button.style.background = 'linear-gradient(135deg, var(--secondary), #0891b2)';
         button.style.color = 'white';
         button.disabled = false;
         
         setTimeout(() => {
-            alert('Clipboard API not supported in this browser. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
+            alert('Automatic clipboard reading not supported.\n\nPlease:\n1. Click in the text area below\n2. Press Ctrl+V (or Cmd+V on Mac) to paste\n3. Click "Process Data" button');
             button.textContent = originalText;
             button.style.background = originalBackground;
             button.style.color = originalColor;
             textarea.focus();
         }, 500);
+        return;
     }
+    
+    // Try to read from clipboard
+    navigator.clipboard.readText()
+        .then(text => {
+            console.log('Clipboard read successful, text length:', text ? text.length : 0);
+            
+            if (text && text.trim()) {
+                // Paste the content
+                textarea.value = text;
+                button.textContent = 'Processing data...';
+                
+                // Add a small delay to show the pasted content
+                setTimeout(() => {
+                    try {
+                        // Process the data immediately
+                        const importText = textarea.value;
+                        if (!importText) {
+                            throw new Error('No text found in textarea after paste');
+                        }
+                        
+                        const patient = patientData[currentPatientIndex];
+                        if (!patient) {
+                            throw new Error('No current patient selected');
+                        }
+                        
+                        patient.ImportedData = importText;
+                        lastImportedData = importText;
+                        
+                        labData = extractLabValues(importText);
+                        patient.LabData = JSON.stringify(labData);
+                        
+                        const fishbone = generateFishbone(labData);
+                        const warnings = generateWarnings(labData);
+                        
+                        // Update VIOLIN field with plain text (asterisks preserved)
+                        const violinField = document.getElementById('field_VIOLIN');
+                        if (violinField) {
+                            violinField.value = fishbone;
+                            autoResizeTextarea(violinField);
+                            
+                            // Save the plain text with asterisks
+                            patient.VIOLIN = fishbone;
+                        }
+                        
+                        // Update warnings
+                        const warningDiv = document.getElementById('warningMessages');
+                        if (warningDiv) {
+                            if (warnings.length > 0) {
+                                warningDiv.innerHTML = warnings.map(w => `<div class="warning-message">${w}</div>`).join('');
+                                warningDiv.classList.remove('hidden');
+                            } else {
+                                warningDiv.innerHTML = '<div class="warning-message" style="color: var(--accent-3);">All values within normal limits</div>';
+                                warningDiv.classList.remove('hidden');
+                            }
+                        }
+                        
+                        saveToLocalStorage();
+                        closeImportModal();
+                        
+                        // Success feedback
+                        button.textContent = 'Completed!';
+                        button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+                        button.style.color = 'white';
+                        button.disabled = false;
+                        
+                        // Show fishbone inline
+                        setTimeout(() => {
+                            showFishboneInline();
+                        }, 200);
+                        
+                        // Auto-reset button after 3 seconds
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.style.background = originalBackground;
+                            button.style.color = originalColor;
+                        }, 3000);
+                        
+                    } catch (error) {
+                        console.error('Error processing data:', error);
+                        button.textContent = 'Processing Error';
+                        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                        button.style.color = 'white';
+                        button.disabled = false;
+                        
+                        alert('Error processing the pasted data: ' + error.message);
+                        
+                        // Reset button after error
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.style.background = originalBackground;
+                            button.style.color = originalColor;
+                        }, 3000);
+                    }
+                }, 300);
+                
+            } else {
+                // Reset button if clipboard is empty
+                button.textContent = 'Clipboard Empty';
+                button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                button.style.color = 'white';
+                button.disabled = false;
+                
+                setTimeout(() => {
+                    alert('Clipboard appears to be empty.\n\nPlease:\n1. Copy some data first\n2. Try the button again');
+                    button.textContent = originalText;
+                    button.style.background = originalBackground;
+                    button.style.color = originalColor;
+                }, 1000);
+            }
+        })
+        .catch(err => {
+            console.error('Failed to read clipboard:', err);
+            button.textContent = 'Permission Required';
+            button.style.background = 'linear-gradient(135deg, var(--secondary), #0891b2)';
+            button.style.color = 'white';
+            button.disabled = false;
+            
+            // Show helpful message
+            setTimeout(() => {
+                alert('Clipboard permission required.\n\nPlease:\n1. Allow clipboard access when prompted by your browser\n2. Make sure you have data copied to clipboard\n3. Try the button again\n\nOR paste manually with Ctrl+V in the text area below');
+                
+                button.textContent = originalText;
+                button.style.background = originalBackground;
+                button.style.color = originalColor;
+                textarea.focus(); // Focus textarea for manual paste
+            }, 500);
+        });
 }
-
 
 
 
