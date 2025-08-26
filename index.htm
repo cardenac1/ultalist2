@@ -2207,6 +2207,7 @@ if (helpContent[header]) {
     const btnContainer = document.createElement('div');
     btnContainer.className = 'violin-button-container';
     btnContainer.style.marginLeft = '10px';
+
     
     const importBtn = document.createElement('button');
     importBtn.textContent = '⬇️ Import';
@@ -2270,7 +2271,7 @@ if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att'
     input.type = 'text';
 } else if (header === 'VIOLIN') {
     // Use contentEditable div for VIOLIN
-    input = document.createElement('div');
+    input = document.createElement('textarea');
     input.contentEditable = true;
     input.className = 'violin-field';
     input.style.border = '1px solid var(--border)';
@@ -2301,18 +2302,7 @@ if (header === 'VIOLIN') {
 
 
 		
-// Set initial content
-if (header === 'VIOLIN') {
-    const content = patient[header] || '';
-    // If content has HTML spans, use innerHTML to preserve red formatting
-    if (content.includes('<span')) {
-        input.innerHTML = content;
-    } else {
-        input.textContent = content;
-    }
-} else {
-    input.value = patient[header] || '';
-}
+input.value = patient[header] || '';
 
 
 
@@ -2524,7 +2514,7 @@ if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att'
     input = document.createElement('input');
 } else if (header === 'VIOLIN') {
     // Use contentEditable div for VIOLIN
-    input = document.createElement('div');
+    input = document.createElement('textarea');
     input.contentEditable = true;
     input.className = 'violin-field';
     input.style.border = '1px solid var(--border)';
@@ -2568,17 +2558,10 @@ if (header === 'VIOLIN') {
 				
 
 input.addEventListener('input', function() {
-    if (header === 'VIOLIN') {
-        // Simply save the plain text content - no more red styling logic here
-        const plainText = this.textContent || this.innerText || '';
-        patient[header] = plainText;
-    } else {
-        patient[header] = this.value;
-    }
+    patient[header] = this.value;
     
     if (header === 'Name') {
-        const nameValue = header === 'VIOLIN' ? (this.textContent || this.innerText) : this.value;
-        document.getElementById('stickyTextContainer').textContent = nameValue || 'Unnamed Patient';
+        document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
     }
     saveToLocalStorage();
     
@@ -3399,22 +3382,15 @@ function processImportedData() {
 
 	
     
-// Update VIOLIN field
+// Update VIOLIN field with plain text (asterisks preserved)
 const violinField = document.getElementById('field_VIOLIN');
 if (violinField) {
-    const redContent = fishbone.replace(/\*([^*]+)\*/g, '<span style="color: var(--danger); font-weight: bold;">*$1*</span>');
+    violinField.value = fishbone;
+    autoResizeTextarea(violinField);
     
-    if (violinField.contentEditable === 'true') {
-        violinField.innerHTML = redContent;
-    } else {
-        violinField.value = fishbone;
-        autoResizeTextarea(violinField);
-    }
-    
-    // Save the RED HTML version permanently
-    patient.VIOLIN = redContent;
+    // Save the plain text with asterisks
+    patient.VIOLIN = fishbone;
 }
-
 
 	
     
@@ -3431,6 +3407,8 @@ if (violinField) {
     saveToLocalStorage();
     closeImportModal();
     document.getElementById('importData').value = '';
+	// Automatically show formatted fishbone popup
+setTimeout(() => showFormattedVIOLIN(), 100); // Small delay to ensure modal closes first
 }
 
 
@@ -7269,6 +7247,62 @@ function pasteFromClipboard() {
 }
 
 		
+
+
+
+		function showFormattedVIOLIN() {
+    if (currentPatientIndex === -1) return;
+    
+    const patient = patientData[currentPatientIndex];
+    const violinText = patient.VIOLIN || 'No VIOLIN data available';
+    
+    // Create formatted version with red text for abnormal values
+    const formattedContent = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">Formatted VIOLIN Data</h2>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 70vh; overflow-y: auto;">${formattedContent}</div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+
+		function showFormattedVIOLIN() {
+    if (currentPatientIndex === -1) return;
+    
+    const patient = patientData[currentPatientIndex];
+    const violinText = patient.VIOLIN || 'No VIOLIN data available';
+    
+    // Create formatted version with red text for abnormal values
+    const formattedContent = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">Formatted VIOLIN Results</h2>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 70vh; overflow-y: auto;">${formattedContent}</div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 		
 
 		
