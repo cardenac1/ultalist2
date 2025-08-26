@@ -1301,6 +1301,43 @@ select,
 		
 
 
+		/* Fishbone display container */
+.fishbone-display {
+    background: var(--card-bg);
+    border: 2px solid var(--secondary);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text-primary);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.fishbone-display.hidden {
+    display: none;
+}
+
+.fishbone-display h4 {
+    color: var(--secondary);
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .fishbone-display {
+        max-height: 300px;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+}
+
+		
+
 
     </style>
 </head>
@@ -2156,33 +2193,13 @@ case 'chartcheck':
         // Skip 'To do' as it's in the right panel
         if (header === 'To do') return;
         
-
-
-
-const label = document.createElement('label');
-
-
-
-
-
-
-
-
-
-
-
-
-
-		
-if (helpContent[header]) {
-    label.innerHTML = `${header}<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('${header}')">?</button>`;
-} else {
-    label.textContent = header;
-}
-
-
-
-
+        const label = document.createElement('label');
+        
+        if (helpContent[header]) {
+            label.innerHTML = `${header}<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('${header}')">?</button>`;
+        } else {
+            label.textContent = header;
+        }
         
         // Add buttons for specific fields
         if (header === 'Problems') {
@@ -2197,46 +2214,60 @@ if (helpContent[header]) {
             };
             label.appendChild(podBtn);
         } else if (header === 'VIOLIN') {
-    // Add warning messages before VIOLIN field
-    const warningDiv = document.createElement('div');
-    warningDiv.id = 'warningMessages';
-    warningDiv.className = 'warning-messages hidden';
-    leftPanel.appendChild(warningDiv);
-    
-    // Create button container with special class for mobile styling
-    const btnContainer = document.createElement('div');
-    btnContainer.className = 'violin-button-container';
-    btnContainer.style.marginLeft = '10px';
+            // Add warning messages before VIOLIN field
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'warningMessages';
+            warningDiv.className = 'warning-messages hidden';
+            leftPanel.appendChild(warningDiv);
+            
+            // Add fishbone display container AFTER warnings
+            const fishboneDiv = document.createElement('div');
+            fishboneDiv.id = 'fishboneDisplay';
+            fishboneDiv.className = 'fishbone-display hidden';
+            fishboneDiv.innerHTML = '<h4>VIOLIN Fishbone Diagram</h4><div id="fishboneContent"></div>';
+            leftPanel.appendChild(fishboneDiv);
+            
+            // Create button container with special class for mobile styling
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'violin-button-container';
+            btnContainer.style.marginLeft = '10px';
 
-    
-    const importBtn = document.createElement('button');
-    importBtn.textContent = '⬇️ Import';
-    importBtn.onclick = function(e) {
-        e.preventDefault();
-        showImportModal();
-    };
-    
-    const tableBtn = document.createElement('button');
-    tableBtn.textContent = '📊 Labs';
-    tableBtn.onclick = function(e) {
-        e.preventDefault();
-        showTableView();
-    };
-    
-    const graphBtn = document.createElement('button');
-    graphBtn.textContent = '📊 Vitals';
-    graphBtn.onclick = function(e) {
-        e.preventDefault();
-        showVitalsTable();
-    };
-    
-    btnContainer.appendChild(importBtn);
-    btnContainer.appendChild(tableBtn);
-    btnContainer.appendChild(graphBtn);
-    label.appendChild(btnContainer);
-}
-		
-		else if (header === 'ORDERS') {
+            const importBtn = document.createElement('button');
+            importBtn.textContent = '⬇️ Import';
+            importBtn.onclick = function(e) {
+                e.preventDefault();
+                showImportModal();
+            };
+            
+            const tableBtn = document.createElement('button');
+            tableBtn.textContent = '📊 Labs';
+            tableBtn.onclick = function(e) {
+                e.preventDefault();
+                showTableView();
+            };
+            
+            const graphBtn = document.createElement('button');
+            graphBtn.textContent = '📊 Vitals';
+            graphBtn.onclick = function(e) {
+                e.preventDefault();
+                showVitalsTable();
+            };
+
+            // ADD NEW FISHBONE TOGGLE BUTTON
+            const fishboneBtn = document.createElement('button');
+            fishboneBtn.textContent = '🐟 Fishbone';
+            fishboneBtn.onclick = function(e) {
+                e.preventDefault();
+                toggleFishboneDisplay();
+            };
+            
+            btnContainer.appendChild(importBtn);
+            btnContainer.appendChild(tableBtn);
+            btnContainer.appendChild(graphBtn);
+            btnContainer.appendChild(fishboneBtn); // Add the new button
+            label.appendChild(btnContainer);
+        }
+        else if (header === 'ORDERS') {
             const btnContainer = document.createElement('span');
             btnContainer.style.marginLeft = '10px';
             
@@ -2265,76 +2296,53 @@ if (helpContent[header]) {
             label.appendChild(btnContainer);
         }
         
-let input;
-if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
-    input = document.createElement('input');
-    input.type = 'text';
-} else if (header === 'VIOLIN') {
-    // Use contentEditable div for VIOLIN
-    input = document.createElement('textarea');
-    input.contentEditable = true;
-    input.className = 'violin-field';
-    input.style.border = '1px solid var(--border)';
-    input.style.padding = '0.75rem';
-    input.style.borderRadius = '0.25rem';
-    input.style.background = 'var(--card-bg)';
-    input.style.color = 'var(--text-primary)';
-    input.style.whiteSpace = 'pre-wrap';
-    input.style.overflowY = 'auto';
-    input.style.minHeight = '100px';
-}
-else {
-    input = document.createElement('textarea');
-}
-            
-        if (input.tagName === 'INPUT') {
+        let input;
+        if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
+            input = document.createElement('input');
             input.type = 'text';
+        } else if (header === 'VIOLIN') {
+            input = document.createElement('textarea');
+            input.contentEditable = true;
+            input.className = 'violin-field';
+            input.style.border = '1px solid var(--border)';
+            input.style.padding = '0.75rem';
+            input.style.borderRadius = '0.25rem';
+            input.style.background = 'var(--card-bg)';
+            input.style.color = 'var(--text-primary)';
+            input.style.whiteSpace = 'pre-wrap';
+            input.style.overflowY = 'auto';
+            input.style.minHeight = '100px';
         }
-
-
+        else {
+            input = document.createElement('textarea');
+        }
+            
         input.id = `field_${header.replace(/\s+/g, '_')}`;
-if (header === 'VIOLIN') {
-    input.className = 'violin-field';
-}
+        if (header === 'VIOLIN') {
+            input.className = 'violin-field';
+        }
+        
+        input.value = patient[header] || '';
 
-
-
-
-
-		
-input.value = patient[header] || '';
-
-
-
-		input.addEventListener('input', function() {
-    if (header === 'VIOLIN') {
-        // Simply save the plain text content - no more red styling logic here
-        const plainText = this.textContent || this.innerText || '';
-        patient[header] = plainText;
-    } else {
-        patient[header] = this.value;
-    }
-    
-    if (header === 'Name') {
-        const nameValue = header === 'VIOLIN' ? (this.textContent || this.innerText) : this.value;
-        document.getElementById('stickyTextContainer').textContent = nameValue || 'Unnamed Patient';
-    }
-    saveToLocalStorage();
-    
-    if (input.tagName === 'TEXTAREA') {
-        autoResizeTextarea(this);
-    }
-});
-
-
-
-
-
-
-
-
-
-		
+        input.addEventListener('input', function() {
+            if (header === 'VIOLIN') {
+                const plainText = this.textContent || this.innerText || '';
+                patient[header] = plainText;
+            } else {
+                patient[header] = this.value;
+            }
+            
+            if (header === 'Name') {
+                const nameValue = header === 'VIOLIN' ? (this.textContent || this.innerText) : this.value;
+                document.getElementById('stickyTextContainer').textContent = nameValue || 'Unnamed Patient';
+            }
+            saveToLocalStorage();
+            
+            if (input.tagName === 'TEXTAREA') {
+                autoResizeTextarea(this);
+            }
+        });
+        
         leftPanel.appendChild(label);
         
         // Add full orders display above ORDERS field
@@ -2347,12 +2355,11 @@ input.value = patient[header] || '';
         
         leftPanel.appendChild(input);
         
-      if (input.tagName === 'TEXTAREA') {
-    setTimeout(() => autoResizeTextarea(input), 0);
-} else if (input.contentEditable === 'true' && header === 'VIOLIN') {
-    setTimeout(() => autoResizeContentEditable(input), 0);
-}
-		
+        if (input.tagName === 'TEXTAREA') {
+            setTimeout(() => autoResizeTextarea(input), 0);
+        } else if (input.contentEditable === 'true' && header === 'VIOLIN') {
+            setTimeout(() => autoResizeContentEditable(input), 0);
+        }
     });
     
     // Set up To Do textarea event listener
@@ -2362,25 +2369,22 @@ input.value = patient[header] || '';
         saveToLocalStorage();
     });
     
-   
-
-
-  chartCheckContainer.appendChild(leftPanel);
-                    chartCheckContainer.appendChild(rightPanel);
-                    form.appendChild(chartCheckContainer);
-                    
-                    // Load lab data if stored
-                    if (patient.ImportedData) {
-                        lastImportedData = patient.ImportedData;
-                    }
-                    if (patient.LabData) {
-                        try {
-                            labData = JSON.parse(patient.LabData);
-                        } catch (e) {
-                            labData = {};
-                        }
-                    }
-                    return; // Exit early to prevent duplicate field creation
+    chartCheckContainer.appendChild(leftPanel);
+    chartCheckContainer.appendChild(rightPanel);
+    form.appendChild(chartCheckContainer);
+    
+    // Load lab data if stored
+    if (patient.ImportedData) {
+        lastImportedData = patient.ImportedData;
+    }
+    if (patient.LabData) {
+        try {
+            labData = JSON.parse(patient.LabData);
+        } catch (e) {
+            labData = {};
+        }
+    }
+    return; // Exit early to prevent duplicate field creation
 
 
 
@@ -3400,10 +3404,9 @@ function processImportedData() {
     closeImportModal();
     document.getElementById('importData').value = '';
     
-    // Automatically show fishbone popup
-    setTimeout(() => showFishbonePopup(), 100); // Small delay to ensure modal closes first
+    // Show fishbone inline instead of popup
+    setTimeout(() => showFishboneInline(), 100);
 }
-
 
 
 
@@ -7499,6 +7502,62 @@ function copyFishboneToClipboard() {
         });
     }
 }
+
+
+
+		// Toggle fishbone display inline
+function toggleFishboneDisplay() {
+    const fishboneDisplay = document.getElementById('fishboneDisplay');
+    const fishboneContent = document.getElementById('fishboneContent');
+    
+    if (!fishboneDisplay) return;
+    
+    if (fishboneDisplay.classList.contains('hidden')) {
+        // Show fishbone - generate it if needed
+        const patient = patientData[currentPatientIndex];
+        if (patient && patient.VIOLIN) {
+            // Format content with red styling for abnormal values
+            const formattedContent = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+            fishboneContent.innerHTML = formattedContent;
+            
+            // Add missing values if available
+            if (labData && Object.keys(labData).length > 0) {
+                const missingValues = generateMissingValuesMessages(labData);
+                if (missingValues) {
+                    const missingDiv = document.createElement('div');
+                    missingDiv.style.marginTop = '1rem';
+                    missingDiv.style.padding = '0.75rem';
+                    missingDiv.style.background = 'rgba(100, 100, 100, 0.1)';
+                    missingDiv.style.borderRadius = '0.25rem';
+                    missingDiv.style.fontSize = '0.85rem';
+                    missingDiv.innerHTML = `<strong style="color: var(--text-secondary);">Missing Values:</strong><br><span style="font-style: italic; color: var(--text-secondary);">${missingValues}</span>`;
+                    fishboneContent.appendChild(missingDiv);
+                }
+            }
+        } else {
+            fishboneContent.innerHTML = '<em style="color: var(--text-secondary);">No VIOLIN data available. Import data first.</em>';
+        }
+        
+        fishboneDisplay.classList.remove('hidden');
+        
+        // Scroll the fishbone into view
+        fishboneDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        // Hide fishbone
+        fishboneDisplay.classList.add('hidden');
+    }
+}
+
+// Show fishbone inline (called after processing data)
+function showFishboneInline() {
+    const fishboneDisplay = document.getElementById('fishboneDisplay');
+    if (fishboneDisplay && currentViewMode === 'chartcheck') {
+        // Auto-show the fishbone after processing
+        fishboneDisplay.classList.remove('hidden');
+        toggleFishboneDisplay(); // This will populate and show it
+    }
+}
+
 
 		
     </script>
