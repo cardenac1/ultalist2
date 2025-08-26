@@ -2182,9 +2182,9 @@ case 'chartcheck':
     const rightPanel = document.createElement('div');
     rightPanel.className = 'chart-check-right';
     rightPanel.innerHTML = `
-    <h3>Plan<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('Plan')">?</button></h3>
-    <textarea id="field_To_do" placeholder="Enter patient plan...">${patient['To do'] || ''}</textarea>
-`;
+        <h3>Plan<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('Plan')">?</button></h3>
+        <textarea id="field_To_do" placeholder="Enter patient plan...">${patient['To do'] || ''}</textarea>
+    `;
     
     fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'Priority'];
     
@@ -2201,33 +2201,22 @@ case 'chartcheck':
             label.textContent = header;
         }
         
-        // Add buttons for specific fields
-        if (header === 'Problems') {
-            const podBtn = document.createElement('button');
-            podBtn.textContent = 'Update POD';
-            podBtn.style.marginLeft = '10px';
-            podBtn.style.padding = '0.3rem 0.6rem';
-            podBtn.style.fontSize = '0.8rem';
-            podBtn.onclick = function(e) {
-                e.preventDefault();
-                updatePOD();
-            };
-            label.appendChild(podBtn);
-        } else if (header === 'VIOLIN') {
-            // Add warning messages before VIOLIN field
+        // CRITICAL: Add warning messages and fishbone BEFORE VIOLIN field
+        if (header === 'VIOLIN') {
+            // Add warning messages container
             const warningDiv = document.createElement('div');
             warningDiv.id = 'warningMessages';
             warningDiv.className = 'warning-messages hidden';
             leftPanel.appendChild(warningDiv);
             
-            // Add fishbone display container AFTER warnings
+            // Add fishbone display container
             const fishboneDiv = document.createElement('div');
             fishboneDiv.id = 'fishboneDisplay';
             fishboneDiv.className = 'fishbone-display hidden';
             fishboneDiv.innerHTML = '<h4>VIOLIN Fishbone Diagram</h4><div id="fishboneContent"></div>';
             leftPanel.appendChild(fishboneDiv);
             
-            // Create button container with special class for mobile styling
+            // Create button container
             const btnContainer = document.createElement('div');
             btnContainer.className = 'violin-button-container';
             btnContainer.style.marginLeft = '10px';
@@ -2253,7 +2242,6 @@ case 'chartcheck':
                 showVitalsTable();
             };
 
-            // ADD NEW FISHBONE TOGGLE BUTTON
             const fishboneBtn = document.createElement('button');
             fishboneBtn.textContent = '🐟 Fishbone';
             fishboneBtn.onclick = function(e) {
@@ -2264,7 +2252,7 @@ case 'chartcheck':
             btnContainer.appendChild(importBtn);
             btnContainer.appendChild(tableBtn);
             btnContainer.appendChild(graphBtn);
-            btnContainer.appendChild(fishboneBtn); // Add the new button
+            btnContainer.appendChild(fishboneBtn);
             label.appendChild(btnContainer);
         }
         else if (header === 'ORDERS') {
@@ -7171,61 +7159,104 @@ function pasteFromClipboard() {
     const textarea = document.getElementById('importData');
     const button = event.target;
     const originalText = button.textContent;
+    const originalBackground = button.style.background;
+    const originalColor = button.style.color;
     
-    button.textContent = '⚡ Paste & Process...';
+    // Clear any existing content first
+    textarea.value = '';
+    
+    button.textContent = '⚡ Reading clipboard...';
     button.disabled = true;
     
     if (navigator.clipboard && navigator.clipboard.readText) {
         navigator.clipboard.readText()
             .then(text => {
-                if (text.trim()) {
+                if (text && text.trim()) {
                     // Paste the content
                     textarea.value = text;
+                    button.textContent = '⚡ Processing data...';
                     
-                    try {
-                        // Immediately process the data
-                        processImportedData();
-                        
-                        // Success feedback - turn green and say "Completed"
-                        button.textContent = '✅ Completed';
-                        button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
-                        button.style.color = 'white';
-                        button.disabled = false; // Re-enable so they can click again if needed
-                        
-                    } catch (error) {
-                        console.error('Error processing data:', error);
-                        button.textContent = '❌ Error';
-                        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-                        button.style.color = 'white';
-                        button.disabled = false;
-                        alert('Error processing the pasted data: ' + error.message);
-                    }
+                    // Add a small delay to show the pasted content
+                    setTimeout(() => {
+                        try {
+                            // Process the data
+                            processImportedData();
+                            
+                            // Success feedback
+                            button.textContent = '✅ Completed!';
+                            button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+                            button.style.color = 'white';
+                            button.disabled = false;
+                            
+                            // Auto-reset button after 3 seconds
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.style.background = originalBackground;
+                                button.style.color = originalColor;
+                            }, 3000);
+                            
+                        } catch (error) {
+                            console.error('Error processing data:', error);
+                            button.textContent = '❌ Processing Error';
+                            button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                            button.style.color = 'white';
+                            button.disabled = false;
+                            alert('Error processing the pasted data: ' + error.message);
+                            
+                            // Reset button after error
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                                button.style.background = originalBackground;
+                                button.style.color = originalColor;
+                            }, 3000);
+                        }
+                    }, 100);
+                    
                 } else {
                     // Reset button if clipboard is empty
-                    button.textContent = originalText;
-                    button.style.background = '';
-                    button.style.color = '';
+                    button.textContent = '📋 Clipboard Empty';
+                    button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                    button.style.color = 'white';
                     button.disabled = false;
-                    alert('Clipboard is empty or contains no text.');
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.background = originalBackground;
+                        button.style.color = originalColor;
+                    }, 2000);
                 }
             })
             .catch(err => {
                 console.error('Failed to read clipboard: ', err);
-                // Reset button on error
-                button.textContent = originalText;
-                button.style.background = '';
-                button.style.color = '';
+                button.textContent = '❌ Clipboard Error';
+                button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+                button.style.color = 'white';
                 button.disabled = false;
-                alert('Failed to read from clipboard. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
+                
+                // Show helpful message
+                setTimeout(() => {
+                    alert('Failed to read from clipboard. Please:\n1. Make sure you have data copied\n2. Grant clipboard permissions when prompted\n3. Try pasting manually with Ctrl+V');
+                    
+                    button.textContent = originalText;
+                    button.style.background = originalBackground;
+                    button.style.color = originalColor;
+                    textarea.focus(); // Focus textarea for manual paste
+                }, 500);
             });
     } else {
-        // Reset button for unsupported browsers
-        button.textContent = originalText;
-        button.style.background = '';
-        button.style.color = '';
+        // Fallback for browsers without clipboard API
+        button.textContent = '❌ Not Supported';
+        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+        button.style.color = 'white';
         button.disabled = false;
-        alert('Clipboard API not supported. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
-        textarea.focus();
+        
+        setTimeout(() => {
+            alert('Clipboard API not supported in this browser. Please paste manually using Ctrl+V (or Cmd+V on Mac).');
+            button.textContent = originalText;
+            button.style.background = originalBackground;
+            button.style.color = originalColor;
+            textarea.focus();
+        }, 500);
     }
 }
 
@@ -7505,12 +7536,14 @@ function copyFishboneToClipboard() {
 
 
 
-		// Toggle fishbone display inline
 function toggleFishboneDisplay() {
     const fishboneDisplay = document.getElementById('fishboneDisplay');
     const fishboneContent = document.getElementById('fishboneContent');
     
-    if (!fishboneDisplay) return;
+    if (!fishboneDisplay || !fishboneContent) {
+        console.error('Fishbone display elements not found');
+        return;
+    }
     
     if (fishboneDisplay.classList.contains('hidden')) {
         // Show fishbone - generate it if needed
@@ -7541,21 +7574,26 @@ function toggleFishboneDisplay() {
         fishboneDisplay.classList.remove('hidden');
         
         // Scroll the fishbone into view
-        fishboneDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => {
+            fishboneDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
     } else {
         // Hide fishbone
         fishboneDisplay.classList.add('hidden');
     }
 }
 
-// Show fishbone inline (called after processing data)
 function showFishboneInline() {
-    const fishboneDisplay = document.getElementById('fishboneDisplay');
-    if (fishboneDisplay && currentViewMode === 'chartcheck') {
-        // Auto-show the fishbone after processing
-        fishboneDisplay.classList.remove('hidden');
-        toggleFishboneDisplay(); // This will populate and show it
-    }
+    // Add a delay to ensure DOM elements are ready
+    setTimeout(() => {
+        const fishboneDisplay = document.getElementById('fishboneDisplay');
+        if (fishboneDisplay && currentViewMode === 'chartcheck') {
+            // Auto-show the fishbone after processing
+            if (fishboneDisplay.classList.contains('hidden')) {
+                toggleFishboneDisplay(); // This will populate and show it
+            }
+        }
+    }, 200);
 }
 
 
