@@ -3360,7 +3360,7 @@ function showImportModal() {
 
 
 
- // Replace the existing processImportedData function (around line 3450) with this:
+// 1. REPLACE the existing processImportedData function (around line 3450) with this:
 
 function processImportedData() {
     const importText = document.getElementById('importData').value;
@@ -3375,24 +3375,16 @@ function processImportedData() {
     
     const fishbone = generateFishbone(labData);
     const warnings = generateWarnings(labData);
-
-
-
-
-
-	
     
-// Update VIOLIN field with plain text (asterisks preserved)
-const violinField = document.getElementById('field_VIOLIN');
-if (violinField) {
-    violinField.value = fishbone;
-    autoResizeTextarea(violinField);
-    
-    // Save the plain text with asterisks
-    patient.VIOLIN = fishbone;
-}
-
-	
+    // Update VIOLIN field with plain text (asterisks preserved)
+    const violinField = document.getElementById('field_VIOLIN');
+    if (violinField) {
+        violinField.value = fishbone;
+        autoResizeTextarea(violinField);
+        
+        // Save the plain text with asterisks
+        patient.VIOLIN = fishbone;
+    }
     
     // Update warnings
     const warningDiv = document.getElementById('warningMessages');
@@ -3407,8 +3399,9 @@ if (violinField) {
     saveToLocalStorage();
     closeImportModal();
     document.getElementById('importData').value = '';
-	// Automatically show formatted fishbone popup
-setTimeout(() => showFormattedVIOLIN(), 100); // Small delay to ensure modal closes first
+    
+    // Automatically show fishbone popup
+    setTimeout(() => showFishbonePopup(), 100); // Small delay to ensure modal closes first
 }
 
 
@@ -7304,6 +7297,208 @@ function pasteFromClipboard() {
 }
 
 		
+
+
+		// 2. ADD this new function (place it near the other modal functions, around line 4500):
+
+function showFishbonePopup() {
+    if (currentPatientIndex === -1) return;
+    
+    const patient = patientData[currentPatientIndex];
+    const violinText = patient.VIOLIN || 'No VIOLIN data available';
+    
+    // Generate missing values messages
+    const missingValues = generateMissingValuesMessages(labData);
+    
+    // Create formatted version with red text for abnormal values
+    const formattedContent = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">VIOLIN Fishbone Diagram</h2>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto;">${formattedContent}</div>
+            ${missingValues ? `<div style="background: var(--card-bg); margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"><div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>Missing Values:</strong></div><div style="font-style: italic; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">${missingValues}</div></div>` : ''}
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="copyFishboneToClipboard()">📋 Copy to Clipboard</button>
+                <button onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Store fishbone content for copy function
+    window.currentFishboneContent = violinText;
+}
+
+		// 3. ADD this function to generate missing values messages:
+
+function generateMissingValuesMessages(data) {
+    const missing = [];
+    
+    // Check vitals
+    if (!data.vitals.hr || data.vitals.hr.length === 0) missing.push('No HR');
+    if (!data.vitals.sbp || data.vitals.sbp.length === 0) missing.push('No SBP');
+    if (!data.vitals.dbp || data.vitals.dbp.length === 0) missing.push('No DBP');
+    if (!data.vitals.temp || data.vitals.temp.length === 0) missing.push('No Temp');
+    if (!data.vitals.o2 || data.vitals.o2.length === 0) missing.push('No SPO2');
+    
+    // Check if MAP is missing (would need to be calculated or extracted)
+    const hasMAP = lastImportedData && /Mean\s+(?:Arterial\s+)?Pressure/i.test(lastImportedData);
+    if (!hasMAP) missing.push('No MAP');
+    
+    // Check respiratory rate
+    const hasRR = lastImportedData && /Respiratory\s+Rate/i.test(lastImportedData);
+    if (!hasRR) missing.push('No RR');
+    
+    // Check O2 therapy
+    if (!data.o2therapyCode && !data.o2therapyRaw) missing.push('No O2 therapy documented');
+    
+    // Check ventilator settings if on vent
+    if (data.o2therapyCode === 'Vent') {
+        if (!data.ventModeRaw) missing.push('No Vent Mode');
+        if (!data.ventFrequencyRaw) missing.push('No Vent RR');
+        if (!data.ventTidalRaw) missing.push('No Vt');
+        if (!data.ventPeepRaw) missing.push('No PEEP');
+        if (!data.ventFiO2Raw) missing.push('No FIO2');
+    }
+    
+    // Check intake/output data if lastImportedData exists
+    if (lastImportedData) {
+        const ioData = extractIntakeOutputData(lastImportedData);
+        
+        // Check for specific I/O types
+        if (ioData.intakes.bloodProducts.length === 0) {
+            const hasBloodProducts = /blood.*product|packed.*cell|plasma|platelet/i.test(lastImportedData);
+            if (!hasBloodProducts) missing.push('No blood products');
+        }
+        
+        if (ioData.intakes.other.length === 0) {
+            const hasOralIntake = /oral|po\s|by\s+mouth/i.test(lastImportedData);
+            if (!hasOralIntake) missing.push('No oral intake');
+        }
+        
+        const hasIVF = /lactated.*ringer|normal.*saline|dextrose.*water|d5w|lr|ns/i.test(lastImportedData);
+        if (!hasIVF) missing.push('No IVF');
+        
+        if (ioData.intakes.enteral.length === 0) {
+            const hasTubeFeeds = /tube.*feed|enteral|nasogastric.*feed/i.test(lastImportedData);
+            if (!hasTubeFeeds) missing.push('No tube feeds');
+        }
+        
+        // Check outputs
+        if (ioData.outputs.urine.length === 0) missing.push('No UOP');
+        
+        const hasOstomy = /ostomy|colostomy|ileostomy|stoma/i.test(lastImportedData);
+        if (!hasOstomy) missing.push('No ostomy output');
+        
+        const hasBM = /bowel.*movement|bm|stool/i.test(lastImportedData);
+        if (!hasBM) missing.push('No BM');
+        
+        const hasEmesis = /emesis|vomit|nausea.*vomit/i.test(lastImportedData);
+        if (!hasEmesis) missing.push('No emesis');
+        
+        const hasBloodLoss = /blood.*loss|ebl|estimated.*blood/i.test(lastImportedData);
+        if (!hasBloodLoss) missing.push('No blood loss');
+        
+        const hasDialysis = /dialysis|cvvh|crrt/i.test(lastImportedData);
+        if (!hasDialysis) missing.push('No dialysis');
+    }
+    
+    // Check labs
+    if (!data.labs.wbc || data.labs.wbc.length === 0) missing.push('No WBC');
+    if (!data.labs.hgb || data.labs.hgb.length === 0) missing.push('No Hgb');
+    if (!data.labs.hct || data.labs.hct.length === 0) missing.push('No Hct');
+    if (!data.labs.plt || data.labs.plt.length === 0) missing.push('No Plt');
+    
+    // BMP
+    if (!data.labs.na || data.labs.na.length === 0) missing.push('No Na');
+    if (!data.labs.k || data.labs.k.length === 0) missing.push('No K');
+    if (!data.labs.cl || data.labs.cl.length === 0) missing.push('No Cl');
+    if (!data.labs.co2 || data.labs.co2.length === 0) missing.push('No CO2');
+    if (!data.labs.bun || data.labs.bun.length === 0) missing.push('No BUN');
+    if (!data.labs.cr || data.labs.cr.length === 0) missing.push('No Cr');
+    if (!data.labs.glu || data.labs.glu.length === 0) missing.push('No Glucose');
+    
+    // Additional electrolytes
+    if (!data.labs.ca || data.labs.ca.length === 0) missing.push('No Ca');
+    if (!data.labs.mg || data.labs.mg.length === 0) missing.push('No Mg');
+    if (!data.labs.phos || data.labs.phos.length === 0) missing.push('No P');
+    
+    // LFTs
+    if (!data.labs.tbil || data.labs.tbil.length === 0) missing.push('No Tbil');
+    if (!data.labs.dbil || data.labs.dbil.length === 0) missing.push('No Dbili');
+    if (!data.labs.alk || data.labs.alk.length === 0) missing.push('No ALK');
+    if (!data.labs.ggt || data.labs.ggt.length === 0) missing.push('No GGT');
+    if (!data.labs.ast || data.labs.ast.length === 0) missing.push('No AST');
+    if (!data.labs.alt || data.labs.alt.length === 0) missing.push('No ALT');
+    
+    // Coags
+    if (!data.labs.pt || data.labs.pt.length === 0) missing.push('No PT');
+    if (!data.labs.ptt || data.labs.ptt.length === 0) missing.push('No PTT');
+    if (!data.labs.inr || data.labs.inr.length === 0) missing.push('No INR');
+    
+    // ABG
+    if (!data.labs.ph || data.labs.ph.length === 0) missing.push('No pH');
+    if (!data.labs.po2 || data.labs.po2.length === 0) missing.push('No PO2');
+    if (!data.labs.pco2 || data.labs.pco2.length === 0) missing.push('No PCO2');
+    if (!data.labs.bicarb || data.labs.bicarb.length === 0) missing.push('No Bicarb');
+    if (!data.labs.lactate || data.labs.lactate.length === 0) missing.push('No Lactate');
+    
+    // Other important labs
+    if (!data.labs.trop || data.labs.trop.length === 0) missing.push('No Trops');
+    
+    // Base excess check (would need to be added to extraction)
+    const hasBaseExcess = lastImportedData && /base.*excess/i.test(lastImportedData);
+    if (!hasBaseExcess) missing.push('No Base excess');
+    
+    if (missing.length === 0) {
+        return null;
+    }
+    
+    return missing.join(', ');
+}
+
+// 4. ADD this function for copying fishbone content:
+
+function copyFishboneToClipboard() {
+    if (window.currentFishboneContent) {
+        navigator.clipboard.writeText(window.currentFishboneContent).then(() => {
+            // Change button text briefly to show success
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '✅ Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = window.currentFishboneContent;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy. Please select and copy manually.');
+            }
+            document.body.removeChild(textArea);
+        });
+    }
+}
 
 		
     </script>
