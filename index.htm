@@ -14,6 +14,7 @@
         IS_EXTENSION = false;
     }
     </script>
+	<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     
     <style>
         * {
@@ -1377,10 +1378,11 @@ select,
         <h2>Add New Entry</h2>
         
         <div id="entryTypeSelection" class="nav-buttons">
-            <button type="button" onclick="showManualEntry()">✏️ Manual Entry</button>
-            <button type="button" onclick="showPasteEntry()">📋 Paste Entry</button>
+            <button type="button" onclick="showManualEntry()">Manual Entry</button>
+            <button type="button" onclick="showPasteEntry()">Paste Entry</button>
             <button type="button" onclick="showUpdatePatientsSection()">🔄 Update Patients</button>
             <button type="button" onclick="closeAddEntryModal()">Cancel</button>
+			<button type="button" onclick="showCameraEntry()">📸 Scan Label</button>
         </div>
 
         <form id="addEntryForm" onsubmit="addEntry(event)" style="display: none;">
@@ -1413,8 +1415,39 @@ select,
     </div>
 </div>
 
+		
 
-
+<!-- Add the Camera Entry section -->
+<div id="cameraEntrySection" style="display: none;">
+    <h3 style="color: var(--accent-4); margin-bottom: 10px;">Scan Patient Label</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 10px;">Take a photo of the patient label sticker to automatically extract Name and MRN:</p>
+    
+    <div style="text-align: center; margin: 1rem 0;">
+        <video id="cameraPreview" width="320" height="240" style="border: 2px solid var(--border); border-radius: 0.5rem; display: none;"></video>
+        <canvas id="captureCanvas" width="320" height="240" style="display: none;"></canvas>
+        <div id="capturedImage" style="display: none; margin: 1rem 0;">
+            <img id="previewImage" style="max-width: 320px; border: 2px solid var(--border); border-radius: 0.5rem;">
+        </div>
+    </div>
+    
+    <div id="ocrProgress" style="display: none; text-align: center; color: var(--primary); margin: 1rem 0;">
+        Processing image... <span id="ocrProgressPercent">0%</span>
+    </div>
+    
+    <div id="extractedInfo" style="display: none; background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+        <h4 style="color: var(--success); margin-bottom: 0.5rem;">Extracted Information:</h4>
+        <div><strong>Name:</strong> <span id="extractedName">-</span></div>
+        <div><strong>MRN:</strong> <span id="extractedMRN">-</span></div>
+    </div>
+    
+    <div class="nav-buttons">
+        <button id="startCameraBtn" type="button" onclick="startCamera()">📷 Start Camera</button>
+        <button id="captureBtn" type="button" onclick="captureImage()" style="display: none;">📸 Capture</button>
+        <button id="processBtn" type="button" onclick="processImage()" style="display: none;">🔍 Process Image</button>
+        <button id="addExtractedBtn" type="button" onclick="addExtractedPatient()" style="display: none;">➕ Add Patient</button>
+        <button type="button" onclick="backToEntrySelection()">← Back</button>
+    </div>
+</div>
 
 
 
@@ -2626,13 +2659,18 @@ input.addEventListener('input', function() {
             document.getElementById('pasteTextArea').focus();
         }
 
-        function backToEntrySelection() {
+  function backToEntrySelection() {
     document.getElementById('entryTypeSelection').style.display = 'block';
     document.getElementById('addEntryForm').style.display = 'none';
     document.getElementById('pasteEntrySection').style.display = 'none';
     document.getElementById('updatePatientsSection').style.display = 'none';
+    document.getElementById('cameraEntrySection').style.display = 'none'; // Add this line
     document.getElementById('pasteTextArea').value = '';
     document.getElementById('updateListDataModal').value = '';
+    
+    // Stop camera if active
+    stopCamera();
+    resetCameraUI();
 }
 
 
@@ -7631,6 +7669,224 @@ function showFishboneInline() {
     }, 200);
 }
 
+
+
+		// ============ CAMERA AND OCR FUNCTIONS ============
+let cameraStream = null;
+let extractedData = { name: '', mrn: '' };
+
+function showCameraEntry() {
+    document.getElementById('entryTypeSelection').style.display = 'none';
+    document.getElementById('cameraEntrySection').style.display = 'block';
+    resetCameraUI();
+}
+
+function resetCameraUI() {
+    document.getElementById('cameraPreview').style.display = 'none';
+    document.getElementById('capturedImage').style.display = 'none';
+    document.getElementById('ocrProgress').style.display = 'none';
+    document.getElementById('extractedInfo').style.display = 'none';
+    
+    document.getElementById('startCameraBtn').style.display = 'inline-block';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('processBtn').style.display = 'none';
+    document.getElementById('addExtractedBtn').style.display = 'none';
+    
+    extractedData = { name: '', mrn: '' };
+}
+
+async function startCamera() {
+    try {
+        const constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'environment' // Use back camera on mobile
+            }
+        };
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.getElementById('cameraPreview');
+        video.srcObject = cameraStream;
+        
+        video.onloadedmetadata = () => {
+            video.play();
+            video.style.display = 'block';
+            document.getElementById('startCameraBtn').style.display = 'none';
+            document.getElementById('captureBtn').style.display = 'inline-block';
+        };
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        alert('Error accessing camera. Please make sure you have granted camera permissions and are using HTTPS.');
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+}
+
+function captureImage() {
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the video frame to the canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to image and display
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const previewImg = document.getElementById('previewImage');
+    previewImg.src = imageDataUrl;
+    
+    // Hide video, show captured image
+    video.style.display = 'none';
+    document.getElementById('capturedImage').style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('processBtn').style.display = 'inline-block';
+    
+    // Stop camera
+    stopCamera();
+}
+
+async function processImage() {
+    const canvas = document.getElementById('captureCanvas');
+    const progressDiv = document.getElementById('ocrProgress');
+    const progressPercent = document.getElementById('ocrProgressPercent');
+    
+    progressDiv.style.display = 'block';
+    document.getElementById('processBtn').disabled = true;
+    
+    try {
+        const result = await Tesseract.recognize(canvas, 'eng', {
+            logger: (m) => {
+                if (m.status === 'recognizing text') {
+                    const percent = Math.round(m.progress * 100);
+                    progressPercent.textContent = `${percent}%`;
+                }
+            }
+        });
+        
+        console.log('OCR Result:', result.data.text);
+        parsePatientLabel(result.data.text);
+        
+    } catch (error) {
+        console.error('OCR Error:', error);
+        alert('Error processing image. Please try again.');
+    } finally {
+        progressDiv.style.display = 'none';
+        document.getElementById('processBtn').disabled = false;
+    }
+}
+
+function parsePatientLabel(text) {
+    // Clean the text
+    const cleanText = text.replace(/[^\w\s:]/g, ' ').replace(/\s+/g, ' ').trim();
+    console.log('Cleaned OCR text:', cleanText);
+    
+    const lines = cleanText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    let name = '';
+    let mrn = '';
+    
+    // Method 1: Look for MRN pattern first
+    const mrnPattern = /(?:MRN\s*:?\s*)?(\d{7,10})/i;
+    const mrnMatch = cleanText.match(mrnPattern);
+    if (mrnMatch) {
+        mrn = mrnMatch[1];
+    }
+    
+    // Method 2: Look for name (assuming it's on the first line or before MRN)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        // Skip lines that look like MRN
+        if (/(?:MRN|medical|record|number|\d{7,10})/i.test(line)) {
+            continue;
+        }
+        
+        // Skip very short lines or lines with mostly numbers
+        if (line.length < 3 || /^\d+$/.test(line)) {
+            continue;
+        }
+        
+        // Look for name-like patterns (letters and spaces, possibly comma)
+        if (/^[a-zA-Z\s,.-]+$/.test(line) && line.length > 3) {
+            name = line.replace(/[,.-]+$/, '').trim(); // Remove trailing punctuation
+            break;
+        }
+    }
+    
+    // Fallback: try to extract from full text
+    if (!name) {
+        // Look for text before MRN
+        const beforeMrn = cleanText.split(/MRN/i)[0];
+        const possibleNames = beforeMrn.split(/\s+/).filter(word => 
+            word.length > 2 && /^[a-zA-Z]+$/.test(word)
+        );
+        if (possibleNames.length >= 2) {
+            name = possibleNames.slice(-2).join(' '); // Take last two words before MRN
+        } else if (possibleNames.length >= 1) {
+            name = possibleNames[possibleNames.length - 1];
+        }
+    }
+    
+    // Store extracted data
+    extractedData.name = name;
+    extractedData.mrn = mrn;
+    
+    // Display results
+    document.getElementById('extractedName').textContent = name || 'Not found';
+    document.getElementById('extractedMRN').textContent = mrn || 'Not found';
+    document.getElementById('extractedInfo').style.display = 'block';
+    
+    // Show add button if we have at least name or MRN
+    if (name || mrn) {
+        document.getElementById('addExtractedBtn').style.display = 'inline-block';
+    }
+}
+
+function addExtractedPatient() {
+    if (!extractedData.name && !extractedData.mrn) {
+        alert('No valid data extracted. Please try again.');
+        return;
+    }
+    
+    // Create new patient object
+    const newPatient = {};
+    MASTER_HEADERS.forEach(header => {
+        newPatient[header] = '';
+    });
+    
+    newPatient.Type = 'Patient';
+    newPatient.Name = extractedData.name || '';
+    newPatient.MRN = extractedData.mrn || '';
+    newPatient.RM = 'TBD'; // Default room
+    
+    // Add to patient list
+    patientData.push(newPatient);
+    displayRows();
+    saveToLocalStorage();
+    closeAddEntryModal();
+    updateCensus();
+    
+    const addedInfo = [];
+    if (extractedData.name) addedInfo.push(`Name: ${extractedData.name}`);
+    if (extractedData.mrn) addedInfo.push(`MRN: ${extractedData.mrn}`);
+    
+    alert(`Patient added successfully!\n\n${addedInfo.join('\n')}`);
+}
+
+		
 
 		
     </script>
