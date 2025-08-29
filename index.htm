@@ -301,6 +301,21 @@
 
 
 
+		#cropInterface {
+    text-align: center;
+}
+
+#cropCanvas {
+    display: block;
+    margin: 0 auto;
+}
+
+.crop-instructions {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+		
 
         /* Details View */
         .details-view {
@@ -1471,6 +1486,19 @@ select,
         <button id="processBtn" type="button" onclick="processCurrentImage()" style="display: none;">🔍 Process Image</button>
         <button id="addExtractedBtn" type="button" onclick="addExtractedPatient()" style="display: none;">➕ Add Patient</button>
         <button type="button" onclick="backToEntrySelection()">← Back</button>
+    </div>
+</div>
+
+
+		<div id="cropInterface" style="display: none; margin: 1rem 0;">
+    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">Select Area to Process</h4>
+    <div style="position: relative; display: inline-block; border: 2px solid var(--border); border-radius: 0.5rem; overflow: hidden;">
+        <canvas id="cropCanvas" style="cursor: crosshair; max-width: 400px; height: auto;"></canvas>
+        <div id="cropSelection" style="position: absolute; border: 2px solid var(--primary); background: rgba(59, 130, 246, 0.2); display: none; pointer-events: none;"></div>
+    </div>
+    <div style="margin-top: 0.5rem;">
+        <button type="button" onclick="resetCrop()">Reset Selection</button>
+        <button type="button" onclick="cropAndProcess()" id="cropProcessBtn">Process Selected Area</button>
     </div>
 </div>
 
@@ -7827,6 +7855,14 @@ function captureImage() {
 
 		
 
+
+
+
+
+
+
+
+
 function parsePatientLabel(text) {
     // Clean the text
     const cleanText = text.replace(/[^\w\s:]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -7837,19 +7873,35 @@ function parsePatientLabel(text) {
     let name = '';
     let mrn = '';
     
-    // Method 1: Look for MRN pattern first
-    const mrnPattern = /(?:MRN\s*:?\s*)?(\d{7,10})/i;
+    // Method 1: Look for MRN or FIN pattern first
+    const mrnPattern = /(?:(?:MRN|FIN)\s*:?\s*)?(\d{7,10})/i;
     const mrnMatch = cleanText.match(mrnPattern);
     if (mrnMatch) {
         mrn = mrnMatch[1];
+        console.log('Found MRN/FIN:', mrn);
     }
     
-    // Method 2: Look for name (assuming it's on the first line or before MRN)
+    // Also try specific FIN and MRN patterns
+    const finPattern = /FIN\s*:?\s*(\d{7,10})/i;
+    const mrnSpecificPattern = /MRN\s*:?\s*(\d{7,10})/i;
+    
+    const finMatch = cleanText.match(finPattern);
+    const mrnSpecificMatch = cleanText.match(mrnSpecificPattern);
+    
+    if (finMatch) {
+        mrn = finMatch[1];
+        console.log('Found FIN specifically:', mrn);
+    } else if (mrnSpecificMatch) {
+        mrn = mrnSpecificMatch[1];
+        console.log('Found MRN specifically:', mrn);
+    }
+    
+    // Method 2: Look for name (assuming it's on the first line or before MRN/FIN)
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         
-        // Skip lines that look like MRN
-        if (/(?:MRN|medical|record|number|\d{7,10})/i.test(line)) {
+        // Skip lines that look like MRN/FIN
+        if (/(?:MRN|FIN|medical|record|number|\d{7,10})/i.test(line)) {
             continue;
         }
         
@@ -7861,19 +7913,20 @@ function parsePatientLabel(text) {
         // Look for name-like patterns (letters and spaces, possibly comma)
         if (/^[a-zA-Z\s,.-]+$/.test(line) && line.length > 3) {
             name = line.replace(/[,.-]+$/, '').trim(); // Remove trailing punctuation
+            console.log('Found name:', name);
             break;
         }
     }
     
     // Fallback: try to extract from full text
     if (!name) {
-        // Look for text before MRN
-        const beforeMrn = cleanText.split(/MRN/i)[0];
+        // Look for text before MRN/FIN
+        const beforeMrn = cleanText.split(/(?:MRN|FIN)/i)[0];
         const possibleNames = beforeMrn.split(/\s+/).filter(word => 
             word.length > 2 && /^[a-zA-Z]+$/.test(word)
         );
         if (possibleNames.length >= 2) {
-            name = possibleNames.slice(-2).join(' '); // Take last two words before MRN
+            name = possibleNames.slice(-2).join(' '); // Take last two words before MRN/FIN
         } else if (possibleNames.length >= 1) {
             name = possibleNames[possibleNames.length - 1];
         }
@@ -7892,7 +7945,25 @@ function parsePatientLabel(text) {
     if (name || mrn) {
         document.getElementById('addExtractedBtn').style.display = 'inline-block';
     }
+    
+    console.log('Final extracted data:', extractedData);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
 
 function addExtractedPatient() {
     if (!extractedData.name && !extractedData.mrn) {
@@ -7935,122 +8006,229 @@ function addExtractedPatient() {
 
 
 
-
-		// ============ ENHANCED CAMERA AND UPLOAD FUNCTIONS ============
+// ============ ENHANCED CAMERA AND CROPPING FUNCTIONS ============
 let currentImageCanvas = null;
-
-function selectUploadMethod() {
-    document.getElementById('inputMethodSelection').style.display = 'none';
-    document.getElementById('uploadSection').style.display = 'block';
-    document.getElementById('cameraSection').style.display = 'none';
-    resetImageState();
-}
-
-function selectCameraMethod() {
-    document.getElementById('inputMethodSelection').style.display = 'none';
-    document.getElementById('uploadSection').style.display = 'none';
-    document.getElementById('cameraSection').style.display = 'block';
-    resetImageState();
-}
+let cropData = null;
+let isCropping = false;
+let cropStart = { x: 0, y: 0 };
 
 function resetImageState() {
     document.getElementById('capturedImage').style.display = 'none';
+    document.getElementById('cropInterface').style.display = 'none';
     document.getElementById('ocrProgress').style.display = 'none';
     document.getElementById('extractedInfo').style.display = 'none';
     document.getElementById('processBtn').style.display = 'none';
     document.getElementById('addExtractedBtn').style.display = 'none';
     
     currentImageCanvas = null;
+    cropData = null;
     extractedData = { name: '', mrn: '' };
-}
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file.');
-        return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        displayUploadedImage(e.target.result);
-    };
-    reader.readAsDataURL(file);
 }
 
 function displayUploadedImage(imageSrc) {
     const previewImg = document.getElementById('previewImage');
-    const canvas = document.getElementById('captureCanvas');
-    const ctx = canvas.getContext('2d');
     
     previewImg.onload = function() {
-        // Set canvas size to match image (with reasonable limits)
-        const maxWidth = 800;
-        const maxHeight = 600;
-        let { width, height } = previewImg;
-        
-        if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-        }
-        if (height > maxHeight) {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw image to canvas
-        ctx.drawImage(previewImg, 0, 0, width, height);
-        currentImageCanvas = canvas;
-        
-        // Show the preview and process button
+        // Show the preview
         document.getElementById('capturedImage').style.display = 'block';
-        document.getElementById('processBtn').style.display = 'inline-block';
+        
+        // Setup cropping interface
+        setupCroppingInterface(previewImg);
     };
     
     previewImg.src = imageSrc;
 }
 
-function processCurrentImage() {
-    if (currentImageCanvas) {
-        processImageFromCanvas(currentImageCanvas);
-    } else {
-        alert('No image available to process.');
-    }
+function captureImage() {
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw the video frame to the canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to image and display
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const previewImg = document.getElementById('previewImage');
+    previewImg.src = imageDataUrl;
+    
+    // Hide video, show captured image
+    video.style.display = 'none';
+    document.getElementById('capturedImage').style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('captureBtn').style.display = 'none';
+    
+    // Stop camera
+    stopCamera();
+    
+    // Setup cropping interface
+    previewImg.onload = function() {
+        setupCroppingInterface(previewImg);
+    };
 }
 
-async function processImageFromCanvas(canvas) {
-    const progressDiv = document.getElementById('ocrProgress');
-    const progressPercent = document.getElementById('ocrProgressPercent');
+function setupCroppingInterface(imgElement) {
+    const cropCanvas = document.getElementById('cropCanvas');
+    const ctx = cropCanvas.getContext('2d');
     
-    progressDiv.style.display = 'block';
-    document.getElementById('processBtn').disabled = true;
+    // Calculate display size (max 400px width)
+    const maxWidth = 400;
+    let displayWidth = imgElement.naturalWidth;
+    let displayHeight = imgElement.naturalHeight;
     
-    try {
-        const result = await Tesseract.recognize(canvas, 'eng', {
-            logger: (m) => {
-                if (m.status === 'recognizing text') {
-                    const percent = Math.round(m.progress * 100);
-                    progressPercent.textContent = `${percent}%`;
-                }
-            }
-        });
-        
-        console.log('OCR Result:', result.data.text);
-        parsePatientLabel(result.data.text);
-        
-    } catch (error) {
-        console.error('OCR Error:', error);
-        alert('Error processing image. Please try again.');
-    } finally {
-        progressDiv.style.display = 'none';
-        document.getElementById('processBtn').disabled = false;
+    if (displayWidth > maxWidth) {
+        displayHeight = (displayHeight * maxWidth) / displayWidth;
+        displayWidth = maxWidth;
     }
+    
+    cropCanvas.width = displayWidth;
+    cropCanvas.height = displayHeight;
+    cropCanvas.style.width = displayWidth + 'px';
+    cropCanvas.style.height = displayHeight + 'px';
+    
+    // Draw image to crop canvas
+    ctx.drawImage(imgElement, 0, 0, displayWidth, displayHeight);
+    
+    // Store original image data
+    currentImageCanvas = cropCanvas;
+    
+    // Show crop interface
+    document.getElementById('cropInterface').style.display = 'block';
+    
+    // Add instruction
+    if (!document.querySelector('.crop-instructions')) {
+        const instructions = document.createElement('div');
+        instructions.className = 'crop-instructions';
+        instructions.textContent = 'Click and drag to select area, or click "Process Selected Area" to process entire image';
+        document.getElementById('cropInterface').insertBefore(instructions, cropCanvas.parentNode);
+    }
+    
+    // Setup cropping interaction
+    setupCropInteraction(cropCanvas);
+}
+
+function setupCropInteraction(canvas) {
+    const selection = document.getElementById('cropSelection');
+    const container = canvas.parentNode;
+    
+    let isMouseDown = false;
+    let startX, startY;
+    
+    canvas.addEventListener('mousedown', function(e) {
+        isMouseDown = true;
+        const rect = canvas.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        
+        selection.style.left = startX + 'px';
+        selection.style.top = startY + 'px';
+        selection.style.width = '0px';
+        selection.style.height = '0px';
+        selection.style.display = 'block';
+        
+        cropStart = { x: startX, y: startY };
+    });
+    
+    canvas.addEventListener('mousemove', function(e) {
+        if (!isMouseDown) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+        
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+        const left = Math.min(currentX, startX);
+        const top = Math.min(currentY, startY);
+        
+        selection.style.left = left + 'px';
+        selection.style.top = top + 'px';
+        selection.style.width = width + 'px';
+        selection.style.height = height + 'px';
+    });
+    
+    canvas.addEventListener('mouseup', function(e) {
+        if (!isMouseDown) return;
+        
+        isMouseDown = false;
+        const rect = canvas.getBoundingClientRect();
+        const endX = e.clientX - rect.left;
+        const endY = e.clientY - rect.top;
+        
+        // Store crop data
+        cropData = {
+            x: Math.min(startX, endX),
+            y: Math.min(startY, endY),
+            width: Math.abs(endX - startX),
+            height: Math.abs(endY - startY)
+        };
+        
+        // Only process if there's a meaningful selection (at least 20x20 pixels)
+        if (cropData.width > 20 && cropData.height > 20) {
+            console.log('Crop area selected:', cropData);
+        }
+    });
+}
+
+function resetCrop() {
+    const selection = document.getElementById('cropSelection');
+    selection.style.display = 'none';
+    cropData = null;
+}
+
+function cropAndProcess() {
+    if (!currentImageCanvas) {
+        alert('No image available to process.');
+        return;
+    }
+    
+    let processCanvas;
+    
+    if (cropData && cropData.width > 20 && cropData.height > 20) {
+        // Create cropped canvas
+        processCanvas = document.createElement('canvas');
+        const ctx = processCanvas.getContext('2d');
+        
+        // Calculate scale factor between display and actual canvas size
+        const scaleX = currentImageCanvas.width / currentImageCanvas.offsetWidth;
+        const scaleY = currentImageCanvas.height / currentImageCanvas.offsetHeight;
+        
+        // Adjust crop coordinates for actual canvas size
+        const actualCropData = {
+            x: cropData.x * scaleX,
+            y: cropData.y * scaleY,
+            width: cropData.width * scaleX,
+            height: cropData.height * scaleY
+        };
+        
+        processCanvas.width = actualCropData.width;
+        processCanvas.height = actualCropData.height;
+        
+        // Draw cropped portion
+        ctx.drawImage(
+            currentImageCanvas,
+            actualCropData.x, actualCropData.y, actualCropData.width, actualCropData.height,
+            0, 0, actualCropData.width, actualCropData.height
+        );
+        
+        console.log('Processing cropped area:', actualCropData);
+    } else {
+        // Process entire image
+        processCanvas = currentImageCanvas;
+        console.log('Processing entire image');
+    }
+    
+    processImageFromCanvas(processCanvas);
+}
+
+// Keep the existing processCurrentImage function for backward compatibility
+function processCurrentImage() {
+    cropAndProcess();
 }
 
 
