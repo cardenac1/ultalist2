@@ -8031,6 +8031,15 @@ function displayUploadedImage(imageSrc) {
     previewImg.onload = function() {
         // Show the preview
         document.getElementById('capturedImage').style.display = 'block';
+        document.getElementById('processBtn').style.display = 'inline-block';
+        
+        // Create a canvas from the image for processing
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = previewImg.naturalWidth;
+        canvas.height = previewImg.naturalHeight;
+        ctx.drawImage(previewImg, 0, 0);
+        currentImageCanvas = canvas;
         
         // Setup cropping interface
         setupCroppingInterface(previewImg);
@@ -8232,6 +8241,70 @@ function processCurrentImage() {
 }
 
 
+
+
+		function selectUploadMethod() {
+    document.getElementById('uploadMethodBtn').style.background = 'var(--primary)';
+    document.getElementById('cameraMethodBtn').style.background = '';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('cameraSection').style.display = 'none';
+}
+
+function selectCameraMethod() {
+    document.getElementById('cameraMethodBtn').style.background = 'var(--primary)';
+    document.getElementById('uploadMethodBtn').style.background = '';
+    document.getElementById('cameraSection').style.display = 'block';
+    document.getElementById('uploadSection').style.display = 'none';
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            displayUploadedImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function processImageFromCanvas(canvas) {
+    // Show progress
+    document.getElementById('ocrProgress').style.display = 'block';
+    document.getElementById('ocrProgressPercent').textContent = '0%';
+    
+    // Convert canvas to data URL
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    
+    // Use Tesseract.js for OCR
+    Tesseract.recognize(
+        imageData,
+        'eng',
+        {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    const percent = Math.round(m.progress * 100);
+                    document.getElementById('ocrProgressPercent').textContent = `${percent}%`;
+                }
+            }
+        }
+    ).then(({ data: { text } }) => {
+        console.log('OCR completed:', text);
+        
+        // Hide progress
+        document.getElementById('ocrProgress').style.display = 'none';
+        
+        // Parse the extracted text
+        parsePatientLabel(text);
+        
+    }).catch(error => {
+        console.error('OCR Error:', error);
+        document.getElementById('ocrProgress').style.display = 'none';
+        alert('Error processing image: ' + error.message);
+    });
+}
+
+		
 
 		
 		
