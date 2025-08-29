@@ -1417,13 +1417,56 @@ select,
 
 		
 
-<!-- Add the Camera Entry section -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- Enhanced Camera/Upload Entry section -->
 <div id="cameraEntrySection" style="display: none;">
     <h3 style="color: var(--accent-4); margin-bottom: 10px;">Scan Patient Label</h3>
-    <p style="color: var(--text-secondary); margin-bottom: 10px;">Take a photo of the patient label sticker to automatically extract Name and MRN:</p>
+    <p style="color: var(--text-secondary); margin-bottom: 10px;">Take a photo or upload an image of the patient label sticker:</p>
     
-    <div style="text-align: center; margin: 1rem 0;">
-        <video id="cameraPreview" width="320" height="240" style="border: 2px solid var(--border); border-radius: 0.5rem; display: none;"></video>
+    <!-- Upload or Camera selection -->
+    <div id="inputMethodSelection" style="margin: 1rem 0;">
+        <div class="nav-buttons" style="grid-template-columns: repeat(2, 1fr);">
+            <button type="button" onclick="selectUploadMethod()" id="uploadMethodBtn">📁 Upload Image</button>
+            <button type="button" onclick="selectCameraMethod()" id="cameraMethodBtn">📷 Use Camera</button>
+        </div>
+    </div>
+    
+    <!-- File upload section -->
+    <div id="uploadSection" style="display: none; margin: 1rem 0;">
+        <div class="file-input-wrapper" style="margin-bottom: 1rem;">
+            <input type="file" id="labelImageInput" accept="image/*" onchange="handleImageUpload(event)">
+            <label for="labelImageInput" class="file-input-label" style="text-align: center; padding: 1rem; border: 2px dashed var(--primary);">
+                📁 Choose Image File
+            </label>
+        </div>
+    </div>
+    
+    <!-- Camera section -->
+    <div id="cameraSection" style="display: none;">
+        <div style="text-align: center; margin: 1rem 0;">
+            <video id="cameraPreview" width="320" height="240" style="border: 2px solid var(--border); border-radius: 0.5rem; display: none;"></video>
+        </div>
+        <div style="text-align: center; margin: 1rem 0;">
+            <button id="startCameraBtn" type="button" onclick="startCamera()">📷 Start Camera</button>
+            <button id="captureBtn" type="button" onclick="captureImage()" style="display: none;">📸 Capture</button>
+        </div>
+    </div>
+    
+    <!-- Common display areas -->
+    <div style="text-align: center;">
         <canvas id="captureCanvas" width="320" height="240" style="display: none;"></canvas>
         <div id="capturedImage" style="display: none; margin: 1rem 0;">
             <img id="previewImage" style="max-width: 320px; border: 2px solid var(--border); border-radius: 0.5rem;">
@@ -1441,14 +1484,19 @@ select,
     </div>
     
     <div class="nav-buttons">
-        <button id="startCameraBtn" type="button" onclick="startCamera()">📷 Start Camera</button>
-        <button id="captureBtn" type="button" onclick="captureImage()" style="display: none;">📸 Capture</button>
-        <button id="processBtn" type="button" onclick="processImage()" style="display: none;">🔍 Process Image</button>
+        <button id="processBtn" type="button" onclick="processCurrentImage()" style="display: none;">🔍 Process Image</button>
         <button id="addExtractedBtn" type="button" onclick="addExtractedPatient()" style="display: none;">➕ Add Patient</button>
         <button type="button" onclick="backToEntrySelection()">← Back</button>
     </div>
 </div>
 
+
+
+
+
+
+
+		
 
 
 
@@ -7682,18 +7730,24 @@ function showCameraEntry() {
 }
 
 function resetCameraUI() {
-    document.getElementById('cameraPreview').style.display = 'none';
-    document.getElementById('capturedImage').style.display = 'none';
-    document.getElementById('ocrProgress').style.display = 'none';
-    document.getElementById('extractedInfo').style.display = 'none';
+    // Reset method selection
+    document.getElementById('inputMethodSelection').style.display = 'block';
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('cameraSection').style.display = 'none';
     
+    // Reset camera specific elements
+    document.getElementById('cameraPreview').style.display = 'none';
     document.getElementById('startCameraBtn').style.display = 'inline-block';
     document.getElementById('captureBtn').style.display = 'none';
-    document.getElementById('processBtn').style.display = 'none';
-    document.getElementById('addExtractedBtn').style.display = 'none';
     
-    extractedData = { name: '', mrn: '' };
+    // Reset file input
+    document.getElementById('labelImageInput').value = '';
+    
+    // Reset common elements
+    resetImageState();
 }
+
+		
 
 async function startCamera() {
     try {
@@ -7740,6 +7794,7 @@ function captureImage() {
     
     // Draw the video frame to the canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    currentImageCanvas = canvas;
     
     // Convert to image and display
     const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -7758,35 +7813,14 @@ function captureImage() {
     stopCamera();
 }
 
-async function processImage() {
-    const canvas = document.getElementById('captureCanvas');
-    const progressDiv = document.getElementById('ocrProgress');
-    const progressPercent = document.getElementById('ocrProgressPercent');
-    
-    progressDiv.style.display = 'block';
-    document.getElementById('processBtn').disabled = true;
-    
-    try {
-        const result = await Tesseract.recognize(canvas, 'eng', {
-            logger: (m) => {
-                if (m.status === 'recognizing text') {
-                    const percent = Math.round(m.progress * 100);
-                    progressPercent.textContent = `${percent}%`;
-                }
-            }
-        });
-        
-        console.log('OCR Result:', result.data.text);
-        parsePatientLabel(result.data.text);
-        
-    } catch (error) {
-        console.error('OCR Error:', error);
-        alert('Error processing image. Please try again.');
-    } finally {
-        progressDiv.style.display = 'none';
-        document.getElementById('processBtn').disabled = false;
-    }
+
+		function processImage() {
+    // This function is now just a wrapper for backward compatibility
+    processCurrentImage();
 }
+
+
+		
 
 function parsePatientLabel(text) {
     // Clean the text
@@ -7888,6 +7922,135 @@ function addExtractedPatient() {
 
 		
 
+
+
+
+
+
+
+
+
+
+		// ============ ENHANCED CAMERA AND UPLOAD FUNCTIONS ============
+let currentImageCanvas = null;
+
+function selectUploadMethod() {
+    document.getElementById('inputMethodSelection').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('cameraSection').style.display = 'none';
+    resetImageState();
+}
+
+function selectCameraMethod() {
+    document.getElementById('inputMethodSelection').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('cameraSection').style.display = 'block';
+    resetImageState();
+}
+
+function resetImageState() {
+    document.getElementById('capturedImage').style.display = 'none';
+    document.getElementById('ocrProgress').style.display = 'none';
+    document.getElementById('extractedInfo').style.display = 'none';
+    document.getElementById('processBtn').style.display = 'none';
+    document.getElementById('addExtractedBtn').style.display = 'none';
+    
+    currentImageCanvas = null;
+    extractedData = { name: '', mrn: '' };
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        displayUploadedImage(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function displayUploadedImage(imageSrc) {
+    const previewImg = document.getElementById('previewImage');
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    previewImg.onload = function() {
+        // Set canvas size to match image (with reasonable limits)
+        const maxWidth = 800;
+        const maxHeight = 600;
+        let { width, height } = previewImg;
+        
+        if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+        }
+        if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw image to canvas
+        ctx.drawImage(previewImg, 0, 0, width, height);
+        currentImageCanvas = canvas;
+        
+        // Show the preview and process button
+        document.getElementById('capturedImage').style.display = 'block';
+        document.getElementById('processBtn').style.display = 'inline-block';
+    };
+    
+    previewImg.src = imageSrc;
+}
+
+function processCurrentImage() {
+    if (currentImageCanvas) {
+        processImageFromCanvas(currentImageCanvas);
+    } else {
+        alert('No image available to process.');
+    }
+}
+
+async function processImageFromCanvas(canvas) {
+    const progressDiv = document.getElementById('ocrProgress');
+    const progressPercent = document.getElementById('ocrProgressPercent');
+    
+    progressDiv.style.display = 'block';
+    document.getElementById('processBtn').disabled = true;
+    
+    try {
+        const result = await Tesseract.recognize(canvas, 'eng', {
+            logger: (m) => {
+                if (m.status === 'recognizing text') {
+                    const percent = Math.round(m.progress * 100);
+                    progressPercent.textContent = `${percent}%`;
+                }
+            }
+        });
+        
+        console.log('OCR Result:', result.data.text);
+        parsePatientLabel(result.data.text);
+        
+    } catch (error) {
+        console.error('OCR Error:', error);
+        alert('Error processing image. Please try again.');
+    } finally {
+        progressDiv.style.display = 'none';
+        document.getElementById('processBtn').disabled = false;
+    }
+}
+
+
+
+		
 		
     </script>
 </body>
