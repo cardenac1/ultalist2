@@ -1334,6 +1334,30 @@ select,
 	
 }
 
+
+		/* Mobile touch improvements */
+#cropCanvas {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Improve button sizing for mobile */
+@media (max-width: 768px) {
+    #cameraEntrySection button {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    #cropInterface button {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        margin: 0.25rem;
+    }
+}
 		
 
 
@@ -7873,35 +7897,30 @@ function parsePatientLabel(text) {
     let name = '';
     let mrn = '';
     
-    // Method 1: Look for MRN or FIN pattern first
-    const mrnPattern = /(?:(?:MRN|FIN)\s*:?\s*)?(\d{7,10})/i;
+    // Method 1: Look specifically for "MRN" followed by numbers
+    const mrnPattern = /MRN\s*:?\s*(\d{7,10})/i;
     const mrnMatch = cleanText.match(mrnPattern);
     if (mrnMatch) {
         mrn = mrnMatch[1];
-        console.log('Found MRN/FIN:', mrn);
+        console.log('Found MRN:', mrn);
     }
     
-    // Also try specific FIN and MRN patterns
-    const finPattern = /FIN\s*:?\s*(\d{7,10})/i;
-    const mrnSpecificPattern = /MRN\s*:?\s*(\d{7,10})/i;
-    
-    const finMatch = cleanText.match(finPattern);
-    const mrnSpecificMatch = cleanText.match(mrnSpecificPattern);
-    
-    if (finMatch) {
-        mrn = finMatch[1];
-        console.log('Found FIN specifically:', mrn);
-    } else if (mrnSpecificMatch) {
-        mrn = mrnSpecificMatch[1];
-        console.log('Found MRN specifically:', mrn);
+    // Fallback: look for "MRN" anywhere with numbers nearby
+    if (!mrn) {
+        const mrnFallbackPattern = /MRN[^\d]*(\d{7,10})/i;
+        const fallbackMatch = cleanText.match(mrnFallbackPattern);
+        if (fallbackMatch) {
+            mrn = fallbackMatch[1];
+            console.log('Found MRN (fallback):', mrn);
+        }
     }
     
-    // Method 2: Look for name (assuming it's on the first line or before MRN/FIN)
+    // Method 2: Look for name (first meaningful text line that's not MRN-related)
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         
-        // Skip lines that look like MRN/FIN
-        if (/(?:MRN|FIN|medical|record|number|\d{7,10})/i.test(line)) {
+        // Skip lines that contain MRN or are mostly numbers
+        if (/MRN|medical|record|number|\d{7,10}/i.test(line)) {
             continue;
         }
         
@@ -7912,23 +7931,9 @@ function parsePatientLabel(text) {
         
         // Look for name-like patterns (letters and spaces, possibly comma)
         if (/^[a-zA-Z\s,.-]+$/.test(line) && line.length > 3) {
-            name = line.replace(/[,.-]+$/, '').trim(); // Remove trailing punctuation
+            name = line.replace(/[,.-]+$/, '').trim();
             console.log('Found name:', name);
             break;
-        }
-    }
-    
-    // Fallback: try to extract from full text
-    if (!name) {
-        // Look for text before MRN/FIN
-        const beforeMrn = cleanText.split(/(?:MRN|FIN)/i)[0];
-        const possibleNames = beforeMrn.split(/\s+/).filter(word => 
-            word.length > 2 && /^[a-zA-Z]+$/.test(word)
-        );
-        if (possibleNames.length >= 2) {
-            name = possibleNames.slice(-2).join(' '); // Take last two words before MRN/FIN
-        } else if (possibleNames.length >= 1) {
-            name = possibleNames[possibleNames.length - 1];
         }
     }
     
@@ -8121,18 +8126,67 @@ function setupCroppingInterface(imgElement) {
     setupCropInteraction(cropCanvas);
 }
 
-function setupCropInteraction(canvas) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+		function setupCropInteraction(canvas) {
     const selection = document.getElementById('cropSelection');
     const container = canvas.parentNode;
     
-    let isMouseDown = false;
+    let isActive = false;
     let startX, startY;
     
-    canvas.addEventListener('mousedown', function(e) {
-        isMouseDown = true;
+    // Prevent default touch behavior
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+    });
+    
+    canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    });
+    
+    canvas.addEventListener('touchend', function(e) {
+        e.preventDefault();
+    });
+    
+    // Helper function to get coordinates from mouse or touch event
+    function getEventCoords(e) {
         const rect = canvas.getBoundingClientRect();
-        startX = e.clientX - rect.left;
-        startY = e.clientY - rect.top;
+        let clientX, clientY;
+        
+        if (e.touches && e.touches.length > 0) {
+            // Touch event
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            // Mouse event
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+    
+    // Start selection (mouse or touch)
+    function startSelection(e) {
+        e.preventDefault();
+        isActive = true;
+        const coords = getEventCoords(e);
+        startX = coords.x;
+        startY = coords.y;
         
         selection.style.left = startX + 'px';
         selection.style.top = startY + 'px';
@@ -8141,14 +8195,17 @@ function setupCropInteraction(canvas) {
         selection.style.display = 'block';
         
         cropStart = { x: startX, y: startY };
-    });
+        console.log('Selection started at:', startX, startY);
+    }
     
-    canvas.addEventListener('mousemove', function(e) {
-        if (!isMouseDown) return;
+    // Update selection (mouse or touch)
+    function updateSelection(e) {
+        if (!isActive) return;
+        e.preventDefault();
         
-        const rect = canvas.getBoundingClientRect();
-        const currentX = e.clientX - rect.left;
-        const currentY = e.clientY - rect.top;
+        const coords = getEventCoords(e);
+        const currentX = coords.x;
+        const currentY = coords.y;
         
         const width = Math.abs(currentX - startX);
         const height = Math.abs(currentY - startY);
@@ -8159,15 +8216,17 @@ function setupCropInteraction(canvas) {
         selection.style.top = top + 'px';
         selection.style.width = width + 'px';
         selection.style.height = height + 'px';
-    });
+    }
     
-    canvas.addEventListener('mouseup', function(e) {
-        if (!isMouseDown) return;
+    // End selection (mouse or touch)
+    function endSelection(e) {
+        if (!isActive) return;
+        e.preventDefault();
         
-        isMouseDown = false;
-        const rect = canvas.getBoundingClientRect();
-        const endX = e.clientX - rect.left;
-        const endY = e.clientY - rect.top;
+        isActive = false;
+        const coords = getEventCoords(e.changedTouches ? e.changedTouches[0] : e);
+        const endX = coords.x;
+        const endY = coords.y;
         
         // Store crop data
         cropData = {
@@ -8180,9 +8239,40 @@ function setupCropInteraction(canvas) {
         // Only process if there's a meaningful selection (at least 20x20 pixels)
         if (cropData.width > 20 && cropData.height > 20) {
             console.log('Crop area selected:', cropData);
+        } else {
+            console.log('Selection too small, will process entire image');
         }
+    }
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startSelection);
+    canvas.addEventListener('mousemove', updateSelection);
+    canvas.addEventListener('mouseup', endSelection);
+    
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', function(e) {
+        startSelection(e);
+    });
+    
+    canvas.addEventListener('touchmove', function(e) {
+        updateSelection(e);
+    });
+    
+    canvas.addEventListener('touchend', function(e) {
+        endSelection(e);
     });
 }
+
+
+
+
+
+
+
+
+
+
+		
 
 function resetCrop() {
     const selection = document.getElementById('cropSelection');
