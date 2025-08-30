@@ -7871,91 +7871,63 @@ function captureImage() {
 
 
 function parsePatientLabel(text) {
-    console.log('Raw OCR text:', text);
+    // DEBUGGING: Show exactly what OCR extracted
+    console.log('=== OCR DEBUGGING ===');
+    console.log('Raw OCR text length:', text.length);
+    console.log('Raw OCR text:', JSON.stringify(text)); // This will show all characters including newlines
+    console.log('Raw OCR text (readable):', text);
     
-    // Split into lines BEFORE cleaning to preserve structure
+    // Split into lines and show each line
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    const cleanText = text.replace(/\s+/g, ' ').trim();
+    console.log('Number of lines:', lines.length);
+    lines.forEach((line, index) => {
+        console.log(`Line ${index}: "${line}"`);
+    });
     
     let name = '';
     let mrn = '';
     
-    // Method 1: Look for MRN patterns (more flexible)
-    const mrnPatterns = [
-        /MRN\s*:?\s*(\d{5,15})/i,
-        /Medical\s*Record\s*(?:Number|#)\s*:?\s*(\d{5,15})/i,
-        /Patient\s*(?:ID|Number)\s*:?\s*(\d{5,15})/i,
-        /ID\s*:?\s*(\d{6,12})/i
-    ];
+    // Try VERY simple patterns first
+    console.log('=== SEARCHING FOR MRN ===');
     
-    for (const pattern of mrnPatterns) {
-        const match = cleanText.match(pattern);
-        if (match) {
-            mrn = match[1];
-            console.log('Found MRN:', mrn);
-            break;
-        }
+    // Look for any sequence of 5+ digits
+    const anyDigits = text.match(/\d{5,}/g);
+    console.log('All digit sequences 5+:', anyDigits);
+    
+    if (anyDigits && anyDigits.length > 0) {
+        mrn = anyDigits[0]; // Take first one
+        console.log('Using first digit sequence as MRN:', mrn);
     }
     
-    // Fallback: Look for any number that might be an MRN
-    if (!mrn) {
-        const numberMatches = cleanText.match(/\b(\d{6,12})\b/g);
-        if (numberMatches && numberMatches.length > 0) {
-            // Take the longest number as most likely to be MRN
-            mrn = numberMatches.reduce((a, b) => a.length >= b.length ? a : b);
-            console.log('Found MRN (fallback):', mrn);
-        }
-    }
+    console.log('=== SEARCHING FOR NAME ===');
     
-    // Method 2: Look for name (check each line)
+    // Look for any line with mostly letters
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        console.log(`Checking line ${i}: "${line}"`);
         
-        // Skip lines that are clearly not names
-        if (/MRN|medical|record|number|patient|id|dob|birth|address|phone/i.test(line)) {
-            continue;
-        }
+        // Count letters vs other characters
+        const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
+        const totalLength = line.length;
+        const letterRatio = letterCount / totalLength;
         
-        // Skip lines that are mostly numbers or very short
-        if (line.length < 3 || /^\d+/.test(line) || /^[^a-zA-Z]*$/.test(line)) {
-            continue;
-        }
+        console.log(`  Letters: ${letterCount}/${totalLength} = ${letterRatio.toFixed(2)}`);
         
-        // Look for name patterns - allow more characters
-        if (/^[a-zA-Z\s,.-]{3,}/.test(line)) {
-            // Clean up the name
-            name = line.replace(/[,.-]+$/, '').replace(/^\W+/, '').trim();
-            console.log('Found name:', name);
+        // If line is mostly letters and reasonable length
+        if (letterRatio > 0.6 && line.length > 2 && line.length < 50) {
+            name = line.trim();
+            console.log(`  -> POTENTIAL NAME: "${name}"`);
             break;
         }
     }
     
-    // Alternative name search: look for comma-separated format (Last, First)
-    if (!name) {
-        const commaPattern = /([A-Z][a-z]+\s*,\s*[A-Z][a-z]+)/;
-        const commaMatch = cleanText.match(commaPattern);
-        if (commaMatch) {
-            name = commaMatch[1].trim();
-            console.log('Found name (comma format):', name);
-        }
-    }
-    
-    // Alternative name search: look for capitalized words pattern
-    if (!name) {
-        const capitalPattern = /\b([A-Z][a-z]+\s+[A-Z][a-z]+)\b/;
-        const capitalMatch = cleanText.match(capitalPattern);
-        if (capitalMatch) {
-            name = capitalMatch[1].trim();
-            console.log('Found name (capital pattern):', name);
-        }
-    }
-    
-    // Store extracted data
+    // Store results
     extractedData.name = name;
     extractedData.mrn = mrn;
     
-    console.log('Final extracted data:', extractedData);
-    console.log('All lines processed:', lines);
+    console.log('=== FINAL RESULTS ===');
+    console.log('Extracted name:', name);
+    console.log('Extracted MRN:', mrn);
     
     // Display results
     document.getElementById('extractedName').textContent = name || 'Not found';
@@ -7966,12 +7938,10 @@ function parsePatientLabel(text) {
     if (name || mrn) {
         document.getElementById('addExtractedBtn').style.display = 'inline-block';
     }
+    
+    // DEBUGGING: Also show an alert with the raw text so you can see it
+    alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
 }
-
-
-
-
-
 
 
 
