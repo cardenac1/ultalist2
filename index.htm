@@ -2408,6 +2408,7 @@ case 'chartcheck':
         if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
             input = document.createElement('input');
             input.type = 'text';
+		}
 else if (header === 'VIOLIN') {
     input = document.createElement('textarea');
     // Remove contentEditable and inline styles - let CSS handle it
@@ -2615,6 +2616,7 @@ if (currentViewMode === 'consult' && CONSULT_MODE_LABELS[header]) {
 let input;
 if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
     input = document.createElement('input');
+}
 else if (header === 'VIOLIN') {
     input = document.createElement('textarea');
     // Remove contentEditable and inline styles - let CSS handle it
