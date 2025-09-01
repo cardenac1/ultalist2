@@ -7908,6 +7908,10 @@ let detectionInterval = null;
 let lastDetectionTime = 0;
 let detectionThrottle = 2000; // Run detection every 2 seconds
 
+let uploadDetectedWords = [];
+let selectedWords = { name: [], mrn: [] };
+let uploadImageOverlay = null;
+
 function showCameraEntry() {
     document.getElementById('entryTypeSelection').style.display = 'none';
     document.getElementById('cameraEntrySection').style.display = 'block';
@@ -8258,9 +8262,22 @@ function resetImageState() {
     document.getElementById('processBtn').style.display = 'none';
     document.getElementById('addExtractedBtn').style.display = 'none';
     
+    // Clean up upload-specific elements
+    const uploadProgress = document.getElementById('uploadProgress');
+    if (uploadProgress) uploadProgress.style.display = 'none';
+    
+    const instructions = document.getElementById('selectionInstructions');
+    if (instructions) instructions.remove();
+    
+    const overlay = document.getElementById('uploadOverlay');
+    if (overlay) overlay.remove();
+    
     currentImageCanvas = null;
     cropData = null;
     extractedData = { name: '', mrn: '' };
+    uploadDetectedWords = [];
+    selectedWords = { name: [], mrn: [] };
+    uploadImageOverlay = null;
     
     // Hide status indicator
     const status = document.getElementById('detectionStatus');
@@ -8268,6 +8285,8 @@ function resetImageState() {
         status.style.display = 'none';
     }
 }
+
+		
 
 function selectUploadMethod() {
     document.getElementById('uploadMethodBtn').style.background = 'var(--primary)';
@@ -8294,13 +8313,23 @@ function handleImageUpload(event) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
 function displayUploadedImage(imageSrc) {
     const previewImg = document.getElementById('previewImage');
     
     previewImg.onload = function() {
         // Show the preview
         document.getElementById('capturedImage').style.display = 'block';
-        document.getElementById('processBtn').style.display = 'inline-block';
         
         // Create a canvas from the image for processing
         const canvas = document.createElement('canvas');
@@ -8310,13 +8339,34 @@ function displayUploadedImage(imageSrc) {
         ctx.drawImage(previewImg, 0, 0);
         currentImageCanvas = canvas;
         
-        // Setup cropping interface
+        // Setup upload image overlay for text selection
+        setupUploadImageOverlay(previewImg);
+        
+        // Auto-detect text in uploaded image
+        autoDetectUploadedText();
+        
+        // Setup cropping interface (existing functionality)
         setupCroppingInterface(previewImg);
     };
     
     previewImg.src = imageSrc;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
 function setupCroppingInterface(imgElement) {
     const cropCanvas = document.getElementById('cropCanvas');
     const ctx = cropCanvas.getContext('2d');
@@ -8738,6 +8788,328 @@ function testOCR() {
 
 
 
+
+
+
+
+
+
+		function setupUploadImageOverlay(imgElement) {
+    // Create overlay canvas if it doesn't exist
+    let overlay = document.getElementById('uploadOverlay');
+    if (!overlay) {
+        overlay = document.createElement('canvas');
+        overlay.id = 'uploadOverlay';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            pointer-events: auto;
+        `;
+        
+        // Insert overlay after the preview image
+        const capturedDiv = document.getElementById('capturedImage');
+        capturedDiv.style.position = 'relative';
+        capturedDiv.appendChild(overlay);
+    }
+    
+    // Size overlay to match image
+    const rect = imgElement.getBoundingClientRect();
+    overlay.width = rect.width;
+    overlay.height = rect.height;
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+    
+    uploadImageOverlay = overlay;
+    
+    // Add click handler for text selection
+    overlay.addEventListener('click', handleTextSelection);
+}
+		
+
+
+
+
+
+
+
+
+		function autoDetectUploadedText() {
+    if (!currentImageCanvas || typeof Tesseract === 'undefined') {
+        console.log('Cannot auto-detect: missing canvas or Tesseract');
+        return;
+    }
+    
+    console.log('Auto-detecting text in uploaded image...');
+    
+    // Show progress indicator
+    showUploadProgress('Analyzing image...', 0);
+    
+    // Create smaller canvas for faster processing
+    const detectCanvas = document.createElement('canvas');
+    const ctx = detectCanvas.getContext('2d');
+    
+    // Scale down for faster processing
+    const scale = Math.min(800 / currentImageCanvas.width, 600 / currentImageCanvas.height);
+    detectCanvas.width = currentImageCanvas.width * scale;
+    detectCanvas.height = currentImageCanvas.height * scale;
+    
+    ctx.drawImage(currentImageCanvas, 0, 0, detectCanvas.width, detectCanvas.height);
+    
+    const imageData = detectCanvas.toDataURL('image/png', 0.8);
+    
+    // Run OCR with word detection
+    Tesseract.recognize(imageData, 'eng', {
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+        tessedit_ocr_engine_mode: Tesseract.OEM.DEFAULT,
+        logger: m => {
+            if (m.status === 'recognizing text') {
+                const percent = Math.round(m.progress * 100);
+                showUploadProgress('Analyzing text...', percent);
+            }
+        }
+    }).then(({ data: { words, text } }) => {
+        console.log('Upload auto-detection completed:', words.length, 'words found');
+        hideUploadProgress();
+        
+        // Store detected words
+        uploadDetectedWords = words.filter(word => word.confidence > 30);
+        
+        // Clear previous selections
+        selectedWords = { name: [], mrn: [] };
+        
+        // Draw text overlay
+        drawUploadTextOverlay();
+        
+        // Show selection instructions
+        showSelectionInstructions();
+        
+    }).catch(error => {
+        console.error('Upload auto-detection error:', error);
+        hideUploadProgress();
+        alert('Text detection failed. You can still manually process the image.');
+    });
+}
+
+function showUploadProgress(message, percent) {
+    let progress = document.getElementById('uploadProgress');
+    if (!progress) {
+        progress = document.createElement('div');
+        progress.id = 'uploadProgress';
+        progress.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 1000;
+            text-align: center;
+        `;
+        document.getElementById('capturedImage').appendChild(progress);
+    }
+    
+    progress.innerHTML = `${message}<br><span style="font-size: 0.9em;">${percent}%</span>`;
+    progress.style.display = 'block';
+}
+
+function hideUploadProgress() {
+    const progress = document.getElementById('uploadProgress');
+    if (progress) {
+        progress.style.display = 'none';
+    }
+}
+
+
+
+
+
+
+		function drawUploadTextOverlay() {
+    if (!uploadImageOverlay || !uploadDetectedWords.length) return;
+    
+    const ctx = uploadImageOverlay.getContext('2d');
+    ctx.clearRect(0, 0, uploadImageOverlay.width, uploadImageOverlay.height);
+    
+    // Calculate scale factors (OCR was done on scaled image)
+    const img = document.getElementById('previewImage');
+    const scaleX = img.naturalWidth / uploadImageOverlay.width;
+    const scaleY = img.naturalHeight / uploadImageOverlay.height;
+    
+    // Analyze and categorize words
+    uploadDetectedWords.forEach((word, index) => {
+        const text = word.text.trim();
+        let category = 'other';
+        
+        // Determine category
+        if (/^\d{5,10}$/.test(text)) {
+            category = 'mrn';
+        } else if (/^[A-Za-z]{2,}$/i.test(text) && text.length >= 2) {
+            category = 'name';
+        }
+        
+        // Calculate display coordinates
+        const x = word.bbox.x0 / scaleX;
+        const y = word.bbox.y0 / scaleY;
+        const width = (word.bbox.x1 - word.bbox.x0) / scaleX;
+        const height = (word.bbox.y1 - word.bbox.y0) / scaleY;
+        
+        // Determine color and selection state
+        let color = '#666666'; // default gray
+        let isSelected = false;
+        
+        if (category === 'mrn') {
+            color = selectedWords.mrn.includes(index) ? '#00aa00' : '#00ff00';
+            isSelected = selectedWords.mrn.includes(index);
+        } else if (category === 'name') {
+            color = selectedWords.name.includes(index) ? '#0044aa' : '#0066ff';
+            isSelected = selectedWords.name.includes(index);
+        }
+        
+        // Draw box
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Draw label
+        const label = category === 'mrn' ? 'MRN' : category === 'name' ? 'NAME' : 'TEXT';
+        const labelHeight = 16;
+        
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y - labelHeight, Math.max(width, 40), labelHeight);
+        
+        ctx.fillStyle = 'white';
+        ctx.font = '10px Arial';
+        ctx.fillText(`${label}: ${text}`, x + 2, y - 4);
+        
+        // Store word info for click handling
+        word._displayBounds = { x, y, width, height };
+        word._index = index;
+        word._category = category;
+    });
+}
+
+
+
+
+
+		function handleTextSelection(event) {
+    const rect = uploadImageOverlay.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    
+    // Find clicked word
+    const clickedWord = uploadDetectedWords.find(word => {
+        if (!word._displayBounds) return false;
+        
+        const bounds = word._displayBounds;
+        return clickX >= bounds.x && 
+               clickX <= bounds.x + bounds.width &&
+               clickY >= bounds.y && 
+               clickY <= bounds.y + bounds.height;
+    });
+    
+    if (clickedWord) {
+        const index = clickedWord._index;
+        const category = clickedWord._category;
+        
+        if (category === 'mrn') {
+            // Toggle MRN selection (only allow one)
+            if (selectedWords.mrn.includes(index)) {
+                selectedWords.mrn = selectedWords.mrn.filter(i => i !== index);
+            } else {
+                selectedWords.mrn = [index]; // Replace previous selection
+            }
+        } else if (category === 'name') {
+            // Toggle name selection (allow multiple for full names)
+            if (selectedWords.name.includes(index)) {
+                selectedWords.name = selectedWords.name.filter(i => i !== index);
+            } else {
+                selectedWords.name.push(index);
+            }
+        }
+        
+        // Redraw overlay
+        drawUploadTextOverlay();
+        
+        // Update extracted data
+        updateExtractedDataFromSelection();
+    }
+}
+
+function updateExtractedDataFromSelection() {
+    // Extract selected name
+    const nameWords = selectedWords.name.map(index => uploadDetectedWords[index].text);
+    const selectedName = nameWords.join(' ').trim();
+    
+    // Extract selected MRN
+    const mrnWords = selectedWords.mrn.map(index => uploadDetectedWords[index].text);
+    const selectedMRN = mrnWords.join('').trim();
+    
+    // Update global extracted data
+    extractedData.name = selectedName;
+    extractedData.mrn = selectedMRN;
+    
+    // Update display
+    document.getElementById('extractedName').textContent = selectedName || 'Not selected';
+    document.getElementById('extractedMRN').textContent = selectedMRN || 'Not selected';
+    document.getElementById('extractedInfo').style.display = 'block';
+    
+    // Show add button if we have any data
+    if (selectedName || selectedMRN) {
+        document.getElementById('addExtractedBtn').style.display = 'inline-block';
+    } else {
+        document.getElementById('addExtractedBtn').style.display = 'none';
+    }
+    
+    console.log('Selection updated:', { name: selectedName, mrn: selectedMRN });
+}
+
+
+
+
+
+
+
+		function showSelectionInstructions() {
+    // Show instructions overlay
+    let instructions = document.getElementById('selectionInstructions');
+    if (!instructions) {
+        instructions = document.createElement('div');
+        instructions.id = 'selectionInstructions';
+        instructions.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            z-index: 999;
+        `;
+        document.getElementById('capturedImage').appendChild(instructions);
+    }
+    
+    instructions.innerHTML = `
+        <strong>📋 Click text to select:</strong><br>
+        🟢 Green boxes = MRN numbers<br>
+        🔵 Blue boxes = Name words<br>
+        Click multiple name words to build full name
+    `;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (instructions) {
+            instructions.style.opacity = '0.5';
+        }
+    }, 5000);
+}
 
 		
 		
