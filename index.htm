@@ -14,8 +14,10 @@
         IS_EXTENSION = false;
     }
     </script>
-	<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    
+	 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+
+	
     <style>
         * {
             margin: 0;
@@ -7852,648 +7854,676 @@ function showFishboneInline() {
 
 
 
-		// ============ CAMERA AND OCR FUNCTIONS ============
-let cameraStream = null;
-let extractedData = { name: '', mrn: '' };
 
-function showCameraEntry() {
-    document.getElementById('entryTypeSelection').style.display = 'none';
-    document.getElementById('cameraEntrySection').style.display = 'block';
-    resetCameraUI();
-}
 
-function resetCameraUI() {
-    // Reset method selection
-    document.getElementById('inputMethodSelection').style.display = 'block';
-    document.getElementById('uploadSection').style.display = 'none';
-    document.getElementById('cameraSection').style.display = 'none';
-    
-    // Reset camera specific elements
-    document.getElementById('cameraPreview').style.display = 'none';
-    document.getElementById('startCameraBtn').style.display = 'inline-block';
-    document.getElementById('captureBtn').style.display = 'none';
-    
-    // Reset file input
-    document.getElementById('labelImageInput').value = '';
-    
-    // Reset common elements
-    resetImageState();
-}
+        let cameraStream = null;
+        let extractedData = { name: '', mrn: '' };
+        let currentImageCanvas = null;
+        let cropData = null;
+        let isCropping = false;
+        let cropStart = { x: 0, y: 0 };
 
-		
+        function showCameraEntry() {
+            document.getElementById('entryTypeSelection').style.display = 'none';
+            document.getElementById('cameraEntrySection').style.display = 'block';
+            resetCameraUI();
+        }
 
-async function startCamera() {
-    try {
-        const constraints = {
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'environment' // Use back camera on mobile
+        function resetCameraUI() {
+            // Reset method selection
+            document.getElementById('inputMethodSelection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('cameraSection').style.display = 'none';
+            
+            // Reset camera specific elements
+            document.getElementById('cameraPreview').style.display = 'none';
+            document.getElementById('startCameraBtn').style.display = 'inline-block';
+            document.getElementById('captureBtn').style.display = 'none';
+            
+            // Reset file input
+            document.getElementById('labelImageInput').value = '';
+            
+            // Reset common elements
+            resetImageState();
+        }
+
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        width: { ideal: 1920, min: 1280 },
+                        height: { ideal: 1080, min: 720 },
+                        facingMode: 'environment' // Use back camera on mobile
+                    }
+                };
+                
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = cameraStream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    video.style.display = 'block';
+                    document.getElementById('startCameraBtn').style.display = 'none';
+                    document.getElementById('captureBtn').style.display = 'inline-block';
+                };
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Error accessing camera. Please make sure you have granted camera permissions and are using HTTPS.');
             }
-        };
-        
-        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-        const video = document.getElementById('cameraPreview');
-        video.srcObject = cameraStream;
-        
-        video.onloadedmetadata = () => {
-            video.play();
-            video.style.display = 'block';
-            document.getElementById('startCameraBtn').style.display = 'none';
-            document.getElementById('captureBtn').style.display = 'inline-block';
-        };
-        
-    } catch (error) {
-        console.error('Error accessing camera:', error);
-        alert('Error accessing camera. Please make sure you have granted camera permissions and are using HTTPS.');
-    }
-}
-
-function stopCamera() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-}
-
-function captureImage() {
-    const video = document.getElementById('cameraPreview');
-    const canvas = document.getElementById('captureCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Draw the video frame to the canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    currentImageCanvas = canvas;
-    
-    // Convert to image and display
-    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    const previewImg = document.getElementById('previewImage');
-    previewImg.src = imageDataUrl;
-    
-    // Hide video, show captured image
-    video.style.display = 'none';
-    document.getElementById('capturedImage').style.display = 'block';
-    
-    // Update buttons
-    document.getElementById('captureBtn').style.display = 'none';
-    document.getElementById('processBtn').style.display = 'inline-block';
-    
-    // Stop camera
-    stopCamera();
-}
-
-
-		function processImage() {
-    // This function is now just a wrapper for backward compatibility
-    processCurrentImage();
-}
-
-
-		
-
-
-
-
-
-
-
-
-
-function parsePatientLabel(text) {
-    // DEBUGGING: Show exactly what OCR extracted
-    console.log('=== OCR DEBUGGING ===');
-    console.log('Raw OCR text length:', text.length);
-    console.log('Raw OCR text:', JSON.stringify(text)); // This will show all characters including newlines
-    console.log('Raw OCR text (readable):', text);
-    
-    // Split into lines and show each line
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    console.log('Number of lines:', lines.length);
-    lines.forEach((line, index) => {
-        console.log(`Line ${index}: "${line}"`);
-    });
-    
-    let name = '';
-    let mrn = '';
-    
-    // Try VERY simple patterns first
-    console.log('=== SEARCHING FOR MRN ===');
-    
-    // Look for any sequence of 5+ digits
-    const anyDigits = text.match(/\d{5,}/g);
-    console.log('All digit sequences 5+:', anyDigits);
-    
-    if (anyDigits && anyDigits.length > 0) {
-        mrn = anyDigits[0]; // Take first one
-        console.log('Using first digit sequence as MRN:', mrn);
-    }
-    
-    console.log('=== SEARCHING FOR NAME ===');
-    
-    // Look for any line with mostly letters
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        console.log(`Checking line ${i}: "${line}"`);
-        
-        // Count letters vs other characters
-        const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
-        const totalLength = line.length;
-        const letterRatio = letterCount / totalLength;
-        
-        console.log(`  Letters: ${letterCount}/${totalLength} = ${letterRatio.toFixed(2)}`);
-        
-        // If line is mostly letters and reasonable length
-        if (letterRatio > 0.6 && line.length > 2 && line.length < 50) {
-            name = line.trim();
-            console.log(`  -> POTENTIAL NAME: "${name}"`);
-            break;
         }
-    }
-    
-    // Store results
-    extractedData.name = name;
-    extractedData.mrn = mrn;
-    
-    console.log('=== FINAL RESULTS ===');
-    console.log('Extracted name:', name);
-    console.log('Extracted MRN:', mrn);
-    
-    // Display results
-    document.getElementById('extractedName').textContent = name || 'Not found';
-    document.getElementById('extractedMRN').textContent = mrn || 'Not found';
-    document.getElementById('extractedInfo').style.display = 'block';
-    
-    // Show add button if we have at least name or MRN
-    if (name || mrn) {
-        document.getElementById('addExtractedBtn').style.display = 'inline-block';
-    }
-    
-    // DEBUGGING: Also show an alert with the raw text so you can see it
-    alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
-}
 
-
-
-
-
-
-
-
-
-
-		
-
-function addExtractedPatient() {
-    if (!extractedData.name && !extractedData.mrn) {
-        alert('No valid data extracted. Please try again.');
-        return;
-    }
-    
-    // Create new patient object
-    const newPatient = {};
-    MASTER_HEADERS.forEach(header => {
-        newPatient[header] = '';
-    });
-    
-    newPatient.Type = 'Patient';
-    newPatient.Name = extractedData.name || '';
-    newPatient.MRN = extractedData.mrn || '';
-    newPatient.RM = 'TBD'; // Default room
-    
-    // Add to patient list
-    patientData.push(newPatient);
-    displayRows();
-    saveToLocalStorage();
-    closeAddEntryModal();
-    updateCensus();
-    
-    const addedInfo = [];
-    if (extractedData.name) addedInfo.push(`Name: ${extractedData.name}`);
-    if (extractedData.mrn) addedInfo.push(`MRN: ${extractedData.mrn}`);
-    
-    alert(`Patient added successfully!\n\n${addedInfo.join('\n')}`);
-}
-
-		
-
-
-
-
-
-
-
-
-
-// ============ ENHANCED CAMERA AND CROPPING FUNCTIONS ============
-let currentImageCanvas = null;
-let cropData = null;
-let isCropping = false;
-let cropStart = { x: 0, y: 0 };
-
-function resetImageState() {
-    document.getElementById('capturedImage').style.display = 'none';
-    document.getElementById('cropInterface').style.display = 'none';
-    document.getElementById('ocrProgress').style.display = 'none';
-    document.getElementById('extractedInfo').style.display = 'none';
-    document.getElementById('processBtn').style.display = 'none';
-    document.getElementById('addExtractedBtn').style.display = 'none';
-    
-    currentImageCanvas = null;
-    cropData = null;
-    extractedData = { name: '', mrn: '' };
-}
-
-function displayUploadedImage(imageSrc) {
-    const previewImg = document.getElementById('previewImage');
-    
-    previewImg.onload = function() {
-        // Show the preview
-        document.getElementById('capturedImage').style.display = 'block';
-        document.getElementById('processBtn').style.display = 'inline-block';
-        
-        // Create a canvas from the image for processing
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = previewImg.naturalWidth;
-        canvas.height = previewImg.naturalHeight;
-        ctx.drawImage(previewImg, 0, 0);
-        currentImageCanvas = canvas;
-        
-        // Setup cropping interface
-        setupCroppingInterface(previewImg);
-    };
-    
-    previewImg.src = imageSrc;
-}
-
-function captureImage() {
-    const video = document.getElementById('cameraPreview');
-    const canvas = document.getElementById('captureCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Draw the video frame to the canvas
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to image and display
-    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    const previewImg = document.getElementById('previewImage');
-    previewImg.src = imageDataUrl;
-    
-    // Hide video, show captured image
-    video.style.display = 'none';
-    document.getElementById('capturedImage').style.display = 'block';
-    
-    // Update buttons
-    document.getElementById('captureBtn').style.display = 'none';
-    
-    // Stop camera
-    stopCamera();
-    
-    // Setup cropping interface
-    previewImg.onload = function() {
-        setupCroppingInterface(previewImg);
-    };
-}
-
-function setupCroppingInterface(imgElement) {
-    const cropCanvas = document.getElementById('cropCanvas');
-    const ctx = cropCanvas.getContext('2d');
-    
-    // Calculate display size (max 400px width)
-    const maxWidth = 400;
-    let displayWidth = imgElement.naturalWidth;
-    let displayHeight = imgElement.naturalHeight;
-    
-    if (displayWidth > maxWidth) {
-        displayHeight = (displayHeight * maxWidth) / displayWidth;
-        displayWidth = maxWidth;
-    }
-    
-    cropCanvas.width = displayWidth;
-    cropCanvas.height = displayHeight;
-    cropCanvas.style.width = displayWidth + 'px';
-    cropCanvas.style.height = displayHeight + 'px';
-    
-    // Draw image to crop canvas
-    ctx.drawImage(imgElement, 0, 0, displayWidth, displayHeight);
-    
-    // Store original image data
-    currentImageCanvas = cropCanvas;
-    
-    // Show crop interface
-    document.getElementById('cropInterface').style.display = 'block';
-    
-    // Add instruction
-    if (!document.querySelector('.crop-instructions')) {
-        const instructions = document.createElement('div');
-        instructions.className = 'crop-instructions';
-        instructions.textContent = 'Click and drag to select area, or click "Process Selected Area" to process entire image';
-        document.getElementById('cropInterface').insertBefore(instructions, cropCanvas.parentNode);
-    }
-    
-    // Setup cropping interaction
-    setupCropInteraction(cropCanvas);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		function setupCropInteraction(canvas) {
-    const selection = document.getElementById('cropSelection');
-    const container = canvas.parentNode;
-    
-    let isActive = false;
-    let startX, startY;
-    
-    // Prevent default touch behavior
-    canvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-    });
-    
-    canvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-    });
-    
-    canvas.addEventListener('touchend', function(e) {
-        e.preventDefault();
-    });
-    
-    // Helper function to get coordinates from mouse or touch event
-    function getEventCoords(e) {
-        const rect = canvas.getBoundingClientRect();
-        let clientX, clientY;
-        
-        if (e.touches && e.touches.length > 0) {
-            // Touch event
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            // Mouse event
-            clientX = e.clientX;
-            clientY = e.clientY;
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
         }
-        
-        return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
-        };
-    }
-    
-    // Start selection (mouse or touch)
-    function startSelection(e) {
-        e.preventDefault();
-        isActive = true;
-        const coords = getEventCoords(e);
-        startX = coords.x;
-        startY = coords.y;
-        
-        selection.style.left = startX + 'px';
-        selection.style.top = startY + 'px';
-        selection.style.width = '0px';
-        selection.style.height = '0px';
-        selection.style.display = 'block';
-        
-        cropStart = { x: startX, y: startY };
-        console.log('Selection started at:', startX, startY);
-    }
-    
-    // Update selection (mouse or touch)
-    function updateSelection(e) {
-        if (!isActive) return;
-        e.preventDefault();
-        
-        const coords = getEventCoords(e);
-        const currentX = coords.x;
-        const currentY = coords.y;
-        
-        const width = Math.abs(currentX - startX);
-        const height = Math.abs(currentY - startY);
-        const left = Math.min(currentX, startX);
-        const top = Math.min(currentY, startY);
-        
-        selection.style.left = left + 'px';
-        selection.style.top = top + 'px';
-        selection.style.width = width + 'px';
-        selection.style.height = height + 'px';
-    }
-    
-    // End selection (mouse or touch)
-    function endSelection(e) {
-        if (!isActive) return;
-        e.preventDefault();
-        
-        isActive = false;
-        const coords = getEventCoords(e.changedTouches ? e.changedTouches[0] : e);
-        const endX = coords.x;
-        const endY = coords.y;
-        
-        // Store crop data
-        cropData = {
-            x: Math.min(startX, endX),
-            y: Math.min(startY, endY),
-            width: Math.abs(endX - startX),
-            height: Math.abs(endY - startY)
-        };
-        
-        // Only process if there's a meaningful selection (at least 20x20 pixels)
-        if (cropData.width > 20 && cropData.height > 20) {
-            console.log('Crop area selected:', cropData);
-        } else {
-            console.log('Selection too small, will process entire image');
+
+        function captureImage() {
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.getElementById('captureCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match video (use higher resolution)
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw the video frame to the canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to image and display
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9); // Higher quality
+            const previewImg = document.getElementById('previewImage');
+            previewImg.src = imageDataUrl;
+            
+            // Hide video, show captured image
+            video.style.display = 'none';
+            document.getElementById('capturedImage').style.display = 'block';
+            
+            // Update buttons
+            document.getElementById('captureBtn').style.display = 'none';
+            
+            // Stop camera
+            stopCamera();
+            
+            // Setup cropping interface
+            previewImg.onload = function() {
+                setupCroppingInterface(previewImg);
+            };
         }
-    }
-    
-    // Mouse events
-    canvas.addEventListener('mousedown', startSelection);
-    canvas.addEventListener('mousemove', updateSelection);
-    canvas.addEventListener('mouseup', endSelection);
-    
-    // Touch events for mobile
-    canvas.addEventListener('touchstart', function(e) {
-        startSelection(e);
-    });
-    
-    canvas.addEventListener('touchmove', function(e) {
-        updateSelection(e);
-    });
-    
-    canvas.addEventListener('touchend', function(e) {
-        endSelection(e);
-    });
-}
 
+        function resetImageState() {
+            document.getElementById('capturedImage').style.display = 'none';
+            document.getElementById('cropInterface').style.display = 'none';
+            document.getElementById('ocrProgress').style.display = 'none';
+            document.getElementById('extractedInfo').style.display = 'none';
+            document.getElementById('processBtn').style.display = 'none';
+            document.getElementById('addExtractedBtn').style.display = 'none';
+            
+            currentImageCanvas = null;
+            cropData = null;
+            extractedData = { name: '', mrn: '' };
+        }
 
+        function displayUploadedImage(imageSrc) {
+            const previewImg = document.getElementById('previewImage');
+            
+            previewImg.onload = function() {
+                // Show the preview
+                document.getElementById('capturedImage').style.display = 'block';
+                document.getElementById('processBtn').style.display = 'inline-block';
+                
+                // Create a canvas from the image for processing
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = previewImg.naturalWidth;
+                canvas.height = previewImg.naturalHeight;
+                ctx.drawImage(previewImg, 0, 0);
+                currentImageCanvas = canvas;
+                
+                // Setup cropping interface
+                setupCroppingInterface(previewImg);
+            };
+            
+            previewImg.src = imageSrc;
+        }
 
+        function setupCroppingInterface(imgElement) {
+            const cropCanvas = document.getElementById('cropCanvas');
+            const ctx = cropCanvas.getContext('2d');
+            
+            // Calculate display size (max 400px width)
+            const maxWidth = 400;
+            let displayWidth = imgElement.naturalWidth;
+            let displayHeight = imgElement.naturalHeight;
+            
+            if (displayWidth > maxWidth) {
+                displayHeight = (displayHeight * maxWidth) / displayWidth;
+                displayWidth = maxWidth;
+            }
+            
+            cropCanvas.width = displayWidth;
+            cropCanvas.height = displayHeight;
+            cropCanvas.style.width = displayWidth + 'px';
+            cropCanvas.style.height = displayHeight + 'px';
+            
+            // Draw image to crop canvas
+            ctx.drawImage(imgElement, 0, 0, displayWidth, displayHeight);
+            
+            // Store original image data
+            currentImageCanvas = cropCanvas;
+            
+            // Show crop interface
+            document.getElementById('cropInterface').style.display = 'block';
+            
+            // Add instruction
+            if (!document.querySelector('.crop-instructions')) {
+                const instructions = document.createElement('div');
+                instructions.className = 'crop-instructions';
+                instructions.textContent = 'Click and drag to select area, or click "Process Selected Area" to process entire image';
+                document.getElementById('cropInterface').insertBefore(instructions, cropCanvas.parentNode);
+            }
+            
+            // Setup cropping interaction
+            setupCropInteraction(cropCanvas);
+        }
 
-
-
-
-
-
-
-		
-
-function resetCrop() {
-    const selection = document.getElementById('cropSelection');
-    selection.style.display = 'none';
-    cropData = null;
-}
-
-function cropAndProcess() {
-    if (!currentImageCanvas) {
-        alert('No image available to process.');
-        return;
-    }
-    
-    let processCanvas;
-    
-    if (cropData && cropData.width > 20 && cropData.height > 20) {
-        // Create cropped canvas
-        processCanvas = document.createElement('canvas');
-        const ctx = processCanvas.getContext('2d');
-        
-        // Calculate scale factor between display and actual canvas size
-        const scaleX = currentImageCanvas.width / currentImageCanvas.offsetWidth;
-        const scaleY = currentImageCanvas.height / currentImageCanvas.offsetHeight;
-        
-        // Adjust crop coordinates for actual canvas size
-        const actualCropData = {
-            x: cropData.x * scaleX,
-            y: cropData.y * scaleY,
-            width: cropData.width * scaleX,
-            height: cropData.height * scaleY
-        };
-        
-        processCanvas.width = actualCropData.width;
-        processCanvas.height = actualCropData.height;
-        
-        // Draw cropped portion
-        ctx.drawImage(
-            currentImageCanvas,
-            actualCropData.x, actualCropData.y, actualCropData.width, actualCropData.height,
-            0, 0, actualCropData.width, actualCropData.height
-        );
-        
-        console.log('Processing cropped area:', actualCropData);
-    } else {
-        // Process entire image
-        processCanvas = currentImageCanvas;
-        console.log('Processing entire image');
-    }
-    
-    processImageFromCanvas(processCanvas);
-}
-
-// Keep the existing processCurrentImage function for backward compatibility
-function processCurrentImage() {
-    cropAndProcess();
-}
-
-
-
-
-		function selectUploadMethod() {
-    document.getElementById('uploadMethodBtn').style.background = 'var(--primary)';
-    document.getElementById('cameraMethodBtn').style.background = '';
-    document.getElementById('uploadSection').style.display = 'block';
-    document.getElementById('cameraSection').style.display = 'none';
-}
-
-function selectCameraMethod() {
-    document.getElementById('cameraMethodBtn').style.background = 'var(--primary)';
-    document.getElementById('uploadMethodBtn').style.background = '';
-    document.getElementById('cameraSection').style.display = 'block';
-    document.getElementById('uploadSection').style.display = 'none';
-}
-
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            displayUploadedImage(e.target.result);
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-
-
-
-
-
-
-
-		
-function processImageFromCanvas(canvas) {
-    // Show progress
-    document.getElementById('ocrProgress').style.display = 'block';
-    document.getElementById('ocrProgressPercent').textContent = '0%';
-    
-    // Preprocess the image
-    const processedCanvas = document.createElement('canvas');
-    processedCanvas.width = canvas.width;
-    processedCanvas.height = canvas.height;
-    const ctx = processedCanvas.getContext('2d');
-    ctx.drawImage(canvas, 0, 0);
-    
-    // Apply preprocessing
-    preprocessImage(processedCanvas);
-    
-    // Use uncompressed PNG for better OCR
-    const imageData = processedCanvas.toDataURL('image/png');
-    
-    Tesseract.recognize(
-        imageData,
-        'eng',
-        {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    const percent = Math.round(m.progress * 100);
-                    document.getElementById('ocrProgressPercent').textContent = `${percent}%`;
+        function setupCropInteraction(canvas) {
+            const selection = document.getElementById('cropSelection');
+            
+            let isActive = false;
+            let startX, startY;
+            
+            // Prevent default touch behavior
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+            });
+            
+            // Helper function to get coordinates from mouse or touch event
+            function getEventCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX, clientY;
+                
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
                 }
-            },
-            tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-            tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-,.:/ ',
+                
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+            
+            // Start selection (mouse or touch)
+            function startSelection(e) {
+                e.preventDefault();
+                isActive = true;
+                const coords = getEventCoords(e);
+                startX = coords.x;
+                startY = coords.y;
+                
+                selection.style.left = startX + 'px';
+                selection.style.top = startY + 'px';
+                selection.style.width = '0px';
+                selection.style.height = '0px';
+                selection.style.display = 'block';
+                
+                cropStart = { x: startX, y: startY };
+            }
+            
+            // Update selection (mouse or touch)
+            function updateSelection(e) {
+                if (!isActive) return;
+                e.preventDefault();
+                
+                const coords = getEventCoords(e);
+                const currentX = coords.x;
+                const currentY = coords.y;
+                
+                const width = Math.abs(currentX - startX);
+                const height = Math.abs(currentY - startY);
+                const left = Math.min(currentX, startX);
+                const top = Math.min(currentY, startY);
+                
+                selection.style.left = left + 'px';
+                selection.style.top = top + 'px';
+                selection.style.width = width + 'px';
+                selection.style.height = height + 'px';
+            }
+            
+            // End selection (mouse or touch)
+            function endSelection(e) {
+                if (!isActive) return;
+                e.preventDefault();
+                
+                isActive = false;
+                const coords = getEventCoords(e.changedTouches ? e.changedTouches[0] : e);
+                const endX = coords.x;
+                const endY = coords.y;
+                
+                // Store crop data
+                cropData = {
+                    x: Math.min(startX, endX),
+                    y: Math.min(startY, endY),
+                    width: Math.abs(endX - startX),
+                    height: Math.abs(endY - startY)
+                };
+            }
+            
+            // Mouse events
+            canvas.addEventListener('mousedown', startSelection);
+            canvas.addEventListener('mousemove', updateSelection);
+            canvas.addEventListener('mouseup', endSelection);
+            
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', startSelection);
+            canvas.addEventListener('touchmove', updateSelection);
+            canvas.addEventListener('touchend', endSelection);
         }
-    ).then(({ data: { text, confidence } }) => {
-        console.log('OCR completed:', text, 'Confidence:', confidence);
-        
-        document.getElementById('ocrProgress').style.display = 'none';
-        
-        if (confidence < 30) {
-            alert('Low confidence OCR result. Try better lighting or a clearer image.');
+
+        function resetCrop() {
+            const selection = document.getElementById('cropSelection');
+            selection.style.display = 'none';
+            cropData = null;
         }
-        
-        parsePatientLabel(text);
-        
-    }).catch(error => {
-        console.error('OCR Error:', error);
-        document.getElementById('ocrProgress').style.display = 'none';
-        alert('Error processing image: ' + error.message);
-    });
-}
 
+        function cropAndProcess() {
+            if (!currentImageCanvas) {
+                alert('No image available to process.');
+                return;
+            }
+            
+            let processCanvas;
+            
+            if (cropData && cropData.width > 20 && cropData.height > 20) {
+                // Create cropped canvas
+                processCanvas = document.createElement('canvas');
+                const ctx = processCanvas.getContext('2d');
+                
+                // Calculate scale factor between display and actual canvas size
+                const scaleX = currentImageCanvas.width / currentImageCanvas.offsetWidth;
+                const scaleY = currentImageCanvas.height / currentImageCanvas.offsetHeight;
+                
+                // Adjust crop coordinates for actual canvas size
+                const actualCropData = {
+                    x: cropData.x * scaleX,
+                    y: cropData.y * scaleY,
+                    width: cropData.width * scaleX,
+                    height: cropData.height * scaleY
+                };
+                
+                processCanvas.width = actualCropData.width;
+                processCanvas.height = actualCropData.height;
+                
+                // Draw cropped portion
+                ctx.drawImage(
+                    currentImageCanvas,
+                    actualCropData.x, actualCropData.y, actualCropData.width, actualCropData.height,
+                    0, 0, actualCropData.width, actualCropData.height
+                );
+                
+                console.log('Processing cropped area:', actualCropData);
+            } else {
+                // Process entire image
+                processCanvas = currentImageCanvas;
+                console.log('Processing entire image');
+            }
+            
+            processImageFromCanvas(processCanvas);
+        }
 
+        function selectUploadMethod() {
+            document.getElementById('uploadMethodBtn').style.background = 'var(--primary)';
+            document.getElementById('cameraMethodBtn').style.background = '';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('cameraSection').style.display = 'none';
+        }
+
+        function selectCameraMethod() {
+            document.getElementById('cameraMethodBtn').style.background = 'var(--primary)';
+            document.getElementById('uploadMethodBtn').style.background = '';
+            document.getElementById('cameraSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    displayUploadedImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Enhanced preprocessing function
+        function preprocessImage(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Convert to grayscale with better weights
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                data[i] = data[i + 1] = data[i + 2] = gray;
+            }
+            
+            // Apply adaptive thresholding
+            const threshold = calculateAdaptiveThreshold(data, canvas.width, canvas.height);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const value = data[i] > threshold ? 255 : 0;
+                data[i] = data[i + 1] = data[i + 2] = value;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Scale up image for better OCR
+            const scaledCanvas = document.createElement('canvas');
+            const minDimension = Math.min(canvas.width, canvas.height);
+            const scaleFactor = minDimension < 300 ? Math.max(2, 400 / minDimension) : 1.5;
+            
+            scaledCanvas.width = canvas.width * scaleFactor;
+            scaledCanvas.height = canvas.height * scaleFactor;
+            
+            const scaledCtx = scaledCanvas.getContext('2d');
+            scaledCtx.imageSmoothingEnabled = false;
+            scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+            
+            return scaledCanvas;
+        }
+
+        function calculateAdaptiveThreshold(data, width, height) {
+            let sum = 0;
+            let count = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                sum += data[i];
+                count++;
+            }
+            
+            const mean = sum / count;
+            
+            // Calculate standard deviation
+            let variance = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                variance += Math.pow(data[i] - mean, 2);
+            }
+            const stdDev = Math.sqrt(variance / count);
+            
+            // Dynamic threshold based on image characteristics
+            return mean - (stdDev * 0.3);
+        }
+
+        function processImageFromCanvas(canvas) {
+            document.getElementById('ocrProgress').style.display = 'block';
+            document.getElementById('ocrProgressPercent').textContent = '0%';
+            
+            console.log('Processing image - Original size:', canvas.width, 'x', canvas.height);
+            
+            // Enhanced preprocessing
+            const processedCanvas = preprocessImage(canvas);
+            console.log('Processed image size:', processedCanvas.width, 'x', processedCanvas.height);
+            
+            const imageData = processedCanvas.toDataURL('image/png');
+            
+            // Enhanced Tesseract configuration
+            Tesseract.recognize(
+                imageData,
+                'eng',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const percent = Math.round(m.progress * 100);
+                            document.getElementById('ocrProgressPercent').textContent = `${percent}%`;
+                        }
+                    },
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_COLUMN,
+                    tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-,.:/ ()[]#',
+                    preserve_interword_spaces: '1',
+                    tessedit_do_invert: '0',
+                    tessedit_create_hocr: '0',
+                }
+            ).then(({ data: { text, confidence } }) => {
+                console.log('OCR completed with confidence:', confidence);
+                document.getElementById('ocrProgress').style.display = 'none';
+                
+                if (confidence < 30) {
+                    alert('Low confidence OCR result (' + Math.round(confidence) + '%). Try better lighting or a clearer image.');
+                }
+                
+                parsePatientLabel(text, confidence);
+                
+            }).catch(error => {
+                console.error('OCR Error:', error);
+                document.getElementById('ocrProgress').style.display = 'none';
+                alert('Error processing image: ' + error.message);
+            });
+        }
+
+        function parsePatientLabel(text, confidence = 0) {
+            console.log('=== ENHANCED OCR PARSING ===');
+            console.log('Raw text:', text);
+            console.log('Confidence:', confidence);
+            
+            let name = '';
+            let mrn = '';
+            
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            console.log('Lines found:', lines);
+            
+            // Enhanced MRN detection patterns
+            const mrnPatterns = [
+                /(?:MRN?|MR|MEDICAL\s*RECORD|PATIENT\s*ID)[\s#:]*(\d{5,10})/i,
+                /\b(\d{7,9})\b/g, // 7-9 digits standalone
+                /ID[\s#:]*(\d{5,10})/i,
+                /(?:^|\s)(\d{6,8})(?:\s|$)/g, // 6-8 digits with boundaries
+                /\b(\d{5,6})\b/g // 5-6 digits
+            ];
+            
+            console.log('=== SEARCHING FOR MRN ===');
+            const foundMRNs = new Set();
+            
+            for (const pattern of mrnPatterns) {
+                let match;
+                const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+                
+                while ((match = globalPattern.exec(text)) !== null) {
+                    const candidate = match[1];
+                    if (candidate && candidate.length >= 5 && candidate.length <= 10) {
+                        foundMRNs.add(candidate);
+                        console.log(`Found MRN candidate:`, candidate);
+                    }
+                }
+            }
+            
+            // Select best MRN (prefer longer, more common lengths)
+            if (foundMRNs.size > 0) {
+                const mrnArray = Array.from(foundMRNs).sort((a, b) => {
+                    // Prefer 7-8 digit MRNs, then by length
+                    const aLen = a.length;
+                    const bLen = b.length;
+                    
+                    if ((aLen === 7 || aLen === 8) && !(bLen === 7 || bLen === 8)) return -1;
+                    if ((bLen === 7 || bLen === 8) && !(aLen === 7 || aLen === 8)) return 1;
+                    
+                    return bLen - aLen; // Longer first
+                });
+                mrn = mrnArray[0];
+                console.log('Selected MRN:', mrn);
+            }
+            
+            // Enhanced name detection
+            console.log('=== SEARCHING FOR NAME ===');
+            
+            // Strategy 1: Look for explicit name patterns
+            const namePatterns = [
+                /(?:NAME|PATIENT)[\s:]+([A-Za-z\s,.-]+?)(?:\s|$|\n)/i,
+                /^([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*,\s*[A-Z][a-z]+)/m, // Last, First
+                /^([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]*)*)/m // First Last
+            ];
+            
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    let candidate = match[1].trim();
+                    // Clean up the candidate
+                    candidate = candidate.replace(/[^\w\s,.-]/g, '').trim();
+                    if (candidate.length >= 3 && candidate.length <= 50) {
+                        name = candidate;
+                        console.log(`Found name with pattern:`, name);
+                        break;
+                    }
+                }
+            }
+            
+            // Strategy 2: Line-by-line analysis
+            if (!name) {
+                console.log('No pattern match, analyzing lines...');
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    
+                    // Skip obviously wrong lines
+                    if (line.length < 3 || line.length > 50) continue;
+                    if (/^\d+$/.test(line)) continue; // Skip pure numbers
+                    if (foundMRNs.has(line)) continue; // Skip if it's the MRN
+                    
+                    // Check for name-like characteristics
+                    const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
+                    const digitCount = (line.match(/\d/g) || []).length;
+                    const letterRatio = letterCount / line.length;
+                    
+                    console.log(`Line ${i}: "${line}" - Letters: ${letterRatio.toFixed(2)}, Digits: ${digitCount}`);
+                    
+                    // Good name candidates
+                    if (letterRatio > 0.7 && digitCount <= 2) {
+                        // Additional validation
+                        const hasValidStructure = /^[A-Za-z][A-Za-z\s,.-]*[A-Za-z]$/i.test(line);
+                        const hasReasonableWords = line.split(/\s+/).every(word => word.length <= 15);
+                        
+                        if (hasValidStructure && hasReasonableWords) {
+                            name = line.trim();
+                            console.log(`Selected name from line analysis:`, name);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Clean and validate extracted data
+            if (name) {
+                // Fix common OCR errors
+                name = name.replace(/\b0\b/g, 'O')    // 0 -> O
+                          .replace(/\b1\b/g, 'I')     // 1 -> I  
+                          .replace(/\b5\b/g, 'S')     // 5 -> S sometimes
+                          .replace(/[^\w\s,.-]/g, '') // Remove special chars
+                          .trim();
+                
+                // Proper capitalization
+                name = name.split(/\s+/).map(word => {
+                    if (word.length > 0) {
+                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    }
+                    return word;
+                }).join(' ');
+            }
+            
+            if (mrn) {
+                // Clean MRN
+                mrn = mrn.replace(/\D/g, '');
+                if (mrn.length < 5 || mrn.length > 10) {
+                    console.log('MRN length invalid, clearing:', mrn);
+                    mrn = '';
+                }
+            }
+            
+            // Store results
+            extractedData.name = name;
+            extractedData.mrn = mrn;
+            
+            console.log('=== FINAL RESULTS ===');
+            console.log('Name:', name || 'Not found');
+            console.log('MRN:', mrn || 'Not found');
+            
+            // Display results with confidence indicator
+            const nameDisplay = name || 'Not found';
+            const mrnDisplay = mrn || 'Not found';
+            const confidenceText = confidence > 0 ? ` (${Math.round(confidence)}% confidence)` : '';
+            
+            document.getElementById('extractedName').textContent = nameDisplay;
+            document.getElementById('extractedMRN').textContent = mrnDisplay;
+            document.getElementById('extractedInfo').style.display = 'block';
+            
+            // Show add button if we have data
+            if (name || mrn) {
+                document.getElementById('addExtractedBtn').style.display = 'inline-block';
+            }
+            
+            // Provide helpful feedback
+            if (!name && !mrn) {
+                alert(`No patient information detected${confidenceText}.\n\nTips for better results:\n• Ensure good lighting\n• Hold camera steady\n• Get close to the label\n• Try cropping to just the text area`);
+            } else if (!name || !mrn) {
+                const missing = !name ? 'name' : 'MRN';
+                console.log(`Note: Could not detect ${missing}${confidenceText}`);
+            }
+        }
+
+        function addExtractedPatient() {
+            if (!extractedData.name && !extractedData.mrn) {
+                alert('No valid data extracted. Please try again.');
+                return;
+            }
+            
+            // Create new patient object
+            const newPatient = {};
+            MASTER_HEADERS.forEach(header => {
+                newPatient[header] = '';
+            });
+            
+            newPatient.Type = 'Patient';
+            newPatient.Name = extractedData.name || '';
+            newPatient.MRN = extractedData.mrn || '';
+            newPatient.RM = 'TBD'; // Default room
+            
+            // Add to patient list
+            patientData.push(newPatient);
+            displayRows();
+            saveToLocalStorage();
+            closeAddEntryModal();
+            updateCensus();
+            
+            const addedInfo = [];
+            if (extractedData.name) addedInfo.push(`Name: ${extractedData.name}`);
+            if (extractedData.mrn) addedInfo.push(`MRN: ${extractedData.mrn}`);
+            
+            alert(`Patient added successfully!\n\n${addedInfo.join('\n')}`);
+        }
+
+        // Backward compatibility functions
+        function processImage() {
+            processCurrentImage();
+        }
+
+        function processCurrentImage() {
+            cropAndProcess();
+        }
 
 
 
@@ -8503,29 +8533,6 @@ function processImageFromCanvas(canvas) {
 
 
 		
-
-
-
-
-		function preprocessImage(canvas) {
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    
-    // Convert to grayscale and increase contrast
-    for (let i = 0; i < data.length; i += 4) {
-        const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-        // Increase contrast
-        const contrast = 1.5;
-        const enhanced = Math.min(255, Math.max(0, (gray - 128) * contrast + 128));
-        data[i] = data[i + 1] = data[i + 2] = enhanced;
-    }
-    
-    ctx.putImageData(imageData, 0, 0);
-    return canvas;
-}
-
-
 		
 		
 		
