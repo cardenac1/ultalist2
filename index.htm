@@ -7496,6 +7496,7 @@ function pasteFromClipboard() {
 
 		// 2. ADD this new function (place it near the other modal functions, around line 4500):
 
+// Fix 1: Update showFishbonePopup function to preserve spacing
 function showFishbonePopup() {
     if (currentPatientIndex === -1) return;
     
@@ -7516,7 +7517,7 @@ function showFishbonePopup() {
         <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
             <h2 style="color: var(--primary); margin-bottom: 1rem;">VIOLIN Fishbone Diagram</h2>
-            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto;">${formattedContent}</div>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto; word-break: keep-all; overflow-wrap: normal;">${formattedContent}</div>
             ${missingValues ? `<div style="background: var(--card-bg); margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"><div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>Missing Values:</strong></div><div style="font-style: italic; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">${missingValues}</div></div>` : ''}
             <div style="margin-top: 1rem; text-align: center;">
                 <button onclick="copyFishboneToClipboard()">📋 Copy to Clipboard</button>
@@ -7529,6 +7530,12 @@ function showFishbonePopup() {
     // Store fishbone content for copy function
     window.currentFishboneContent = violinText;
 }
+
+
+
+
+
+		
 
 		// 3. ADD this function to generate missing values messages:
 
@@ -7697,6 +7704,7 @@ function copyFishboneToClipboard() {
 
 
 
+// Fix 2: Update toggleFishboneDisplay function to preserve spacing
 function toggleFishboneDisplay() {
     const fishboneDisplay = document.getElementById('fishboneDisplay');
     const fishboneContent = document.getElementById('fishboneContent');
@@ -7710,8 +7718,16 @@ function toggleFishboneDisplay() {
         // Show fishbone - generate it if needed
         const patient = patientData[currentPatientIndex];
         if (patient && patient.VIOLIN) {
-            // Format content with red styling for abnormal values
+            // Format content with red styling for abnormal values, preserving spacing
             const formattedContent = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+            
+            // Clear existing content and set with proper spacing
+            fishboneContent.innerHTML = '';
+            fishboneContent.style.fontFamily = "'Courier New', monospace";
+            fishboneContent.style.whiteSpace = 'pre-wrap';
+            fishboneContent.style.wordBreak = 'keep-all';
+            fishboneContent.style.overflowWrap = 'normal';
+            fishboneContent.style.lineHeight = '1.4';
             fishboneContent.innerHTML = formattedContent;
             
             // Add missing values if available
@@ -7724,6 +7740,8 @@ function toggleFishboneDisplay() {
                     missingDiv.style.background = 'rgba(100, 100, 100, 0.1)';
                     missingDiv.style.borderRadius = '0.25rem';
                     missingDiv.style.fontSize = '0.85rem';
+                    missingDiv.style.fontFamily = 'inherit'; // Use normal font for missing values
+                    missingDiv.style.whiteSpace = 'normal'; // Allow normal wrapping for missing values
                     missingDiv.innerHTML = `<strong style="color: var(--text-secondary);">Missing Values:</strong><br><span style="font-style: italic; color: var(--text-secondary);">${missingValues}</span>`;
                     fishboneContent.appendChild(missingDiv);
                 }
@@ -7743,6 +7761,11 @@ function toggleFishboneDisplay() {
         fishboneDisplay.classList.add('hidden');
     }
 }
+
+
+
+
+		
 
 function showFishboneInline() {
     // Add a delay to ensure DOM elements are ready
@@ -7874,10 +7897,10 @@ function parsePatientLabel(text) {
     // DEBUGGING: Show exactly what OCR extracted
     console.log('=== OCR DEBUGGING ===');
     console.log('Raw OCR text length:', text.length);
-    console.log('Raw OCR text:', JSON.stringify(text)); // This will show all characters including newlines
+    console.log('Raw OCR text:', JSON.stringify(text));
     console.log('Raw OCR text (readable):', text);
     
-    // Split into lines and show each line
+    // Split into lines and clean them
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     console.log('Number of lines:', lines.length);
     lines.forEach((line, index) => {
@@ -7887,37 +7910,44 @@ function parsePatientLabel(text) {
     let name = '';
     let mrn = '';
     
-    // Try VERY simple patterns first
-    console.log('=== SEARCHING FOR MRN ===');
-    
-    // Look for any sequence of 5+ digits
-    const anyDigits = text.match(/\d{5,}/g);
-    console.log('All digit sequences 5+:', anyDigits);
-    
-    if (anyDigits && anyDigits.length > 0) {
-        mrn = anyDigits[0]; // Take first one
-        console.log('Using first digit sequence as MRN:', mrn);
+    // Extract NAME from first line
+    console.log('=== EXTRACTING NAME FROM FIRST LINE ===');
+    if (lines.length > 0) {
+        name = lines[0].trim();
+        console.log('Name extracted from first line:', name);
     }
     
-    console.log('=== SEARCHING FOR NAME ===');
+    // Extract MRN by looking for "MRN:" pattern
+    console.log('=== SEARCHING FOR MRN PATTERN ===');
     
-    // Look for any line with mostly letters
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        console.log(`Checking line ${i}: "${line}"`);
+    // Look for "MRN:" followed by digits (case insensitive)
+    const mrnMatch = text.match(/MRN:?\s*(\d+)/i);
+    if (mrnMatch) {
+        mrn = mrnMatch[1];
+        console.log('MRN found after "MRN:":', mrn);
+    } else {
+        // Fallback: look for common MRN patterns
+        const fallbackPatterns = [
+            /(?:medical\s+record|record\s+number|patient\s+id)\s*:?\s*(\d{5,})/i,
+            /(?:^|\s)(\d{7,9})(?:\s|$)/, // 7-9 digit numbers (common MRN length)
+        ];
         
-        // Count letters vs other characters
-        const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
-        const totalLength = line.length;
-        const letterRatio = letterCount / totalLength;
+        for (const pattern of fallbackPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                mrn = match[1];
+                console.log('MRN found with fallback pattern:', mrn);
+                break;
+            }
+        }
         
-        console.log(`  Letters: ${letterCount}/${totalLength} = ${letterRatio.toFixed(2)}`);
-        
-        // If line is mostly letters and reasonable length
-        if (letterRatio > 0.6 && line.length > 2 && line.length < 50) {
-            name = line.trim();
-            console.log(`  -> POTENTIAL NAME: "${name}"`);
-            break;
+        // Last resort: look for any 6+ digit number
+        if (!mrn) {
+            const anyDigits = text.match(/\d{6,}/g);
+            if (anyDigits && anyDigits.length > 0) {
+                mrn = anyDigits[0];
+                console.log('MRN found as first 6+ digit sequence:', mrn);
+            }
         }
     }
     
@@ -7940,9 +7970,10 @@ function parsePatientLabel(text) {
     }
     
     // DEBUGGING: Also show an alert with the raw text so you can see it
-    alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+    console.log('Showing OCR text preview...');
+    // Remove the alert since it's annoying for users
+    // alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
 }
-
 
 
 
