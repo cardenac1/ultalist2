@@ -7579,8 +7579,7 @@ function pasteFromClipboard() {
 		
 
 
-		// 2. ADD this new function (place it near the other modal functions, around line 4500):
-
+// Replace the showFishbonePopup function (around line 4600)
 function showFishbonePopup() {
     if (currentPatientIndex === -1) return;
     
@@ -7590,9 +7589,11 @@ function showFishbonePopup() {
     // Generate missing values messages
     const missingValues = generateMissingValuesMessages(labData);
     
+    // Convert asterisks to red HTML spans FIRST, then handle spacing
+    const withRedText = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+    
     // PRESERVE EXACT SPACING - Convert spaces to &nbsp; for HTML display
-    const preservedSpacing = violinText
-        .replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>') // Handle asterisks first
+    const preservedSpacing = withRedText
         .replace(/ /g, '&nbsp;') // Convert all spaces to non-breaking spaces
         .replace(/\n/g, '<br>'); // Convert newlines to HTML breaks
     
@@ -7617,7 +7618,6 @@ function showFishbonePopup() {
     // Store fishbone content for copy function
     window.currentFishboneContent = violinText;
 }
-
 
 
 
@@ -7790,6 +7790,7 @@ function copyFishboneToClipboard() {
 
 
 
+// Replace the toggleFishboneDisplay function (around line 4800)
 function toggleFishboneDisplay() {
     const fishboneDisplay = document.getElementById('fishboneDisplay');
     const fishboneContent = document.getElementById('fishboneContent');
@@ -7803,9 +7804,11 @@ function toggleFishboneDisplay() {
         // Show fishbone - generate it if needed
         const patient = patientData[currentPatientIndex];
         if (patient && patient.VIOLIN) {
+            // Convert asterisks to red HTML spans FIRST, then handle spacing
+            const withRedText = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+            
             // PRESERVE EXACT SPACING - Convert spaces to &nbsp; for HTML display
-            const preservedSpacing = patient.VIOLIN
-                .replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>') // Handle asterisks first
+            const preservedSpacing = withRedText
                 .replace(/ /g, '&nbsp;') // Convert all spaces to non-breaking spaces
                 .replace(/\n/g, '<br>'); // Convert newlines to HTML breaks
             
@@ -7848,7 +7851,6 @@ function toggleFishboneDisplay() {
         fishboneDisplay.classList.add('hidden');
     }
 }
-
 
 
 
