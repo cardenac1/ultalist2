@@ -1003,7 +1003,85 @@ textarea, input[type="text"] {
 }
 
 
+/* Add these CSS rules to your existing <style> section */
 
+/* Improved camera preview for mobile */
+#cameraPreview {
+    width: 100% !important;
+    max-width: 400px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    border: 2px solid var(--border);
+}
+
+/* Better canvas sizing for high-quality capture */
+#captureCanvas {
+    display: none; /* Hidden canvas for processing */
+}
+
+/* Improved preview image display */
+#previewImage {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    border: 2px solid var(--border);
+    object-fit: contain;
+}
+
+/* Better camera section layout */
+#cameraSection {
+    text-align: center;
+}
+
+/* Improve button spacing in camera section */
+#cameraSection button {
+    margin: 0.5rem 0.25rem;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+    #cameraPreview {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    #previewImage {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    /* Larger touch targets for mobile */
+    #cameraSection button,
+    #cropInterface button {
+        min-height: 48px;
+        padding: 0.8rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Better crop canvas sizing on mobile */
+    #cropCanvas {
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        touch-action: none;
+    }
+}
+
+/* Prevent zoom on double-tap for better UX */
+#cameraPreview,
+#previewImage,
+#cropCanvas {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
   
 
 
@@ -1480,8 +1558,15 @@ select,
     <!-- Camera section -->
     <div id="cameraSection" style="display: none;">
         <div style="text-align: center; margin: 1rem 0;">
-            <video id="cameraPreview" width="320" height="240" style="border: 2px solid var(--border); border-radius: 0.5rem; display: none;"></video>
-        </div>
+<video id="cameraPreview" 
+       width="400" 
+       height="300" 
+       playsinline 
+       webkit-playsinline 
+       muted 
+       autoplay
+       style="border: 2px solid var(--border); border-radius: 0.5rem; display: none; width: 100%; max-width: 400px; height: auto; object-fit: cover;">
+</video>        </div>
         <div style="text-align: center; margin: 1rem 0;">
             <button id="startCameraBtn" type="button" onclick="startCamera()">📷 Start Camera</button>
             <button id="captureBtn" type="button" onclick="captureImage()" style="display: none;">📸 Capture</button>
@@ -8411,6 +8496,213 @@ function processImageFromCanvas(canvas) {
 
 		
 
+
+
+
+
+		// Add this new function to initialize camera properly on all devices
+function initializeCameraInterface() {
+    const video = document.getElementById('cameraPreview');
+    const canvas = document.getElementById('captureCanvas');
+    
+    // Ensure canvas exists and is properly sized
+    if (!canvas) {
+        console.error('Capture canvas not found');
+        return;
+    }
+    
+    // Set up video element for iOS compatibility
+    setupVideoForIOS();
+    
+    // Add click handler for start camera button
+    const startBtn = document.getElementById('startCameraBtn');
+    if (startBtn) {
+        startBtn.onclick = function() {
+            console.log('Start camera clicked');
+            startCamera();
+        };
+    }
+    
+    // Add click handler for capture button
+    const captureBtn = document.getElementById('captureBtn');
+    if (captureBtn) {
+        captureBtn.onclick = function() {
+            console.log('Capture button clicked');
+            captureImage();
+        };
+    }
+    
+    console.log('Camera interface initialized');
+}
+
+// Enhanced setup function specifically for iOS video element
+function setupVideoForIOS() {
+    const video = document.getElementById('cameraPreview');
+    if (!video) {
+        console.error('Video element not found');
+        return;
+    }
+    
+    // iOS-specific attributes - these are crucial for iPhone compatibility
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('muted', 'true');
+    video.muted = true;
+    video.autoplay = true;
+    video.defaultMuted = true;
+    
+    // Prevent iOS from showing video controls
+    video.controls = false;
+    video.disablePictureInPicture = true;
+    
+    // Set video CSS for better mobile display
+    video.style.width = '100%';
+    video.style.height = 'auto';
+    video.style.maxWidth = '400px';
+    video.style.objectFit = 'cover';
+    
+    console.log('Video element configured for iOS');
+}
+
+// Enhanced camera start function with better iOS support
+async function startCamera() {
+    try {
+        console.log('Starting camera...');
+        
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Camera not supported in this browser');
+        }
+        
+        // Progressive constraint fallback for better compatibility
+        const constraintOptions = [
+            {
+                video: {
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 },
+                    facingMode: 'environment',
+                    focusMode: 'continuous',
+                    exposureMode: 'continuous',
+                    whiteBalanceMode: 'continuous'
+                }
+            },
+            {
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'environment'
+                }
+            },
+            {
+                video: {
+                    facingMode: 'environment'
+                }
+            },
+            {
+                video: true // Fallback to any camera
+            }
+        ];
+        
+        let stream = null;
+        
+        // Try each constraint set until one works
+        for (let i = 0; i < constraintOptions.length; i++) {
+            try {
+                console.log(`Trying camera constraint set ${i + 1}...`);
+                stream = await navigator.mediaDevices.getUserMedia(constraintOptions[i]);
+                console.log(`Camera started with constraint set ${i + 1}`);
+                break;
+            } catch (err) {
+                console.log(`Constraint set ${i + 1} failed:`, err.message);
+                if (i === constraintOptions.length - 1) {
+                    throw err; // If last option fails, throw the error
+                }
+            }
+        }
+        
+        if (!stream) {
+            throw new Error('Unable to start camera with any constraint set');
+        }
+        
+        cameraStream = stream;
+        const video = document.getElementById('cameraPreview');
+        video.srcObject = stream;
+        
+        // Get the actual video track settings
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+        console.log('Camera settings:', settings);
+        console.log(`Resolution: ${settings.width}x${settings.height}`);
+        
+        video.onloadedmetadata = async () => {
+            console.log(`Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
+            
+            try {
+                // For iOS Safari, we must handle the play promise
+                await video.play();
+                console.log('Video playing successfully');
+                
+                video.style.display = 'block';
+                document.getElementById('startCameraBtn').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'inline-block';
+                
+            } catch (playError) {
+                console.error('Video play failed:', playError);
+                alert('Failed to start video preview. Try tapping the start button again.');
+            }
+        };
+        
+        // Handle any video errors
+        video.onerror = (error) => {
+            console.error('Video error:', error);
+            alert('Video error occurred. Please try again.');
+        };
+        
+    } catch (error) {
+        console.error('Camera start error:', error);
+        
+        // Provide specific guidance for different error types
+        let errorMessage = 'Camera Error: ';
+        
+        switch (error.name) {
+            case 'NotAllowedError':
+                errorMessage += 'Camera permission denied. Please:\n1. Go to Settings > Safari > Camera\n2. Allow camera access\n3. Refresh this page and try again';
+                break;
+            case 'NotFoundError':
+                errorMessage += 'No camera found. Please make sure your device has a camera.';
+                break;
+            case 'NotSupportedError':
+                errorMessage += 'Camera not supported. Please use Safari or Chrome browser.';
+                break;
+            case 'NotReadableError':
+                errorMessage += 'Camera in use by another app. Please:\n1. Close other camera apps\n2. Try again';
+                break;
+            case 'AbortError':
+                errorMessage += 'Camera startup was interrupted. Please try again.';
+                break;
+            default:
+                errorMessage += `${error.message}\n\nTroubleshooting:\n1. Make sure you're using HTTPS\n2. Grant camera permission\n3. Try refreshing the page`;
+        }
+        
+        alert(errorMessage);
+    }
+}
+
+// Call this when the camera entry section is shown
+function showCameraEntry() {
+    document.getElementById('entryTypeSelection').style.display = 'none';
+    document.getElementById('cameraEntrySection').style.display = 'block';
+    resetCameraUI();
+    
+    // Initialize camera interface for iOS compatibility
+    setTimeout(() => {
+        initializeCameraInterface();
+    }, 100);
+}
+
+
+
+		
 		
 		
     </script>
