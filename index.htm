@@ -5706,7 +5706,7 @@ if (outputSummaryMatch) {
         }
         
         if (!hasIntakes) {
-            fishbone += `None found (fluids, infusions, blood products, oral) in last ${elapsedHoursDisplay}hr\n`;
+            fishbone += ``;
         }
         
         // OUTPUTS  
@@ -6727,8 +6727,8 @@ function extractDoseInfo(line) {
     const cc = patient.CC || 'No chief complaint';
     const ageGender = patient['A/G'] || 'Unknown age/gender';
     const pmh = patient.PMH || '';
-    const hpi = patient.HPI || 'No HPI documented';
-    const ros = patient.ROS || 'No ROS documented';
+    const hpi = patient.HPI || '';
+    const ros = patient.ROS || '';
     const violin = patient.VIOLIN || 'No labs/vitals documented';
     const pe = patient.PE || 'No physical exam documented';
     const todo = patient['To do'] || 'No plan documented';
