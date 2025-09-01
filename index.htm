@@ -7967,10 +7967,10 @@ function parsePatientLabel(text) {
     // DEBUGGING: Show exactly what OCR extracted
     console.log('=== OCR DEBUGGING ===');
     console.log('Raw OCR text length:', text.length);
-    console.log('Raw OCR text:', JSON.stringify(text));
+    console.log('Raw OCR text:', JSON.stringify(text)); // This will show all characters including newlines
     console.log('Raw OCR text (readable):', text);
     
-    // Split into lines and clean them
+    // Split into lines and show each line
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     console.log('Number of lines:', lines.length);
     lines.forEach((line, index) => {
@@ -7980,44 +7980,37 @@ function parsePatientLabel(text) {
     let name = '';
     let mrn = '';
     
-    // Extract NAME from first line
-    console.log('=== EXTRACTING NAME FROM FIRST LINE ===');
-    if (lines.length > 0) {
-        name = lines[0].trim();
-        console.log('Name extracted from first line:', name);
+    // Try VERY simple patterns first
+    console.log('=== SEARCHING FOR MRN ===');
+    
+    // Look for any sequence of 5+ digits
+    const anyDigits = text.match(/\d{5,}/g);
+    console.log('All digit sequences 5+:', anyDigits);
+    
+    if (anyDigits && anyDigits.length > 0) {
+        mrn = anyDigits[0]; // Take first one
+        console.log('Using first digit sequence as MRN:', mrn);
     }
     
-    // Extract MRN by looking for "MRN:" pattern
-    console.log('=== SEARCHING FOR MRN PATTERN ===');
+    console.log('=== SEARCHING FOR NAME ===');
     
-    // Look for "MRN:" followed by digits (case insensitive)
-    const mrnMatch = text.match(/MRN:?\s*(\d+)/i);
-    if (mrnMatch) {
-        mrn = mrnMatch[1];
-        console.log('MRN found after "MRN:":', mrn);
-    } else {
-        // Fallback: look for common MRN patterns
-        const fallbackPatterns = [
-            /(?:medical\s+record|record\s+number|patient\s+id)\s*:?\s*(\d{5,})/i,
-            /(?:^|\s)(\d{7,9})(?:\s|$)/, // 7-9 digit numbers (common MRN length)
-        ];
+    // Look for any line with mostly letters
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        console.log(`Checking line ${i}: "${line}"`);
         
-        for (const pattern of fallbackPatterns) {
-            const match = text.match(pattern);
-            if (match) {
-                mrn = match[1];
-                console.log('MRN found with fallback pattern:', mrn);
-                break;
-            }
-        }
+        // Count letters vs other characters
+        const letterCount = (line.match(/[a-zA-Z]/g) || []).length;
+        const totalLength = line.length;
+        const letterRatio = letterCount / totalLength;
         
-        // Last resort: look for any 6+ digit number
-        if (!mrn) {
-            const anyDigits = text.match(/\d{6,}/g);
-            if (anyDigits && anyDigits.length > 0) {
-                mrn = anyDigits[0];
-                console.log('MRN found as first 6+ digit sequence:', mrn);
-            }
+        console.log(`  Letters: ${letterCount}/${totalLength} = ${letterRatio.toFixed(2)}`);
+        
+        // If line is mostly letters and reasonable length
+        if (letterRatio > 0.6 && line.length > 2 && line.length < 50) {
+            name = line.trim();
+            console.log(`  -> POTENTIAL NAME: "${name}"`);
+            break;
         }
     }
     
@@ -8040,10 +8033,9 @@ function parsePatientLabel(text) {
     }
     
     // DEBUGGING: Also show an alert with the raw text so you can see it
-    console.log('Showing OCR text preview...');
-    // Remove the alert since it's annoying for users
-    // alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+    alert('OCR extracted text:\n' + text.substring(0, 200) + (text.length > 200 ? '...' : ''));
 }
+
 
 
 
@@ -8478,213 +8470,6 @@ function processImageFromCanvas(canvas) {
         alert('Error processing image: ' + error.message);
     });
 }
-
-		
-
-
-
-
-
-		// Add this new function to initialize camera properly on all devices
-function initializeCameraInterface() {
-    const video = document.getElementById('cameraPreview');
-    const canvas = document.getElementById('captureCanvas');
-    
-    // Ensure canvas exists and is properly sized
-    if (!canvas) {
-        console.error('Capture canvas not found');
-        return;
-    }
-    
-    // Set up video element for iOS compatibility
-    setupVideoForIOS();
-    
-    // Add click handler for start camera button
-    const startBtn = document.getElementById('startCameraBtn');
-    if (startBtn) {
-        startBtn.onclick = function() {
-            console.log('Start camera clicked');
-            startCamera();
-        };
-    }
-    
-    // Add click handler for capture button
-    const captureBtn = document.getElementById('captureBtn');
-    if (captureBtn) {
-        captureBtn.onclick = function() {
-            console.log('Capture button clicked');
-            captureImage();
-        };
-    }
-    
-    console.log('Camera interface initialized');
-}
-
-// Enhanced setup function specifically for iOS video element
-function setupVideoForIOS() {
-    const video = document.getElementById('cameraPreview');
-    if (!video) {
-        console.error('Video element not found');
-        return;
-    }
-    
-    // iOS-specific attributes - these are crucial for iPhone compatibility
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('webkit-playsinline', 'true');
-    video.setAttribute('muted', 'true');
-    video.muted = true;
-    video.autoplay = true;
-    video.defaultMuted = true;
-    
-    // Prevent iOS from showing video controls
-    video.controls = false;
-    video.disablePictureInPicture = true;
-    
-    // Set video CSS for better mobile display
-    video.style.width = '100%';
-    video.style.height = 'auto';
-    video.style.maxWidth = '400px';
-    video.style.objectFit = 'cover';
-    
-    console.log('Video element configured for iOS');
-}
-
-// Enhanced camera start function with better iOS support
-async function startCamera() {
-    try {
-        console.log('Starting camera...');
-        
-        // Check if getUserMedia is supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('Camera not supported in this browser');
-        }
-        
-        // Progressive constraint fallback for better compatibility
-        const constraintOptions = [
-            {
-                video: {
-                    width: { ideal: 1920, min: 1280 },
-                    height: { ideal: 1080, min: 720 },
-                    facingMode: 'environment',
-                    focusMode: 'continuous',
-                    exposureMode: 'continuous',
-                    whiteBalanceMode: 'continuous'
-                }
-            },
-            {
-                video: {
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    facingMode: 'environment'
-                }
-            },
-            {
-                video: {
-                    facingMode: 'environment'
-                }
-            },
-            {
-                video: true // Fallback to any camera
-            }
-        ];
-        
-        let stream = null;
-        
-        // Try each constraint set until one works
-        for (let i = 0; i < constraintOptions.length; i++) {
-            try {
-                console.log(`Trying camera constraint set ${i + 1}...`);
-                stream = await navigator.mediaDevices.getUserMedia(constraintOptions[i]);
-                console.log(`Camera started with constraint set ${i + 1}`);
-                break;
-            } catch (err) {
-                console.log(`Constraint set ${i + 1} failed:`, err.message);
-                if (i === constraintOptions.length - 1) {
-                    throw err; // If last option fails, throw the error
-                }
-            }
-        }
-        
-        if (!stream) {
-            throw new Error('Unable to start camera with any constraint set');
-        }
-        
-        cameraStream = stream;
-        const video = document.getElementById('cameraPreview');
-        video.srcObject = stream;
-        
-        // Get the actual video track settings
-        const videoTrack = stream.getVideoTracks()[0];
-        const settings = videoTrack.getSettings();
-        console.log('Camera settings:', settings);
-        console.log(`Resolution: ${settings.width}x${settings.height}`);
-        
-        video.onloadedmetadata = async () => {
-            console.log(`Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
-            
-            try {
-                // For iOS Safari, we must handle the play promise
-                await video.play();
-                console.log('Video playing successfully');
-                
-                video.style.display = 'block';
-                document.getElementById('startCameraBtn').style.display = 'none';
-                document.getElementById('captureBtn').style.display = 'inline-block';
-                
-            } catch (playError) {
-                console.error('Video play failed:', playError);
-                alert('Failed to start video preview. Try tapping the start button again.');
-            }
-        };
-        
-        // Handle any video errors
-        video.onerror = (error) => {
-            console.error('Video error:', error);
-            alert('Video error occurred. Please try again.');
-        };
-        
-    } catch (error) {
-        console.error('Camera start error:', error);
-        
-        // Provide specific guidance for different error types
-        let errorMessage = 'Camera Error: ';
-        
-        switch (error.name) {
-            case 'NotAllowedError':
-                errorMessage += 'Camera permission denied. Please:\n1. Go to Settings > Safari > Camera\n2. Allow camera access\n3. Refresh this page and try again';
-                break;
-            case 'NotFoundError':
-                errorMessage += 'No camera found. Please make sure your device has a camera.';
-                break;
-            case 'NotSupportedError':
-                errorMessage += 'Camera not supported. Please use Safari or Chrome browser.';
-                break;
-            case 'NotReadableError':
-                errorMessage += 'Camera in use by another app. Please:\n1. Close other camera apps\n2. Try again';
-                break;
-            case 'AbortError':
-                errorMessage += 'Camera startup was interrupted. Please try again.';
-                break;
-            default:
-                errorMessage += `${error.message}\n\nTroubleshooting:\n1. Make sure you're using HTTPS\n2. Grant camera permission\n3. Try refreshing the page`;
-        }
-        
-        alert(errorMessage);
-    }
-}
-
-// Call this when the camera entry section is shown
-function showCameraEntry() {
-    document.getElementById('entryTypeSelection').style.display = 'none';
-    document.getElementById('cameraEntrySection').style.display = 'block';
-    resetCameraUI();
-    
-    // Initialize camera interface for iOS compatibility
-    setTimeout(() => {
-        initializeCameraInterface();
-    }, 100);
-}
-
 
 
 		
