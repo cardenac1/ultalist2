@@ -7579,7 +7579,6 @@ function pasteFromClipboard() {
 		
 
 
-// Replace the showFishbonePopup function (around line 4600)
 function showFishbonePopup() {
     if (currentPatientIndex === -1) return;
     
@@ -7589,13 +7588,8 @@ function showFishbonePopup() {
     // Generate missing values messages
     const missingValues = generateMissingValuesMessages(labData);
     
-    // Convert asterisks to red HTML spans FIRST, then handle spacing
-    const withRedText = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
-    
-    // PRESERVE EXACT SPACING - Convert spaces to &nbsp; for HTML display
-    const preservedSpacing = withRedText
-        .replace(/ /g, '&nbsp;') // Convert all spaces to non-breaking spaces
-        .replace(/\n/g, '<br>'); // Convert newlines to HTML breaks
+    // Create formatted version with red text for abnormal values
+    const formattedContent = violinText.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
     
     // Create modal
     const modal = document.createElement('div');
@@ -7605,8 +7599,8 @@ function showFishbonePopup() {
         <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
             <h2 style="color: var(--primary); margin-bottom: 1rem;">VIOLIN Fishbone Diagram</h2>
-            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.2; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto; overflow-x: auto; white-space: nowrap;">${preservedSpacing}</div>
-            ${missingValues ? `<div style="background: var(--card-bg); margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"><div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>Missing Values:</strong></div><div style="font-style: italic; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; white-space: normal;">${missingValues}</div></div>` : ''}
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto;">${formattedContent}</div>
+            ${missingValues ? `<div style="background: var(--card-bg); margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"><div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>Missing Values:</strong></div><div style="font-style: italic; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">${missingValues}</div></div>` : ''}
             <div style="margin-top: 1rem; text-align: center;">
                 <button onclick="copyFishboneToClipboard()">📋 Copy to Clipboard</button>
                 <button onclick="this.closest('.modal').remove()">Close</button>
@@ -7618,6 +7612,7 @@ function showFishbonePopup() {
     // Store fishbone content for copy function
     window.currentFishboneContent = violinText;
 }
+		
 
 
 
@@ -7790,7 +7785,6 @@ function copyFishboneToClipboard() {
 
 
 
-// Replace the toggleFishboneDisplay function (around line 4800)
 function toggleFishboneDisplay() {
     const fishboneDisplay = document.getElementById('fishboneDisplay');
     const fishboneContent = document.getElementById('fishboneContent');
@@ -7804,21 +7798,9 @@ function toggleFishboneDisplay() {
         // Show fishbone - generate it if needed
         const patient = patientData[currentPatientIndex];
         if (patient && patient.VIOLIN) {
-            // Convert asterisks to red HTML spans FIRST, then handle spacing
-            const withRedText = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
-            
-            // PRESERVE EXACT SPACING - Convert spaces to &nbsp; for HTML display
-            const preservedSpacing = withRedText
-                .replace(/ /g, '&nbsp;') // Convert all spaces to non-breaking spaces
-                .replace(/\n/g, '<br>'); // Convert newlines to HTML breaks
-            
-            // Clear existing content and set with preserved spacing
-            fishboneContent.innerHTML = preservedSpacing;
-            fishboneContent.style.fontFamily = "'Courier New', monospace";
-            fishboneContent.style.fontSize = '0.9rem';
-            fishboneContent.style.lineHeight = '1.2';
-            fishboneContent.style.whiteSpace = 'nowrap';
-            fishboneContent.style.overflowX = 'auto';
+            // Format content with red styling for abnormal values
+            const formattedContent = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+            fishboneContent.innerHTML = formattedContent;
             
             // Add missing values if available
             if (labData && Object.keys(labData).length > 0) {
@@ -7830,8 +7812,6 @@ function toggleFishboneDisplay() {
                     missingDiv.style.background = 'rgba(100, 100, 100, 0.1)';
                     missingDiv.style.borderRadius = '0.25rem';
                     missingDiv.style.fontSize = '0.85rem';
-                    missingDiv.style.fontFamily = 'inherit'; // Use normal font for missing values
-                    missingDiv.style.whiteSpace = 'normal'; // Allow normal wrapping for missing values
                     missingDiv.innerHTML = `<strong style="color: var(--text-secondary);">Missing Values:</strong><br><span style="font-style: italic; color: var(--text-secondary);">${missingValues}</span>`;
                     fishboneContent.appendChild(missingDiv);
                 }
@@ -7852,6 +7832,7 @@ function toggleFishboneDisplay() {
     }
 }
 
+		
 
 
 		
