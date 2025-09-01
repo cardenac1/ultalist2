@@ -7799,7 +7799,7 @@ function toggleFishboneDisplay() {
         const patient = patientData[currentPatientIndex];
         if (patient && patient.VIOLIN) {
             // Format content with red styling for abnormal values
-            const formattedContent = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
+        const formattedContent = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
             fishboneContent.innerHTML = formattedContent;
             
             // Add missing values if available
