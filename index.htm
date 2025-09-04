@@ -1453,6 +1453,63 @@ select,
         margin: 0.25rem;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		.status-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    min-width: 40px;
+}
+
+.status-indicator:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.checklist-status {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.priority-status {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .status-indicator {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+    }
+    
+    .row-item {
+        padding-right: 5rem; /* Adjust for smaller status indicator */
+    }
+}
+
+
+
+
 		
 
 
@@ -2112,7 +2169,146 @@ function exportJSON() {
 
 
 
-      function displayRows() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// Function to calculate checklist completion status
+function getChecklistStatus(patient, patientIndex) {
+    const patientKey = `${patientIndex}_${patient.Name || 'unnamed'}`;
+    const isTrauma = patient.Type !== 'Consult';
+    
+    // Define item counts for each checklist type
+    const traumaItemCount = 17; // Based on your traumaItems array
+    const consultItemCount = 11; // Based on your consultItems array
+    const totalItems = isTrauma ? traumaItemCount : consultItemCount;
+    
+    // Check if patient has any checklist state
+    if (!tempChecklistStates[patientKey]) {
+        return { completed: 0, total: totalItems, percentage: 0 };
+    }
+    
+    const states = tempChecklistStates[patientKey];
+    const completed = Object.values(states).filter(Boolean).length;
+    const percentage = Math.round((completed / totalItems) * 100);
+    
+    return { completed, total: totalItems, percentage };
+}
+
+// Function to get priority-based status
+function getPriorityStatus(patient) {
+    const priority = patient.Priority || '';
+    
+    if (!priority.trim()) {
+        return 'none'; // No priority set
+    }
+    
+    const priorityNum = parseInt(priority);
+    if (!isNaN(priorityNum)) {
+        if (priorityNum === 1) return 'high';
+        if (priorityNum === 2) return 'medium'; 
+        if (priorityNum >= 3) return 'low';
+    }
+    
+    // Text-based priority
+    const priorityLower = priority.toLowerCase();
+    if (priorityLower.includes('high') || priorityLower.includes('urgent') || priorityLower.includes('stat')) {
+        return 'high';
+    }
+    if (priorityLower.includes('medium') || priorityLower.includes('moderate')) {
+        return 'medium';
+    }
+    if (priorityLower.includes('low') || priorityLower.includes('routine')) {
+        return 'low';
+    }
+    
+    return 'medium'; // Default for any other text
+}
+
+// Function to generate status indicator HTML
+function generateStatusIndicator(patient, index) {
+    const hasChecklist = patient.Type === 'Consult' || tempChecklistStates[`${index}_${patient.Name || 'unnamed'}`];
+    
+    if (hasChecklist) {
+        // Checklist-based status
+        const status = getChecklistStatus(patient, index);
+        const isComplete = status.percentage === 100;
+        const color = isComplete ? '#10b981' : '#ef4444'; // green : red
+        const title = `Checklist: ${status.completed}/${status.total} (${status.percentage}%) - Click for details`;
+        
+        return `
+            <div class="status-indicator checklist-status" 
+                 style="background: ${color};" 
+                 title="${title}"
+                 onclick="event.stopPropagation(); showChecklistStatus(${index})">
+                <span style="color: white; font-size: 0.7rem; font-weight: bold;">
+                    ${status.percentage}%
+                </span>
+            </div>`;
+    } else {
+        // Priority-based status
+        const priorityStatus = getPriorityStatus(patient);
+        let color = '#6b7280'; // Default gray
+        let symbol = '○';
+        let title = 'No priority set';
+        
+        switch(priorityStatus) {
+            case 'high':
+                color = '#ef4444';
+                symbol = '●';
+                title = `High Priority: ${patient.Priority}`;
+                break;
+            case 'medium':
+                color = '#f59e0b';
+                symbol = '●';
+                title = `Medium Priority: ${patient.Priority}`;
+                break;
+            case 'low':
+                color = '#10b981';
+                symbol = '●';
+                title = `Low Priority: ${patient.Priority}`;
+                break;
+        }
+        
+        return `
+            <div class="status-indicator priority-status" 
+                 style="background: ${color};" 
+                 title="${title}"
+                 onclick="event.stopPropagation(); showPriorityStatus(${index})">
+                <span style="color: white; font-size: 0.8rem; font-weight: bold;">
+                    ${symbol}
+                </span>
+            </div>`;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+    function displayRows() {
     const rowList = document.getElementById('rowList');
     rowList.innerHTML = '';
     
@@ -2126,8 +2322,13 @@ function exportJSON() {
         contentContainer.style.display = 'flex';
         contentContainer.style.alignItems = 'center';
         contentContainer.style.position = 'relative';
-	contentContainer.style.paddingRight = '3rem'; // Reserve space for button
-
+        contentContainer.style.paddingRight = '6rem'; // More space for status + clipboard
+        
+        // Add status indicator
+        const statusIndicator = document.createElement('div');
+        statusIndicator.innerHTML = generateStatusIndicator(patient, index);
+        statusIndicator.style.marginRight = '1rem';
+        contentContainer.appendChild(statusIndicator);
         
         // Display the selected columns vertically
         const columnsDiv = document.createElement('div');
@@ -2153,14 +2354,14 @@ function exportJSON() {
         clipboardBtn.innerHTML = '📋';
         clipboardBtn.title = 'Copy patient info';
         clipboardBtn.onclick = (e) => {
-            e.stopPropagation(); // Prevent row click
+            e.stopPropagation();
             copyPatientInfo(patient, clipboardBtn);
         };
         
         contentContainer.appendChild(clipboardBtn);
         listItem.appendChild(contentContainer);
         
-        // Make the row clickable (but not the button)
+        // Make the row clickable (but not the buttons)
         columnsDiv.onclick = () => showDetails(index);
         
         rowList.appendChild(listItem);
@@ -9265,6 +9466,116 @@ function testOCR() {
     displayRows();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+		function showChecklistStatus(index) {
+    const patient = patientData[index];
+    const status = getChecklistStatus(patient, index);
+    const isTrauma = patient.Type !== 'Consult';
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h3 style="color: var(--primary); margin-bottom: 1rem;">
+                ${patient.Name || 'Unnamed'} - Checklist Status
+            </h3>
+            <div style="text-align: center; margin: 1.5rem 0;">
+                <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; 
+                           background: ${status.percentage === 100 ? 'var(--success)' : 'var(--danger)'}; 
+                           display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <span style="color: white; font-size: 1.5rem; font-weight: bold;">
+                        ${status.percentage}%
+                    </span>
+                </div>
+                <div style="color: var(--text-primary); margin-bottom: 0.5rem;">
+                    <strong>${isTrauma ? 'Trauma' : 'Consult'} Checklist Progress</strong>
+                </div>
+                <div style="color: var(--text-secondary);">
+                    ${status.completed} of ${status.total} items completed
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="showDetails(${index}); this.closest('.modal').remove();">
+                    View Details
+                </button>
+                <button onclick="this.closest('.modal').remove();" style="margin-left: 0.5rem;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showPriorityStatus(index) {
+    const patient = patientData[index];
+    const priorityStatus = getPriorityStatus(patient);
+    const priority = patient.Priority || 'Not set';
+    
+    let statusColor = '#6b7280';
+    let statusText = 'No Priority';
+    
+    switch(priorityStatus) {
+        case 'high':
+            statusColor = '#ef4444';
+            statusText = 'High Priority';
+            break;
+        case 'medium':
+            statusColor = '#f59e0b';
+            statusText = 'Medium Priority';
+            break;
+        case 'low':
+            statusColor = '#10b981';
+            statusText = 'Low Priority';
+            break;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h3 style="color: var(--primary); margin-bottom: 1rem;">
+                ${patient.Name || 'Unnamed'} - Priority Status
+            </h3>
+            <div style="text-align: center; margin: 1.5rem 0;">
+                <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; 
+                           background: ${statusColor}; display: flex; align-items: center; 
+                           justify-content: center; margin-bottom: 1rem;">
+                    <span style="color: white; font-size: 2rem;">●</span>
+                </div>
+                <div style="color: var(--text-primary); margin-bottom: 0.5rem;">
+                    <strong>${statusText}</strong>
+                </div>
+                <div style="color: var(--text-secondary);">
+                    Priority: ${priority}
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="showDetails(${index}); this.closest('.modal').remove();">
+                    View Details
+                </button>
+                <button onclick="this.closest('.modal').remove();" style="margin-left: 0.5rem;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 
 		
 		
