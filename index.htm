@@ -7111,12 +7111,11 @@ function generateFullChecklistHTML() {
         
         // STAFF  
         { section: 'STAFF', color: '#d97706', text: 'Staff' },
-		{ section: 'STAFF', color: '#d97706', text: 'Order Scans' },
-
+        { section: 'STAFF', color: '#d97706', text: 'Order Scans' },
         
         // NOTE
         { section: 'NOTE (include HCP)', color: '#16a34a', text: 'Advanced Directives/Goals of Care/HCP' },   
-		
+        
         // F/U SCANS AND LABS
         { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Primary review of imaging' },
         { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Plan by injury: CTH, CT C/T/L Spine, CT chest/abdomen/pelvis, + additional scans' },
@@ -7136,7 +7135,7 @@ function generateFullChecklistHTML() {
         { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)' },
         { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
         { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Order daily 2 AM labs' },
-		
+        
         // DISPO/ADDENDUM
         { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Sign out to ICU/Floor/ED' },
         { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Update family' },
@@ -7160,23 +7159,32 @@ function generateFullChecklistHTML() {
         { section: 'ORDERS', color: '#d97706', text: 'Nursing Orders: Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status, Notify provider of abnormal vital signs, Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
         { section: 'ORDERS', color: '#d97706', text: 'Order daily 2 AM labs' },
         { section: 'ORDERS', color: '#d97706', text: 'Consultations/Imaging/Interventions' },
-		        
-		// NOTE
-        { section: 'NOTE', color: '#9333ea', text: 'Complete consultation note' },
         
-
+        // NOTE
+        { section: 'NOTE', color: '#9333ea', text: 'Complete consultation note' }
     ];
     
     const items = isTrauma ? traumaItems : consultItems;
     const completed = items.filter((_, i) => states[`item_${i}`]).length;
     const progress = Math.round((completed / items.length) * 100);
     
-    // Generate HTML
+    // Generate HTML with toggle button
     let html = `
         <div style="margin-bottom: 1.5rem; text-align: center;">
-            <strong style="color: ${isTrauma ? '#ef4444' : '#3b82f6'}; font-size: 1.3em;">
-                ${isTrauma ? 'TRAUMA' : 'CONSULT PATIENT'} CHECKLIST
-            </strong>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <strong style="color: ${isTrauma ? '#ef4444' : '#3b82f6'}; font-size: 1.3em;">
+                    ${isTrauma ? 'TRAUMA' : 'CONSULT PATIENT'} CHECKLIST
+                </strong>
+                <button onclick="toggleChecklistType()" 
+                        style="background: linear-gradient(135deg, ${isTrauma ? '#3b82f6' : '#ef4444'}, ${isTrauma ? '#2563eb' : '#dc2626'}); 
+                               color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; 
+                               font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;
+                               box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
+                        onmouseover="this.style.transform='scale(1.05)'"
+                        onmouseout="this.style.transform='scale(1)'">
+                    Switch to ${isTrauma ? 'Consult' : 'Trauma'}
+                </button>
+            </div>
         </div>
         
         <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--card-bg); border-radius: 0.5rem; border: 2px solid var(--primary);">
@@ -7229,6 +7237,17 @@ function generateFullChecklistHTML() {
     
     return html;
 }
+
+
+
+
+
+		
+
+
+
+
+		
 
 function updateFullChecklist(patientKey, index, checked, totalItems) {
     // Update temporary state
@@ -9213,6 +9232,39 @@ function testOCR() {
     
     processImageFromCanvas(canvas);
 }
+
+
+
+
+	function toggleChecklistType() {
+    const patient = patientData[currentPatientIndex];
+    const patientKey = `${currentPatientIndex}_${patient.Name || 'unnamed'}`;
+    
+    // Toggle patient type
+    if (patient.Type === 'Consult') {
+        patient.Type = 'Patient';
+    } else {
+        patient.Type = 'Consult';
+    }
+    
+    // Clear the checklist state since items are different
+    if (tempChecklistStates[patientKey]) {
+        tempChecklistStates[patientKey] = {};
+    }
+    
+    // Save the patient type change
+    saveToLocalStorage();
+    
+    // Regenerate the checklist HTML
+    const body = document.getElementById('helpModalBody');
+    if (body) {
+        body.innerHTML = generateFullChecklistHTML();
+    }
+    
+    // Also update the main list display
+    displayRows();
+}
+
 
 		
 		
