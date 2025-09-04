@@ -288,6 +288,22 @@
 }
 
 
+		#helpModal input[type="checkbox"] {
+    cursor: pointer;
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+#helpModal input[type="checkbox"]:hover {
+    transform: scale(1.2);
+}
+
+#helpModal label:hover {
+    transform: translateX(2px);
+}
+
+		
+
 
         @keyframes slideIn {
             from {
@@ -1809,6 +1825,8 @@ window.addEventListener('load', function() {
         let currentChart = null;
 		let currentSortColumn = ''; // Track current sort column
 		let violinRedStylingApplied = false; // Add this flag
+		let tempChecklistStates = {}; // Temporary checklist states
+
 
         // Master headers structure
         const MASTER_HEADERS = [
@@ -1861,8 +1879,7 @@ const helpContent = {
     'Meds': '<b>Current Medications</b><br><br>• Home medications<br>• Current hospital medications<br>• Allergies',
     'All': '<b>Allergies</b><br><br>• Drug allergies<br>• Environmental allergies<br>• Type of reaction',
 	'PE': '<strong>Clinical Examination:</strong></div><ul><li><strong>Gen: Well appearing in no acute distress. Alert and oriented x3.</strong></li><li><strong>Neuro: strength and sensation intact BUE+BLE, CN II-XII grossly intact, EOMI</strong></li><li><strong>Resp: Non-labored breathing. No use of accessory muscles, no retractions.</strong></li><li><strong>CV: Hemodynamically stable</strong></li><li><strong>Pulse: palpable b/l DP/PT pulses, radial/ulnar pulses</strong></li><li><strong>Abd: soft, non tender, non distended, no voluntary or involuntary guarding, no rebound or jolt tenderness</strong></li><li><strong>Wound: Incisions clean, dry, intact.</strong></li><li><strong>LTD:</strong></li></ul><div><strong>Trauma Examination:</strong></div><ul><li><strong>Head: Normocephalic, atraumatic, no deformities, abrasions, tenderness, oropharynx clear, no blood in nares or ears, hearing intact</strong></li><li><strong>Neuro: GCS 15, Pupils equal and reactive to light bilaterally, extraocular muscles intact. gross motor and sensory intact in all 4 extremities.</strong></li><li><strong>Face: Atraumatic, no deformities, abrasions, tenderness</strong></li><li><strong>Chest: clear to auscultation bilaterally, non-tender, atraumatic, Pulling _ On incentive spirometer</strong></li><li><strong>CVS: RRR, hemodynamically stable</strong></li><li><strong>Abdomen: soft, non-tender, non-distended, no voluntary or involuntary guarding, no jolt or rebound tenderness</strong></li><li><strong>Pelvis: Stable</strong></li><li><strong>Upper Extremities: Atraumatic, no deformities, abrasions, tenderness, Bilateral radial pulses palpable, brisk capillary refill</strong></li><li><strong>Lower Extremities: Atraumatic, no deformities, abrasions, tenderness, brisk capillary refill, Bilateral femoral, DP, PT pulses palpable.</strong></li><li><strong>Spine: No obvious cervical, lumbar, or thoracic spine deformities, no step offs, no tenderness, trachea midline</strong></li><li><strong>Perineum: No gross blood in the perineum, rectal exam deferred, anal wink reflex intact</strong></li>',
-	    'To do': '<strong style="color: #ef4444; font-size: 1.1em;">TRAUMA CHECKLIST</strong><br><br><strong style="color: #dc2626;">ADD TO LIST</strong><br><strong style="color: #d97706;">STAFF</strong></br> <strong style="color: #0284c7;">ORDERS/CONSULTS</strong><ul><li><strong>Scans/Consults</strong></li><li><strong>IF Admitting- PSO call bed board</strong></li><ul> <li><strong>Diet order vs. NPO/IVF</strong></li><li><strong>Home medications</strong></li><li><strong>DVT prophylaxis</strong></li><li><strong>Pain meds</strong></li><li><strong>Floor Orders:</strong> Vital signs, Continuous pulse oximetry, Telemetry monitoring</li><li><strong>Nursing Orders:</strong> Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status, Notify provider of abnormal vital sign <i>(Systolic BP greater than 180 mmHg, Systolic BP less than 100 mmHg, Mean MAP less than 65 mmHg, HR greater than 110 beats/min, HR less than 50 beats/min, RR greater than 30 breaths/min, RR less than 10 breaths/min, Change in Oxygen Delivery Method)</i>, Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)</li><li><strong>Order daily 2 AM labs</strong></li> </ul> </ul><strong style="color: #16a34a;">NOTE (include HCP)</strong><ul><li>Advanced Directives/Goals of Care</li><li>Healthcare Proxy</li></ul><strong style="color: #9333ea;">F/U SCANS AND LABS</strong><ul><li><strong>Primary review of imaging</strong></li><li><strong>Plan by injury:</strong> CTH, CT C/T/L Spine, CT chest/abdomen/pelvis, + additional scans</li><li><strong>TERTIARY survey</strong></li><li><strong>Review labs</strong></li><li><strong>If going to OR:</strong> NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments</li></ul><strong style="color: #c026d3;">DISPO/ADDENDUM</strong><ul><li><strong>Sign out</strong> with specific disposition plan</li><li>Communicate care plan to ED</li><li>Update family</li><li>Tertiary Survey</li></ul><br><hr style="border: 1px solid #ccc; margin: 1rem 0;"><br><strong style="color: #3b82f6; font-size: 1.1em;">CONSULT PATIENT CHECKLIST</strong><br><br><strong style="color: #2563eb;">ADD TO LIST</strong><ul><li>Add patient to consult list</li><li>Update service census</li></ul><strong style="color: #16a34a;">STAFF</strong><ul><li><strong>Staff with attending or senior</strong></li><li>Present case and recommendations</li></ul><strong style="color: #d97706;">ORDERS</strong><ul><li><strong>PSO if admitting- call bed board</strong></li><li><strong>Diet order vs. NPO/IVF</strong></li><li><strong>Home medications</strong></li><li><strong>DVT prophylaxis</strong></li><li><strong>Pain meds</strong></li><li><strong>Floor Orders:</strong> Vital signs, Continuous pulse oximetry, Telemetry monitoring</li><li><strong>Nursing Orders:</strong> Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status, Notify provider of abnormal vital sign <i>(Systolic BP greater than 180 mmHg, Systolic BP less than 100 mmHg, Mean MAP less than 65 mmHg, HR greater than 110 beats/min, HR less than 50 beats/min, RR greater than 30 breaths/min, RR less than 10 breaths/min, Change in Oxygen Delivery Method)</i>, Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)</li><li><strong>Order daily 2 AM labs</strong></li><li><strong>Consultations</strong></li></ul><strong style="color: #9333ea;">NOTE</strong><ul><li><strong>Complete consultation note</strong></li><li><strong>Clear assessment and recommendations</strong></li><li><strong>Follow-up plan</strong></li><li><strong>Communication with primary team</strong></li><li><strong>Goals of care discussion</strong> if appropriate</li><li>Add final addendum if needed</li></ul>',
-
+'To do': 'INTERACTIVE_CHECKLIST', 
 'Plan': '<h3>Nutrition/Fluids</h3><ul><li><strong>NPO considerations</strong><ul><li><strong>if NPO may need fluids</strong></li><li><strong>Speech and swallow consult for concern for dysphagia or older patients with cervical spine injury</strong></li></ul></li><li><strong>TPN/PPN</strong><ul><li><strong>Used when there are contraindications to EN</strong></li><li><strong>Critically Ill: Within 36 to 48 hours</strong></li><li><strong>Noncritically ill postoperative patients: After at least five days, usually at 14 days</strong></li><li><strong>Chronic malnutrition and anticipated prolonged bowel rest: Can be earlier than five to seven days</strong></li><li><strong>Daily order needs to be cosigned</strong></li><li><strong>Ensure fat emulsion is ordered</strong></li><li><strong>Need central access for TPN</strong></li><li><strong>Note rate</strong></li></ul></li><li><strong>TF</strong><ul><li><strong>Indications</strong></li><li><strong>Severe dysphagia (may need postpyloric access to reduce aspiration risk)</strong></li><li><strong>Persisted for at least two weeks and expected to persist for at least four weeks</strong></li><li><strong>Requirement of mechanical ventilation for 4 weeks or more (NG tube 4 weeks or more)</strong></li><li><strong>Note feeding rate versus goal rate</strong></li><li><strong>If via cortrack consider PEG</strong></li></ul></li><li><strong>Maintenance fluid rate: <a href="https://www.mdcalc.com/calc/72/maintenance-fluids-calculations" target="_blank">https://www.mdcalc.com/calc/72/maintenance-fluids-calculations</a></strong></li></ul><h3>Pain Management</h3><ul><li><strong>Convert all IV pain meds to oral when possible</strong></li><li><strong>Check MAR for frequency of requests for pain meds</strong></li><li><strong>Order standing non opioid pain meds for all patients on PRN opioids.</strong></li></ul><h3>LTD</h3><ul><li><strong>Make plan to remove drains/tubes.</strong></li><li><strong>Tracheostomy indicated for prolonged mechanical ventilation (&gt;10 days) unlikely to wean (max duration 3 weeks on ETT)</strong></li></ul><h3>Antibiotics/Special Meds</h3><ul><li><strong>Order Vancomycin/medication trough levels</strong></li><li><strong>Find out end date of antibiotics, wean off pressors and sedation. Otherwise set up long term antibiotic IV access if needed</strong></li><li><strong>Ensure all home meds are restarted if appropriate</strong></li></ul><h3>Anticoagulation</h3><ul><li><strong>Check/start dvt prophylaxis or home AC ex. aspirin/plavix when appropriate</strong></li><li><strong>.dvt_url for trauma patients</strong></li></ul><h3>Discharge</h3><ul><li><strong>PT/OT consult for all elderly debilitated patients postoperatively</strong></li><li><strong>Text SW/IDT daily with update for all primary patients</strong></li><li><strong>Special orders</strong><ul><li><strong>VNS: help with dressing changes, wound vacs, home medication review, vital signs monitoring</strong></li><li><strong>Home wound vac services</strong></li><li><strong>Home PT/OT</strong></li><li><strong>Home infusion services</strong></li><li><strong>Transportation/Medical</strong></li></ul></li></ul><h3>Adjuncts</h3><ul><li><strong>Urine retention-&gt; Foley, bladder scan, flomax</strong></li><li><strong>Constipation-&gt; senna, colace, miralax, suppository, enema</strong></li><li><strong>Nausea/vomiting-&gt; zofran, reglan, compazine, NGT</strong></li><li><strong>CXRs/KUBs</strong></li></ul>', 
 	
 };
@@ -7072,18 +7089,223 @@ function copyPatientInfo(patient, button) {
 
 
 
-		// Help Modal Functions
-function showHelpModal(fieldName) {
+
+
+
+function generateFullChecklistHTML() {
+    const patient = patientData[currentPatientIndex];
+    const patientKey = `${currentPatientIndex}_${patient.Name || 'unnamed'}`;
+    const isTrauma = patient.Type !== 'Consult';
+    
+    // Initialize patient's checklist if not exists
+    if (!tempChecklistStates[patientKey]) {
+        tempChecklistStates[patientKey] = {};
+    }
+    
+    const states = tempChecklistStates[patientKey];
+    
+    // Define all checklist items with colors and sections
+    const traumaItems = [
+        // ADD TO LIST
+        { section: 'ADD TO LIST', color: '#dc2626', text: 'Add to list' },
+        
+        // STAFF  
+        { section: 'STAFF', color: '#d97706', text: 'Staff with attending or senior' },
+        
+        // ORDERS/CONSULTS
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Scans/Consults' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'PSO if admitting - call bed board' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Diet order vs. NPO/IVF' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Home medications' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'DVT prophylaxis' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Pain meds' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Floor Orders: Vital signs, Continuous pulse oximetry, Telemetry monitoring' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Nursing Orders: Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
+        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Order daily 2 AM labs' },
+        
+        // NOTE
+        { section: 'NOTE (include HCP)', color: '#16a34a', text: 'Advanced Directives/Goals of Care' },
+        { section: 'NOTE (include HCP)', color: '#16a34a', text: 'Healthcare Proxy' },
+        
+        // F/U SCANS AND LABS
+        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Primary review of imaging' },
+        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Plan by injury: CTH, CT C/T/L Spine, CT chest/abdomen/pelvis, + additional scans' },
+        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'TERTIARY survey' },
+        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Review labs' },
+        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'If going to OR: NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments' },
+        
+        // DISPO/ADDENDUM
+        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Sign out with specific disposition plan' },
+        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Communicate care plan to ED' },
+        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Update family' },
+        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Tertiary Survey' }
+    ];
+    
+    const consultItems = [
+        // ADD TO LIST
+        { section: 'ADD TO LIST', color: '#2563eb', text: 'Add patient to consult list' },
+        { section: 'ADD TO LIST', color: '#2563eb', text: 'Update service census' },
+        
+        // STAFF
+        { section: 'STAFF', color: '#16a34a', text: 'Staff with attending or senior' },
+        { section: 'STAFF', color: '#16a34a', text: 'Present case and recommendations' },
+        
+        // ORDERS
+        { section: 'ORDERS', color: '#d97706', text: 'PSO if admitting - call bed board' },
+        { section: 'ORDERS', color: '#d97706', text: 'Diet order vs. NPO/IVF' },
+        { section: 'ORDERS', color: '#d97706', text: 'Home medications' },
+        { section: 'ORDERS', color: '#d97706', text: 'DVT prophylaxis' },
+        { section: 'ORDERS', color: '#d97706', text: 'Pain meds' },
+        { section: 'ORDERS', color: '#d97706', text: 'Floor Orders: Vital signs, Continuous pulse oximetry, Telemetry monitoring' },
+        { section: 'ORDERS', color: '#d97706', text: 'Nursing Orders: Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status, Notify provider of abnormal vital signs, Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
+        { section: 'ORDERS', color: '#d97706', text: 'Order daily 2 AM labs' },
+        { section: 'ORDERS', color: '#d97706', text: 'Consultations' },
+        
+        // NOTE
+        { section: 'NOTE', color: '#9333ea', text: 'Complete consultation note' },
+        { section: 'NOTE', color: '#9333ea', text: 'Clear assessment and recommendations' },
+        { section: 'NOTE', color: '#9333ea', text: 'Follow-up plan' },
+        { section: 'NOTE', color: '#9333ea', text: 'Communication with primary team' },
+        { section: 'NOTE', color: '#9333ea', text: 'Goals of care discussion if appropriate' },
+        { section: 'NOTE', color: '#9333ea', text: 'Add final addendum if needed' }
+    ];
+    
+    const items = isTrauma ? traumaItems : consultItems;
+    const completed = items.filter((_, i) => states[`item_${i}`]).length;
+    const progress = Math.round((completed / items.length) * 100);
+    
+    // Generate HTML
+    let html = `
+        <div style="margin-bottom: 1.5rem; text-align: center;">
+            <strong style="color: ${isTrauma ? '#ef4444' : '#3b82f6'}; font-size: 1.3em;">
+                ${isTrauma ? 'TRAUMA' : 'CONSULT PATIENT'} CHECKLIST
+            </strong>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--card-bg); border-radius: 0.5rem; border: 2px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <strong style="color: var(--primary);">Progress</strong>
+                <span id="progressText" style="color: var(--text-primary);">${completed}/${items.length} (${progress}%)</span>
+            </div>
+            <div style="background: var(--dark-bg); border-radius: 1rem; height: 10px; overflow: hidden;">
+                <div id="progressBar" style="background: linear-gradient(90deg, var(--primary), var(--secondary)); height: 100%; width: ${progress}%; transition: width 0.3s;"></div>
+            </div>
+        </div>`;
+    
+    // Group items by section
+    const sections = {};
+    items.forEach((item, index) => {
+        if (!sections[item.section]) {
+            sections[item.section] = [];
+        }
+        sections[item.section].push({...item, index});
+    });
+    
+    // Generate HTML for each section
+    Object.entries(sections).forEach(([sectionName, sectionItems]) => {
+        const sectionColor = sectionItems[0].color;
+        
+        html += `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: ${sectionColor}; margin-bottom: 0.75rem; font-size: 1.1em; font-weight: bold;">
+                    ${sectionName}
+                </h4>
+                <div style="margin-left: 1rem; display: grid; gap: 0.5rem;">`;
+        
+        sectionItems.forEach(item => {
+            const isChecked = states[`item_${item.index}`] || false;
+            html += `
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; padding: 0.75rem; border-radius: 0.375rem; transition: background 0.2s; border: 1px solid transparent;" 
+                       onmouseover="this.style.background='var(--card-hover)'; this.style.borderColor='${sectionColor}30';" 
+                       onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                           onchange="updateFullChecklist('${patientKey}', ${item.index}, this.checked, ${items.length})"
+                           style="width: 18px; height: 18px; min-width: 18px; margin-top: 2px; accent-color: ${sectionColor}; cursor: pointer;">
+                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.4;">
+                        ${item.text}
+                    </span>
+                </label>`;
+        });
+        
+        html += `</div></div>`;
+    });
+    
+    return html;
+}
+
+function updateFullChecklist(patientKey, index, checked, totalItems) {
+    // Update temporary state
+    if (!tempChecklistStates[patientKey]) {
+        tempChecklistStates[patientKey] = {};
+    }
+    tempChecklistStates[patientKey][`item_${index}`] = checked;
+    
+    // Update progress display
+    const states = tempChecklistStates[patientKey];
+    const completed = Object.values(states).filter(Boolean).length;
+    const progress = Math.round((completed / totalItems) * 100);
+    
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    if (progressBar) progressBar.style.width = `${progress}%`;
+    if (progressText) progressText.textContent = `${completed}/${totalItems} (${progress}%)`;
+}
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		function showHelpModal(fieldName) {
     const modal = document.getElementById('helpModal') || createHelpModal();
     const title = document.getElementById('helpModalTitle');
     const body = document.getElementById('helpModalBody');
     
     title.textContent = `${fieldName} - Help & Instructions`;
-    body.innerHTML = helpContent[fieldName] || 'No help content available.';
+    
+    // Special handling for interactive 'To do' checklist
+    if (fieldName === 'To do' && currentPatientIndex !== -1) {
+        body.innerHTML = generateFullChecklistHTML();
+    } else {
+        body.innerHTML = helpContent[fieldName] || 'No help content available.';
+    }
     
     modal.style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    document.body.style.overflow = 'hidden';
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
 
 function closeHelpModal() {
     const modal = document.getElementById('helpModal');
