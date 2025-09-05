@@ -1463,30 +1463,52 @@ select,
 </head>
 
 
-<script src="https://unpkg.com/tesseract.js@v5.0.0/dist/tesseract.min.js"></script>
+
+
+
+
+	<!-- Replace the existing Tesseract script tag with this updated one -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+	
 <script>
 let tesseractWorker = null;
+let tesseractInitialized = false;
 
 async function initTesseract() {
-    if (!tesseractWorker && typeof Tesseract !== 'undefined') {
-        try {
-            tesseractWorker = await Tesseract.createWorker('eng');
-            console.log('Tesseract worker initialized');
-            return true;
-        } catch (error) {
-            console.error('Failed to initialize Tesseract worker:', error);
-            return false;
-        }
+    if (tesseractInitialized && tesseractWorker) {
+        return true;
     }
-    return tesseractWorker !== null;
+    
+    try {
+        console.log('Initializing Tesseract worker...');
+        tesseractWorker = await Tesseract.createWorker({
+            logger: m => {
+                if (m.status === 'loading tesseract core') {
+                    console.log('Loading Tesseract core...');
+                }
+            }
+        });
+        
+        await tesseractWorker.loadLanguage('eng');
+        await tesseractWorker.initialize('eng');
+        
+        tesseractInitialized = true;
+        console.log('Tesseract worker initialized successfully');
+        return true;
+    } catch (error) {
+        console.error('Failed to initialize Tesseract worker:', error);
+        tesseractInitialized = false;
+        return false;
+    }
 }
 
+// Initialize on page load
 window.addEventListener('load', function() {
     if (typeof Tesseract === 'undefined') {
         console.error('Tesseract.js failed to load');
     } else {
         console.log('Tesseract.js loaded successfully');
-        initTesseract();
+        // Don't initialize immediately, wait for user action
     }
 });
 </script>
@@ -1594,9 +1616,18 @@ window.addEventListener('load', function() {
 
 
 
+
 		<div id="cameraEntrySection" style="display: none;">
     <h3 style="color: var(--accent-4); margin-bottom: 10px;">Scan Patient Label</h3>
     <p style="color: var(--text-secondary); margin-bottom: 15px;">Upload a photo of the patient label sticker:</p>
+    
+    <!-- Test OCR System Button -->
+    <div style="margin-bottom: 1rem; text-align: center;">
+        <button type="button" onclick="testOCRSystem()" style="background: linear-gradient(135deg, var(--secondary), #0891b2); margin-bottom: 0.5rem;">
+            🔧 Test OCR System
+        </button>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Click to verify OCR is working before scanning</div>
+    </div>
     
     <!-- File upload section -->
     <div style="margin: 1rem 0;">
@@ -1637,13 +1668,21 @@ window.addEventListener('load', function() {
         <div><strong>MRN:</strong> <span id="extractedMRN">-</span></div>
     </div>
     
+    <!-- Debug info -->
+    <div id="debugInfo" style="display: none; background: var(--dark-bg); padding: 0.75rem; border-radius: 0.25rem; margin: 1rem 0; font-family: monospace; font-size: 0.8rem; max-height: 200px; overflow-y: auto;">
+        <div style="color: var(--text-secondary); margin-bottom: 0.5rem;"><strong>Raw OCR Text:</strong></div>
+        <div id="debugText" style="color: var(--text-primary);"></div>
+    </div>
+    
     <!-- Action buttons -->
     <div class="nav-buttons">
         <button id="processBtn" type="button" onclick="processCurrentImage()" style="display: none;">🔍 Process Image</button>
         <button id="addExtractedBtn" type="button" onclick="addExtractedPatient()" style="display: none; background: linear-gradient(135deg, var(--success), #059669);">➕ Add Patient</button>
+        <button type="button" onclick="toggleDebugInfo()">🐛 Toggle Debug</button>
         <button type="button" onclick="backToEntrySelection()">← Back</button>
     </div>
 </div>
+		
 
 		
 
@@ -8722,13 +8761,12 @@ function getStatusColor(colorName) {
 
 
 
-		// Camera and OCR Functions
-
-// Global variables for camera functionality
+// Camera and OCR Functions - Global variables
 let currentImageCanvas = null;
 let currentRotation = 0;
 let baseImageSrc = null;
 let extractedData = { name: '', mrn: '' };
+let lastOCRText = '';
 
 function showCameraEntry() {
     document.getElementById('entryTypeSelection').style.display = 'none';
@@ -8737,31 +8775,38 @@ function showCameraEntry() {
 }
 
 function resetCameraUI() {
-    // Reset all UI elements
     document.getElementById('capturedImage').style.display = 'none';
     document.getElementById('rotationControls').style.display = 'none';
     document.getElementById('ocrProgress').style.display = 'none';
     document.getElementById('extractedInfo').style.display = 'none';
+    document.getElementById('debugInfo').style.display = 'none';
     document.getElementById('processBtn').style.display = 'none';
     document.getElementById('addExtractedBtn').style.display = 'none';
     
-    // Reset file input
     document.getElementById('labelImageInput').value = '';
     
-    // Reset variables
     currentImageCanvas = null;
     currentRotation = 0;
     baseImageSrc = null;
     extractedData = { name: '', mrn: '' };
+    lastOCRText = '';
 }
 
 function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+    }
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         displayUploadedImage(e.target.result);
+    };
+    reader.onerror = function() {
+        alert('Error reading file. Please try again.');
     };
     reader.readAsDataURL(file);
 }
@@ -8770,26 +8815,23 @@ function displayUploadedImage(imageSrc) {
     const previewImg = document.getElementById('previewImage');
     
     previewImg.onload = function() {
-        console.log('Image loaded successfully');
+        console.log('Image loaded successfully:', previewImg.naturalWidth + 'x' + previewImg.naturalHeight);
         
-        // Store the original image
         baseImageSrc = imageSrc;
         currentRotation = 0;
         
-        // Create canvas from the image
         createCanvasFromImage(previewImg);
         
-        // Show UI elements
         document.getElementById('capturedImage').style.display = 'block';
         document.getElementById('rotationControls').style.display = 'block';
         document.getElementById('processBtn').style.display = 'inline-block';
         
-        console.log('Process button should now be visible');
+        console.log('UI elements shown, ready to process');
     };
     
     previewImg.onerror = function() {
         console.error('Failed to load image');
-        alert('Failed to load the image. Please try again.');
+        alert('Failed to load the image. Please try a different image.');
     };
     
     previewImg.src = imageSrc;
@@ -8805,7 +8847,7 @@ function createCanvasFromImage(imgElement) {
     ctx.drawImage(imgElement, 0, 0);
     currentImageCanvas = canvas;
     
-    console.log('Canvas created:', canvas.width, 'x', canvas.height);
+    console.log('Canvas created:', canvas.width + 'x' + canvas.height);
 }
 
 function rotateImage(degrees) {
@@ -8820,7 +8862,6 @@ function rotateImage(degrees) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Calculate new canvas size after rotation
     const rad = (currentRotation * Math.PI) / 180;
     const sin = Math.abs(Math.sin(rad));
     const cos = Math.abs(Math.cos(rad));
@@ -8831,16 +8872,13 @@ function rotateImage(degrees) {
     canvas.width = Math.floor(origWidth * cos + origHeight * sin);
     canvas.height = Math.floor(origWidth * sin + origHeight * cos);
     
-    // Rotate and draw the image
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(rad);
     ctx.drawImage(currentImageCanvas, -origWidth / 2, -origHeight / 2);
     
-    // Update the preview and stored data
     const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
     document.getElementById('previewImage').src = rotatedDataUrl;
     
-    // Create new canvas from rotated image
     const img = new Image();
     img.onload = function() {
         createCanvasFromImage(img);
@@ -8852,148 +8890,177 @@ function rotateImage(degrees) {
 }
 
 async function processCurrentImage() {
-    console.log('Processing current image...');
+    console.log('=== Starting image processing ===');
     
     if (!currentImageCanvas) {
         alert('No image available to process. Please upload an image first.');
         return;
     }
     
-    // Check if Tesseract is available
     if (typeof Tesseract === 'undefined') {
         alert('OCR system is not loaded. Please refresh the page and try again.');
         return;
     }
     
-    // Initialize Tesseract if needed
-    const isReady = await initTesseract();
-    if (!isReady) {
-        alert('OCR system failed to initialize. Please refresh the page and try again.');
-        return;
-    }
-    
-    // Show progress
     const progressDiv = document.getElementById('ocrProgress');
     const progressBar = document.getElementById('ocrProgressBar');
     const progressPercent = document.getElementById('ocrProgressPercent');
     
     progressDiv.style.display = 'block';
-    progressPercent.textContent = '0%';
-    progressBar.style.width = '0%';
+    progressPercent.textContent = 'Initializing OCR...';
+    progressBar.style.width = '10%';
     
     try {
-        // Enhance image for better OCR
-        const enhancedCanvas = enhanceImageForOCR(currentImageCanvas);
-        const imageData = enhancedCanvas.toDataURL('image/png', 1.0);
+        console.log('Initializing Tesseract...');
+        const isReady = await initTesseract();
+        if (!isReady) {
+            throw new Error('OCR engine failed to initialize');
+        }
+        
+        progressPercent.textContent = 'Preparing image...';
+        progressBar.style.width = '30%';
+        
+        const imageData = currentImageCanvas.toDataURL('image/png', 1.0);
+        console.log('Image data prepared, size:', imageData.length);
+        
+        progressPercent.textContent = 'Reading text...';
+        progressBar.style.width = '50%';
         
         console.log('Starting OCR recognition...');
-        
-        const { data: { text } } = await tesseractWorker.recognize(imageData, {
+        const { data: { text, confidence } } = await tesseractWorker.recognize(imageData, {
             logger: m => {
+                console.log('OCR Progress:', m);
                 if (m.status === 'recognizing text') {
-                    const percent = Math.round(m.progress * 100);
-                    progressPercent.textContent = percent + '%';
+                    const percent = Math.round(50 + (m.progress * 40));
+                    progressPercent.textContent = `Reading text... ${Math.round(m.progress * 100)}%`;
                     progressBar.style.width = percent + '%';
                 }
             }
         });
         
-        console.log('OCR completed. Raw text:', text);
+        progressPercent.textContent = 'Processing results...';
+        progressBar.style.width = '95%';
         
-        // Hide progress
-        progressDiv.style.display = 'none';
+        console.log('OCR completed. Confidence:', confidence);
+        console.log('Raw text length:', text ? text.length : 0);
+        console.log('Raw text:', text);
         
-        // Extract patient information
+        lastOCRText = text || '';
+        updateDebugInfo();
+        
+        if (!text || text.trim().length < 3) {
+            throw new Error('No text could be extracted from the image. Try:\n• Rotating the image\n• Taking a clearer photo\n• Ensuring good lighting\n• Making sure text is clearly visible');
+        }
+        
+        if (confidence < 30) {
+            console.warn('Low confidence OCR result:', confidence);
+        }
+        
+        progressPercent.textContent = 'Complete!';
+        progressBar.style.width = '100%';
+        
+        setTimeout(() => {
+            progressDiv.style.display = 'none';
+        }, 1500);
+        
         extractPatientInfo(text);
         
     } catch (error) {
         console.error('OCR Error:', error);
         progressDiv.style.display = 'none';
-        alert('Error processing image: ' + error.message + '\n\nTry taking a clearer photo or rotating the image.');
-    }
-}
-
-function enhanceImageForOCR(canvas) {
-    const enhancedCanvas = document.createElement('canvas');
-    const ctx = enhancedCanvas.getContext('2d');
-    
-    enhancedCanvas.width = canvas.width;
-    enhancedCanvas.height = canvas.height;
-    
-    // Draw original image
-    ctx.drawImage(canvas, 0, 0);
-    
-    // Convert to grayscale and increase contrast
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    
-    for (let i = 0; i < data.length; i += 4) {
-        // Convert to grayscale
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
         
-        // Increase contrast
-        const contrast = 1.5;
-        const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-        const enhanced = factor * (avg - 128) + 128;
+        let errorMessage = 'Error processing image: ' + error.message;
+        if (error.message.includes('Network') || error.message.includes('fetch')) {
+            errorMessage += '\n\nCheck your internet connection and try again.';
+        }
         
-        data[i] = enhanced;     // Red
-        data[i + 1] = enhanced; // Green
-        data[i + 2] = enhanced; // Blue
-        // Alpha channel (i + 3) remains unchanged
+        alert(errorMessage);
     }
-    
-    ctx.putImageData(imageData, 0, 0);
-    
-    return enhancedCanvas;
 }
 
 function extractPatientInfo(text) {
-    console.log('Extracting patient info from text:', text);
+    console.log('=== Extracting patient info ===');
+    console.log('Input text:', text);
     
     extractedData = { name: '', mrn: '' };
     
-    // Split text into lines and clean them
-    const lines = text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 2);
-    
-    console.log('Cleaned lines:', lines);
-    
-    // Look for patient name (usually first meaningful line)
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        
-        // Skip lines that are likely not names
-        if (/^[0-9\s\-\./]+$/.test(line)) continue; // Only numbers/punctuation
-        if (line.length < 3) continue; // Too short
-        if (/^(MRN|DOB|AGE|ROOM)/i.test(line)) continue; // Field labels
-        
-        // This is likely the patient name
-        extractedData.name = line.replace(/[^\w\s,.-]/g, '').trim();
-        console.log('Extracted name:', extractedData.name);
-        break;
+    if (!text || text.trim().length === 0) {
+        console.log('No text to process');
+        displayExtractedInfo();
+        return;
     }
     
-    // Look for MRN (Medical Record Number)
-    const fullText = text.replace(/\n/g, ' ');
+    const cleanText = text.replace(/[^\w\s\n,.-]/g, ' ').replace(/\s+/g, ' ');
+    const lines = cleanText.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 1);
     
-    // Try different MRN patterns
+    console.log('Processed lines:', lines);
+    
+    // Extract MRN - Enhanced patterns
+    const fullText = cleanText.replace(/\n/g, ' ');
     const mrnPatterns = [
-        /MRN[:\s]*([0-9]{6,10})/i,
-        /Medical\s*Record[:\s]*([0-9]{6,10})/i,
-        /Record[:\s]*([0-9]{6,10})/i,
-        /\b([0-9]{7,10})\b/g  // Generic 7-10 digit number
+        /(?:MRN|Medical\s*Record|Record\s*#?|Patient\s*ID)[:\s#]*([0-9]{5,12})/i,
+        /(?:ID|#)\s*([0-9]{6,10})/i,
+        /\b([0-9]{7,10})\b/g
     ];
     
     for (const pattern of mrnPatterns) {
-        const match = fullText.match(pattern);
-        if (match) {
-            extractedData.mrn = match[1];
-            console.log('Extracted MRN:', extractedData.mrn);
+        if (pattern.global) {
+            const matches = [...fullText.matchAll(pattern)];
+            for (const match of matches) {
+                const potentialMRN = match[1] || match[0];
+                if (potentialMRN && potentialMRN.length >= 6 && potentialMRN.length <= 12) {
+                    extractedData.mrn = potentialMRN.replace(/\D/g, '');
+                    console.log('Found MRN:', extractedData.mrn);
+                    break;
+                }
+            }
+        } else {
+            const match = fullText.match(pattern);
+            if (match) {
+                extractedData.mrn = match[1].replace(/\D/g, '');
+                console.log('Found MRN:', extractedData.mrn);
+                break;
+            }
+        }
+        if (extractedData.mrn) break;
+    }
+    
+    // Extract Name - Improved logic
+    for (let i = 0; i < Math.min(lines.length, 6); i++) {
+        const line = lines[i];
+        
+        if (/^[0-9\s\-\./]+$/.test(line)) continue;
+        if (line.length < 3 || line.length > 60) continue;
+        if (/^(MRN|DOB|AGE|ROOM|BIRTH|GENDER|MALE|FEMALE|DATE)/i.test(line)) continue;
+        if (/^\d/.test(line)) continue;
+        if (extractedData.mrn && line.includes(extractedData.mrn)) continue;
+        
+        if (/[a-zA-Z]{2,}/.test(line) && line.split(' ').length <= 5) {
+            extractedData.name = line.replace(/[^\w\s,.-]/g, '').trim();
+            console.log('Found name:', extractedData.name);
             break;
         }
     }
     
+    // Fallback name extraction
+    if (!extractedData.name) {
+        const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g;
+        const nameMatches = [...fullText.matchAll(namePattern)];
+        
+        for (const match of nameMatches) {
+            const potentialName = match[1];
+            if (potentialName.length > 3 && potentialName.length < 50 && 
+                !potentialName.match(/^(MRN|DOB|AGE|ROOM|BIRTH|GENDER|MALE|FEMALE|DATE)/i)) {
+                extractedData.name = potentialName;
+                console.log('Fallback name found:', extractedData.name);
+                break;
+            }
+        }
+    }
+    
+    console.log('Final extracted data:', extractedData);
     displayExtractedInfo();
 }
 
@@ -9003,61 +9070,55 @@ function displayExtractedInfo() {
     const mrnSpan = document.getElementById('extractedMRN');
     const addBtn = document.getElementById('addExtractedBtn');
     
-    // Update display
     nameSpan.textContent = extractedData.name || 'Not found';
     mrnSpan.textContent = extractedData.mrn || 'Not found';
     
-    // Style based on success
     if (extractedData.name) {
         nameSpan.style.color = '#10b981';
         nameSpan.style.fontWeight = 'bold';
+        nameSpan.style.fontStyle = 'normal';
     } else {
         nameSpan.style.color = '#ef4444';
         nameSpan.style.fontStyle = 'italic';
-        nameSpan.textContent = 'Not found - try rotating the image';
+        nameSpan.style.fontWeight = 'normal';
     }
     
     if (extractedData.mrn) {
         mrnSpan.style.color = '#10b981';
         mrnSpan.style.fontWeight = 'bold';
+        mrnSpan.style.fontStyle = 'normal';
     } else {
         mrnSpan.style.color = '#ef4444';
         mrnSpan.style.fontStyle = 'italic';
-        mrnSpan.textContent = 'Not found - ensure MRN is visible';
+        mrnSpan.style.fontWeight = 'normal';
     }
     
-    // Show the extracted info section and add button
     extractedDiv.style.display = 'block';
     addBtn.style.display = 'inline-block';
     
-    console.log('Extracted info displayed');
+    console.log('Extraction results displayed');
 }
 
 function addExtractedPatient() {
-    console.log('Adding extracted patient');
+    console.log('Adding extracted patient to list');
     
-    // Create new patient object
     const newPatient = {};
     MASTER_HEADERS.forEach(header => {
         newPatient[header] = '';
     });
     
-    // Set extracted data
     newPatient.Type = 'Patient';
     newPatient.Name = extractedData.name || 'Unknown Patient - Please Edit';
     newPatient.MRN = extractedData.mrn || '';
     newPatient.RM = 'TBD';
     
-    // Add to patient list
     patientData.push(newPatient);
     displayRows();
     saveToLocalStorage();
     updateCensus();
     
-    // Close modal and show success
     closeAddEntryModal();
     
-    // Show success message
     const successParts = [];
     if (extractedData.name) successParts.push(`Name: ${extractedData.name}`);
     if (extractedData.mrn) successParts.push(`MRN: ${extractedData.mrn}`);
@@ -9065,12 +9126,70 @@ function addExtractedPatient() {
     if (successParts.length > 0) {
         alert(`Patient added successfully!\n\n${successParts.join('\n')}\n\nYou can edit any details by clicking on the patient in the list.`);
     } else {
-        alert('Patient added to list with placeholder information.\n\nPlease click on the patient to edit the name and MRN.');
-        // Auto-open details for editing
+        alert('Patient added with placeholder information.\n\nPlease click on the patient to edit the name and MRN.');
         setTimeout(() => {
             showDetails(patientData.length - 1);
         }, 100);
     }
+}
+
+function toggleDebugInfo() {
+    const debugDiv = document.getElementById('debugInfo');
+    if (debugDiv.style.display === 'none') {
+        updateDebugInfo();
+        debugDiv.style.display = 'block';
+    } else {
+        debugDiv.style.display = 'none';
+    }
+}
+
+function updateDebugInfo() {
+    const debugText = document.getElementById('debugText');
+    if (debugText) {
+        debugText.textContent = lastOCRText || 'No OCR text available yet';
+    }
+}
+
+async function testOCRSystem() {
+    console.log('=== Testing OCR System ===');
+    
+    const button = event.target;
+    const originalText = button.textContent;
+    const originalStyle = button.style.background;
+    
+    button.textContent = 'Testing...';
+    button.disabled = true;
+    button.style.background = 'linear-gradient(135deg, var(--secondary), #0891b2)';
+    
+    try {
+        if (typeof Tesseract === 'undefined') {
+            throw new Error('Tesseract.js is not loaded. Check the script tag.');
+        }
+        
+        console.log('Tesseract is available, testing initialization...');
+        const success = await initTesseract();
+        
+        if (success) {
+            console.log('OCR system test: SUCCESS');
+            button.textContent = '✅ OCR Working!';
+            button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+            alert('OCR system is working correctly!\n\nYou can now upload and process images.');
+        } else {
+            throw new Error('OCR initialization failed');
+        }
+        
+    } catch (error) {
+        console.error('OCR test error:', error);
+        button.textContent = '❌ OCR Failed';
+        button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
+        alert('OCR test failed: ' + error.message + '\n\nCheck browser console for details.');
+    }
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = originalStyle;
+        button.disabled = false;
+    }, 3000);
 }
 		
 
