@@ -2266,7 +2266,7 @@ function generateStatusIndicator(patient, index) {
     if (!hasConsultData && !hasPriority) {
         return `
             <div class="status-dot" 
-                 style="background: #6b7280;" 
+                 style="background: var(--card-bg);" 
                  title="No consult data or priority assigned">
             </div>`;
     }
