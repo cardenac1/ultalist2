@@ -2198,7 +2198,7 @@ function getChecklistStatus(patient, patientIndex) {
         } else if (priorityNum === 10) {
             return { color: '#a855f7', title: `Priority ${priorityNum} - Lowest` }; // Violet
         } else if (priorityNum > 10) {
-            return { color: '#6b7280', title: `Priority ${priorityNum} - Out of range` }; // Gray
+            return { color: 'var(--card-bg)', title: `Priority ${priorityNum} - Out of range` }; // Gray
         }
     }
     
@@ -2248,7 +2248,7 @@ function generateStatusIndicator(patient, index) {
     const priority = patient.Priority || '';
     const priorityNum = parseInt(priority);
     
-    let color = '#6b7280'; // Default grey
+    let color = 'var(--card-bg)'; // Default grey
     let title = 'No priority set';
     
     if (!isNaN(priorityNum)) {
@@ -2286,7 +2286,7 @@ function generateStatusIndicator(patient, index) {
             color = '#a855f7'; // Violet - Lowest
             title = `Priority ${priorityNum} - Lowest`;
         } else {
-            color = '#6b7280'; // Grey for out of range
+            color = 'var(--card-bg)'; // Grey for out of range
             title = `Priority ${priorityNum} - Out of range`;
         }
     } else if (priority.trim()) {
@@ -8533,7 +8533,7 @@ function showPriorityStatus(index) {
     const priorityStatus = getPriorityStatus(patient);
     const priority = patient.Priority || 'Not set';
     
-    let statusColor = '#6b7280';
+    let statusColor = 'var(--card-bg)';
     let statusText = 'No Priority';
     
     switch(priorityStatus) {
@@ -8607,7 +8607,7 @@ function showPriorityStatus(index) {
         { num: '8', name: 'Priority 8 - Very Low', color: '#3b82f6' },
         { num: '9', name: 'Priority 9 - Minimal', color: '#8b5cf6' },
         { num: '10', name: 'Priority 10 - Lowest', color: '#a855f7' },
-        { num: '', name: 'No Priority', color: '#6b7280' }
+        { num: '', name: 'No Priority', color: 'var(--card-bg)' }
     ];
     
     const modal = document.createElement('div');
@@ -8653,9 +8653,9 @@ function getStatusColor(colorName) {
         'blue': '#3b82f6',
         'purple': '#8b5cf6',
         'orange': '#f97316',
-        'grey': '#6b7280'
+        'grey': 'var(--card-bg)'
     };
-    return colors[colorName] || '#6b7280';
+    return colors[colorName] || 'var(--card-bg)';
 }
 
 
