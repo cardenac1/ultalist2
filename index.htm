@@ -2375,7 +2375,7 @@ function generateStatusIndicator(patient, index) {
 
 
 
-   function displayRows() {
+  function displayRows() {
     const rowList = document.getElementById('rowList');
     rowList.innerHTML = '';
     
@@ -2389,11 +2389,29 @@ function generateStatusIndicator(patient, index) {
         contentContainer.style.display = 'flex';
         contentContainer.style.alignItems = 'center';
         contentContainer.style.position = 'relative';
-        contentContainer.style.paddingRight = '3.5rem'; // Adjusted spacing
+        contentContainer.style.paddingRight = '3.5rem'; // Space for clipboard button
         
-        // Display the selected columns vertically
+        // Add status dot at the beginning (left side)
+        const statusDot = document.createElement('div');
+        statusDot.innerHTML = generateStatusIndicator(patient, index);
+        statusDot.style.position = 'absolute';
+        statusDot.style.left = '0.5rem'; // Left justified
+        statusDot.style.top = '50%';
+        statusDot.style.transform = 'translateY(-50%)';
+        statusDot.style.cursor = 'pointer';
+        statusDot.style.zIndex = '10';
+        statusDot.title = 'Click to change status';
+        statusDot.onclick = (e) => {
+            e.stopPropagation();
+            showStatusSelector(patient, index, statusDot);
+        };
+        contentContainer.appendChild(statusDot);
+        
+        // Display the selected columns vertically with proper left margin
         const columnsDiv = document.createElement('div');
         columnsDiv.style.flex = '1';
+        columnsDiv.style.marginLeft = '2.5rem'; // THIS IS THE KEY - creates space between dot and text
+        columnsDiv.style.paddingLeft = '0.5rem'; // Additional padding for visual comfort
         
         selectedColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
@@ -2408,21 +2426,6 @@ function generateStatusIndicator(patient, index) {
         });
         
         contentContainer.appendChild(columnsDiv);
-        
-        // Add tiny status dot
-  const statusDot = document.createElement('div');
-        statusDot.innerHTML = generateStatusIndicator(patient, index);
-        statusDot.style.position = 'absolute';
-        statusDot.style.left = '0.5rem'; // Left justified
-        statusDot.style.top = '50%';
-        statusDot.style.transform = 'translateY(-50%)';
-        statusDot.style.cursor = 'pointer';
-        statusDot.title = 'Click to change status';
-        statusDot.onclick = (e) => {
-            e.stopPropagation();
-            showStatusSelector(patient, index, statusDot);
-        };
-        contentContainer.appendChild(statusDot);
         
         // Add clipboard button
         const clipboardBtn = document.createElement('button');
