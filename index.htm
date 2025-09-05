@@ -2284,6 +2284,18 @@ function getChecklistStatus(patient, patientIndex) {
 
 
 		function generateStatusIndicator(patient, index) {
+    // PRIORITY 0 OVERRIDES EVERYTHING - show green if priority is 0
+    const priority = patient.Priority || '';
+    const priorityNum = parseInt(priority);
+    if (!isNaN(priorityNum) && priorityNum === 0) {
+        return `
+            <div class="status-dot" 
+                 style="background: #10b981;" 
+                 title="Priority 0 - Complete/Done">
+            </div>`;
+    }
+    
+    // Check for checklist status only if priority is not 0
     const hasChecklist = patient.Type === 'Consult' || tempChecklistStates[`${index}_${patient.Name || 'unnamed'}`];
     
     if (hasChecklist) {
@@ -2299,7 +2311,7 @@ function getChecklistStatus(patient, patientIndex) {
                  title="${title}">
             </div>`;
     } else {
-        // Priority-based status
+        // Priority-based status (for priorities 1-10)
         const priorityStatus = getPriorityStatus(patient);
         
         return `
