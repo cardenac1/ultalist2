@@ -3145,15 +3145,13 @@ input.addEventListener('input', function() {
     document.getElementById('addEntryForm').style.display = 'none';
     document.getElementById('pasteEntrySection').style.display = 'none';
     document.getElementById('updatePatientsSection').style.display = 'none';
-    document.getElementById('cameraEntrySection').style.display = 'none'; // Add this line
+    document.getElementById('cameraEntrySection').style.display = 'none';
     document.getElementById('pasteTextArea').value = '';
     document.getElementById('updateListDataModal').value = '';
     
-    // Stop camera if active
-    stopCamera();
+    // Reset camera UI
     resetCameraUI();
 }
-
 
 
 
