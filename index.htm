@@ -8487,11 +8487,15 @@ function resetCameraUI() {
 
 async function startCamera() {
     try {
+        // Better mobile camera constraints
         const constraints = {
             video: {
-                width: { ideal: 1920, min: 640 },
-                height: { ideal: 1080, min: 480 },
-                facingMode: 'environment'
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                facingMode: 'environment', // Use back camera
+                focusMode: 'continuous',
+                exposureMode: 'continuous',
+                whiteBalanceMode: 'continuous'
             }
         };
         
@@ -8504,15 +8508,33 @@ async function startCamera() {
             video.play();
             video.style.display = 'block';
             
+            // Auto-focus after a short delay
+            setTimeout(() => {
+                if (video.srcObject) {
+                    const track = video.srcObject.getVideoTracks()[0];
+                    if (track && track.getCapabilities) {
+                        const capabilities = track.getCapabilities();
+                        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                            track.applyConstraints({
+                                advanced: [{ focusMode: 'continuous' }]
+                            }).catch(e => console.log('Focus constraint failed:', e));
+                        }
+                    }
+                }
+            }, 1000);
+            
             document.getElementById('startCameraBtn').style.display = 'none';
             document.getElementById('captureBtn').style.display = 'inline-block';
         };
         
     } catch (error) {
         console.error('Error accessing camera:', error);
-        alert('Error accessing camera. Please make sure you have granted camera permissions.');
+        alert('Camera access failed. Please:\n1. Grant camera permissions\n2. Make sure no other app is using the camera\n3. Try refreshing the page');
     }
 }
+
+
+		
 
 function stopCamera() {
     if (cameraStream) {
@@ -8679,20 +8701,9 @@ function setupCropInteraction(canvas) {
     let isActive = false;
     let startX, startY;
     
-    // Prevent default touch behavior
-    canvas.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-    });
+    // Better mobile touch handling
+    canvas.style.touchAction = 'none';
     
-    canvas.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-    });
-    
-    canvas.addEventListener('touchend', function(e) {
-        e.preventDefault();
-    });
-    
-    // Helper function to get coordinates from mouse or touch event
     function getEventCoords(e) {
         const rect = canvas.getBoundingClientRect();
         let clientX, clientY;
@@ -8706,124 +8717,137 @@ function setupCropInteraction(canvas) {
         }
         
         return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
         };
     }
     
-    // Start selection (mouse or touch)
     function startSelection(e) {
         e.preventDefault();
+        e.stopPropagation();
+        
         isActive = true;
         const coords = getEventCoords(e);
         startX = coords.x;
         startY = coords.y;
         
-        selection.style.left = startX + 'px';
-        selection.style.top = startY + 'px';
+        selection.style.left = (startX * canvas.offsetWidth / canvas.width) + 'px';
+        selection.style.top = (startY * canvas.offsetHeight / canvas.height) + 'px';
         selection.style.width = '0px';
         selection.style.height = '0px';
         selection.style.display = 'block';
-        
-        cropStart = { x: startX, y: startY };
     }
     
-    // Update selection (mouse or touch)
     function updateSelection(e) {
         if (!isActive) return;
         e.preventDefault();
+        e.stopPropagation();
         
         const coords = getEventCoords(e);
-        const currentX = coords.x;
-        const currentY = coords.y;
+        const width = Math.abs(coords.x - startX);
+        const height = Math.abs(coords.y - startY);
+        const left = Math.min(coords.x, startX);
+        const top = Math.min(coords.y, startY);
         
-        const width = Math.abs(currentX - startX);
-        const height = Math.abs(currentY - startY);
-        const left = Math.min(currentX, startX);
-        const top = Math.min(currentY, startY);
-        
-        selection.style.left = left + 'px';
-        selection.style.top = top + 'px';
-        selection.style.width = width + 'px';
-        selection.style.height = height + 'px';
+        selection.style.left = (left * canvas.offsetWidth / canvas.width) + 'px';
+        selection.style.top = (top * canvas.offsetHeight / canvas.height) + 'px';
+        selection.style.width = (width * canvas.offsetWidth / canvas.width) + 'px';
+        selection.style.height = (height * canvas.offsetHeight / canvas.height) + 'px';
     }
     
-    // End selection (mouse or touch)
     function endSelection(e) {
         if (!isActive) return;
         e.preventDefault();
+        e.stopPropagation();
         
         isActive = false;
         const coords = getEventCoords(e.changedTouches ? e.changedTouches[0] : e);
-        const endX = coords.x;
-        const endY = coords.y;
         
-        // Store crop data
         cropData = {
-            x: Math.min(startX, endX),
-            y: Math.min(startY, endY),
-            width: Math.abs(endX - startX),
-            height: Math.abs(endY - startY)
+            x: Math.min(startX, coords.x),
+            y: Math.min(startY, coords.y),
+            width: Math.abs(coords.x - startX),
+            height: Math.abs(coords.y - startY)
         };
+        
+        console.log('Crop selection completed:', cropData);
     }
     
-    // Mouse events
-    canvas.addEventListener('mousedown', startSelection);
-    canvas.addEventListener('mousemove', updateSelection);
-    canvas.addEventListener('mouseup', endSelection);
+    // Event listeners
+    canvas.addEventListener('mousedown', startSelection, { passive: false });
+    canvas.addEventListener('mousemove', updateSelection, { passive: false });
+    canvas.addEventListener('mouseup', endSelection, { passive: false });
     
-    // Touch events for mobile
-    canvas.addEventListener('touchstart', startSelection);
-    canvas.addEventListener('touchmove', updateSelection);
-    canvas.addEventListener('touchend', endSelection);
+    canvas.addEventListener('touchstart', startSelection, { passive: false });
+    canvas.addEventListener('touchmove', updateSelection, { passive: false });
+    canvas.addEventListener('touchend', endSelection, { passive: false });
 }
 
-function resetCrop() {
-    const selection = document.getElementById('cropSelection');
-    selection.style.display = 'none';
-    cropData = null;
-}
 
-// Enhanced image preprocessing for better OCR
-function preprocessImage(canvas) {
+
+
+
+
+
+
+
+
+		function preprocessImage(canvas) {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     
-    // Convert to grayscale first
+    // Step 1: Convert to grayscale with weighted average
     for (let i = 0; i < data.length; i += 4) {
         const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-        data[i] = gray;     // Red
-        data[i + 1] = gray; // Green  
-        data[i + 2] = gray; // Blue
+        data[i] = gray;
+        data[i + 1] = gray;
+        data[i + 2] = gray;
     }
     
-    // Apply adaptive contrast enhancement
-    const contrast = 1.8;
-    const brightness = 20;
+    // Step 2: Apply aggressive contrast for patient labels (usually black text on white)
+    const contrast = 2.5;
+    const brightness = 30;
     
     for (let i = 0; i < data.length; i += 4) {
+        let value = data[i];
+        
         // Apply contrast and brightness
-        data[i] = Math.min(255, Math.max(0, (data[i] - 128) * contrast + 128 + brightness));
-        data[i + 1] = data[i];
-        data[i + 2] = data[i];
+        value = ((value - 128) * contrast) + 128 + brightness;
+        
+        // Apply threshold for cleaner black/white text
+        value = value > 128 ? 255 : 0;
+        
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
     }
     
     ctx.putImageData(imageData, 0, 0);
     
-    // Scale up for better OCR recognition
+    // Step 3: Scale up significantly for better OCR (patient labels need high resolution)
     const scaledCanvas = document.createElement('canvas');
-    const scaleFactor = Math.min(3, Math.max(1, 1200 / Math.max(canvas.width, canvas.height)));
+    const targetWidth = Math.max(1200, canvas.width * 2);
+    const scaleFactor = targetWidth / canvas.width;
     
     scaledCanvas.width = canvas.width * scaleFactor;
     scaledCanvas.height = canvas.height * scaleFactor;
     
     const scaledCtx = scaledCanvas.getContext('2d');
-    scaledCtx.imageSmoothingEnabled = false;
+    
+    // Use bicubic interpolation for text
+    scaledCtx.imageSmoothingEnabled = true;
+    scaledCtx.imageSmoothingQuality = 'high';
     scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
     
     return scaledCanvas;
 }
+
+
+
+
+
+		
 
 // Enhanced OCR processing function
 function processImageFromCanvas(canvas) {
@@ -8880,7 +8904,7 @@ function processImageFromCanvas(canvas) {
             }
             
             // Enhanced parsing with multiple strategies
-            parsePatientLabelEnhanced(text, words, lines, confidence);
+parsePatientLabel(text, words, lines);
             
         }).catch(error => {
             console.error('OCR Error:', error);
@@ -8889,140 +8913,115 @@ function processImageFromCanvas(canvas) {
         });
 }
 
-// Enhanced parsing function with multiple detection strategies
-function parsePatientLabelEnhanced(text, words, lines, confidence = 0) {
-    console.log('=== ENHANCED OCR TEXT PARSING ===');
-    console.log('Raw text:', text);
-    console.log('Words count:', words.length);
-    console.log('Lines count:', lines.length);
+
+
+
+
+
+
+
+
+
+		function parsePatientLabel(text, words = [], lines = []) {
+    console.log('=== PATIENT LABEL PARSING ===');
+    console.log('Raw OCR text:', text);
     
     let detectedName = '';
     let detectedMRN = '';
     
-    // Strategy 1: Pattern-based MRN detection (multiple patterns)
+    // Clean up the text
+    const cleanText = text.replace(/[^\w\s,.-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const textLines = cleanText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    console.log('Cleaned lines:', textLines);
+    
+    // Strategy 1: Find MRN (most reliable identifier)
     const mrnPatterns = [
-        /\b\d{5,12}\b/g,           // 5-12 digits
-        /\bMRN:?\s*(\d{5,12})/gi,  // MRN: followed by digits
-        /\bMR:?\s*(\d{5,12})/gi,   // MR: followed by digits
-        /\b(\d{8,12})\b/g,         // Longer numbers (8-12 digits)
+        /MRN:?\s*(\d{5,12})/gi,          // "MRN: 12345678"
+        /MRN\s*#?\s*(\d{5,12})/gi,       // "MRN #12345678"  
+        /Medical\s*Record\s*#?\s*(\d{5,12})/gi, // "Medical Record 12345678"
+        /\b(\d{7,10})\b/g                 // Standalone 7-10 digit numbers (common MRN length)
     ];
     
-    const allMrnMatches = [];
-    mrnPatterns.forEach(pattern => {
-        const matches = text.match(pattern);
-        if (matches) {
-            matches.forEach(match => {
-                const digits = match.replace(/\D/g, '');
-                if (digits.length >= 5 && digits.length <= 12) {
-                    allMrnMatches.push(digits);
-                }
-            });
+    for (const pattern of mrnPatterns) {
+        const matches = [...text.matchAll(pattern)];
+        if (matches.length > 0) {
+            // Take the first valid match
+            const mrn = matches[0][1] || matches[0][0].replace(/\D/g, '');
+            if (mrn.length >= 6 && mrn.length <= 12) {
+                detectedMRN = mrn;
+                console.log('Found MRN with pattern:', pattern, '=', detectedMRN);
+                break;
+            }
         }
-    });
-    
-    // Select the best MRN candidate (longest valid number)
-    if (allMrnMatches.length > 0) {
-        detectedMRN = allMrnMatches.reduce((a, b) => {
-            // Prefer 7-10 digit numbers, then longest
-            const aScore = (a.length >= 7 && a.length <= 10) ? a.length + 10 : a.length;
-            const bScore = (b.length >= 7 && b.length <= 10) ? b.length + 10 : b.length;
-            return bScore > aScore ? b : a;
-        });
     }
     
-    // Strategy 2: Enhanced name detection using multiple approaches
-    const namePatterns = [
-        /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/m,  // Proper case names
-        /([A-Z]{2,}(?:\s*,?\s*[A-Z]{2,})*)/g,   // All caps names
-        /^([A-Za-z]+(?:\s*,\s*[A-Za-z]+)+)/m,   // Last, First format
-    ];
-    
-    const nameLines = text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 2 && line.length < 60);
-    
-    const nameCandidates = [];
-    
-    // Check each line for name patterns
-    nameLines.forEach(line => {
+    // Strategy 2: Find Name (usually first substantial line)
+    for (const line of textLines) {
         // Skip lines that contain the MRN
-        if (detectedMRN && line.includes(detectedMRN)) return;
+        if (detectedMRN && line.includes(detectedMRN)) continue;
         
-        // Skip lines with too many numbers
+        // Skip lines with mostly numbers
         const numberCount = (line.match(/\d/g) || []).length;
-        if (numberCount > line.length * 0.3) return;
+        if (numberCount > line.length * 0.4) continue;
         
-        // Check against name patterns
-        namePatterns.forEach(pattern => {
-            const match = line.match(pattern);
-            if (match) {
-                const candidate = match[1] || match[0];
-                const cleanCandidate = candidate.replace(/[^\w\s,.-]/g, '').trim();
-                if (cleanCandidate.length >= 3) {
-                    nameCandidates.push({
-                        text: cleanCandidate,
-                        score: calculateNameScore(cleanCandidate)
-                    });
-                }
-            }
-        });
+        // Skip very short lines
+        if (line.length < 3) continue;
         
-        // Check for high letter ratio lines
-        const letterCount = (line.match(/[A-Za-z]/g) || []).length;
-        const letterRatio = letterCount / line.length;
+        // Skip lines that don't look like names
+        if (!/[A-Za-z]/.test(line)) continue;
         
-        if (letterRatio > 0.7 && line.length >= 3 && line.length <= 40) {
-            const cleanLine = line.replace(/[^\w\s,.-]/g, '').trim();
-            if (cleanLine.length >= 3) {
-                nameCandidates.push({
-                    text: cleanLine,
-                    score: calculateNameScore(cleanLine) * letterRatio
-                });
+        // Check if this looks like a name
+        const namePattern = /^[A-Za-z\s,.-]{3,40}$/;
+        if (namePattern.test(line)) {
+            // Clean up the name
+            const cleanName = line
+                .replace(/[^\w\s,.-]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toUpperCase();
+            
+            if (cleanName.length >= 3) {
+                detectedName = cleanName;
+                console.log('Found name in line:', line, '=', detectedName);
+                break;
             }
         }
-    });
-    
-    // Select best name candidate
-    if (nameCandidates.length > 0) {
-        const bestName = nameCandidates.reduce((a, b) => a.score > b.score ? a : b);
-        detectedName = bestName.text;
     }
     
-    // Strategy 3: Use word-level analysis as fallback
-    if (!detectedName && words && words.length > 0) {
-        const highConfidenceWords = words
-            .filter(word => word.confidence > 60 && /^[A-Za-z]{2,}$/.test(word.text))
-            .sort((a, b) => b.confidence - a.confidence);
+    // Fallback: Try to extract from individual words if lines failed
+    if (!detectedName && words.length > 0) {
+        const nameWords = words
+            .filter(word => word.confidence > 70)
+            .filter(word => /^[A-Za-z]{2,}$/.test(word.text))
+            .filter(word => word.text.length >= 2)
+            .slice(0, 4); // Take first few high-confidence letter words
         
-        if (highConfidenceWords.length > 0) {
-            // Try to group adjacent words
-            const groupedWords = groupAdjacentWords(highConfidenceWords);
-            if (groupedWords.length > 0) {
-                detectedName = groupedWords[0];
-            }
+        if (nameWords.length > 0) {
+            detectedName = nameWords.map(w => w.text.toUpperCase()).join(' ');
+            console.log('Fallback name from words:', detectedName);
         }
     }
     
     // Final cleanup
-    detectedName = cleanupName(detectedName);
-    detectedMRN = detectedMRN.replace(/\D/g, ''); // Remove any non-digits
+    if (detectedName) {
+        detectedName = detectedName.replace(/[^\w\s,.-]/g, '').trim();
+    }
     
-    console.log('=== ENHANCED FINAL RESULTS ===');
+    console.log('=== FINAL RESULTS ===');
     console.log('Name:', detectedName || 'Not detected');
     console.log('MRN:', detectedMRN || 'Not detected');
-    console.log('All MRN candidates found:', allMrnMatches);
-    console.log('Name candidates found:', nameCandidates.length);
     
     // Store results
     extractedData.name = detectedName;
     extractedData.mrn = detectedMRN;
     
-    // Display results
+    // Update display
     document.getElementById('extractedName').textContent = detectedName || 'Not detected';
     document.getElementById('extractedMRN').textContent = detectedMRN || 'Not detected';
     document.getElementById('extractedInfo').style.display = 'block';
     
-    // Show add button if we have any data
+    // Show add button if we detected anything useful
     if (detectedName || detectedMRN) {
         document.getElementById('addExtractedBtn').style.display = 'inline-block';
         
@@ -9030,12 +9029,19 @@ function parsePatientLabelEnhanced(text, words, lines, confidence = 0) {
         if (detectedName) detectedInfo.push(`Name: ${detectedName}`);
         if (detectedMRN) detectedInfo.push(`MRN: ${detectedMRN}`);
         
-        // Show success message
-        console.log(`Successfully detected: ${detectedInfo.join(', ')}`);
+        console.log(`SUCCESS: Detected ${detectedInfo.join(', ')}`);
     } else {
-        alert(`No patient information detected.\n\nThe detected text was:\n"${text}"\n\nTry:\n• Better lighting\n• Clearer focus\n• Different angle\n• Cropping closer to the text`);
+        alert(`No patient information detected in the label.\n\nDetected text was:\n"${text.substring(0, 200)}"\n\nTips:\n• Ensure good lighting\n• Hold camera steady\n• Get close to the label\n• Make sure text is clear and readable`);
     }
 }
+		
+
+
+
+
+
+
+		
 
 // Helper function to calculate name score
 function calculateNameScore(text) {
