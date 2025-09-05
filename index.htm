@@ -2395,7 +2395,7 @@ function generateStatusIndicator(patient, index) {
         const statusDot = document.createElement('div');
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
-        statusDot.style.left = '0.5rem'; // Left justified
+        statusDot.style.left = '0.2rem'; // Left justified
         statusDot.style.top = '50%';
         statusDot.style.transform = 'translateY(-50%)';
         statusDot.style.cursor = 'pointer';
@@ -2411,7 +2411,7 @@ function generateStatusIndicator(patient, index) {
         const columnsDiv = document.createElement('div');
         columnsDiv.style.flex = '1';
         columnsDiv.style.marginLeft = '1rem'; // THIS IS THE KEY - creates space between dot and text
-        columnsDiv.style.paddingLeft = '0.1rem'; // Additional padding for visual comfort
+        columnsDiv.style.paddingLeft = '0.5rem'; // Additional padding for visual comfort
         
         selectedColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
