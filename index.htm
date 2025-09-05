@@ -2285,7 +2285,40 @@ function getChecklistStatus(patient, patientIndex) {
 
 
 
-		function generateStatusIndicator(patient, index) {
+function generateStatusIndicator(patient, index) {
+    // Check if this should be grey (not a consult and no priority)
+    const consultFields = ['CC', 'HPI', 'ROS', 'PMH', 'Meds', 'All', 'Surg hx', 'FSH', 'PE'];
+    const hasConsultData = consultFields.some(field => patient[field] && patient[field].trim());
+    const hasPriority = patient.Priority && patient.Priority.trim();
+    
+    // If no consult data and no priority, show grey
+    if (!hasConsultData && !hasPriority) {
+        return `
+            <div class="status-dot" 
+                 style="background: #6b7280;" 
+                 title="No consult data or priority assigned">
+            </div>`;
+    }
+    
+    // Use saved status if available
+    if (patient.SavedStatus) {
+        const statusColors = {
+            'red': '#ef4444',
+            'yellow': '#f59e0b', 
+            'green': '#10b981',
+            'blue': '#3b82f6',
+            'purple': '#8b5cf6',
+            'orange': '#f97316',
+            'grey': '#6b7280'
+        };
+        
+        return `
+            <div class="status-dot" 
+                 style="background: ${statusColors[patient.SavedStatus] || '#6b7280'};" 
+                 title="Status: ${patient.SavedStatus}">
+            </div>`;
+    }
+    
     // PRIORITY 0 OVERRIDES EVERYTHING - show green if priority is 0
     const priority = patient.Priority || '';
     const priorityNum = parseInt(priority);
@@ -2377,12 +2410,18 @@ function getChecklistStatus(patient, patientIndex) {
         contentContainer.appendChild(columnsDiv);
         
         // Add tiny status dot
-        const statusDot = document.createElement('div');
+  const statusDot = document.createElement('div');
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
-        statusDot.style.right = '3rem'; // Small gap from clipboard button
+        statusDot.style.left = '0.5rem'; // Left justified
         statusDot.style.top = '50%';
         statusDot.style.transform = 'translateY(-50%)';
+        statusDot.style.cursor = 'pointer';
+        statusDot.title = 'Click to change status';
+        statusDot.onclick = (e) => {
+            e.stopPropagation();
+            showStatusSelector(patient, index, statusDot);
+        };
         contentContainer.appendChild(statusDot);
         
         // Add clipboard button
