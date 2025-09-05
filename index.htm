@@ -2244,62 +2244,81 @@ function generateStatusIndicator(patient, index) {
             </div>`;
     }
     
-    // Use saved status if available
-    if (patient.SavedStatus) {
-        const statusColors = {
-            'red': '#ef4444',
-            'yellow': '#f59e0b', 
-            'green': '#10b981',
-            'blue': '#3b82f6',
-            'purple': '#8b5cf6',
-            'orange': '#f97316',
-            'grey': '#6b7280'
-        };
-        
-        return `
-            <div class="status-dot" 
-                 style="background: ${statusColors[patient.SavedStatus] || '#6b7280'};" 
-                 title="Status: ${patient.SavedStatus}">
-            </div>`;
-    }
-    
-    // PRIORITY 0 OVERRIDES EVERYTHING - show green if priority is 0
+    // STATUS IS NOW BASED PURELY ON PRIORITY NUMBER
     const priority = patient.Priority || '';
     const priorityNum = parseInt(priority);
-    if (!isNaN(priorityNum) && priorityNum === 0) {
-        return `
-            <div class="status-dot" 
-                 style="background: #10b981;" 
-                 title="Priority 0 - Complete/Done">
-            </div>`;
+    
+    let color = '#6b7280'; // Default grey
+    let title = 'No priority set';
+    
+    if (!isNaN(priorityNum)) {
+        if (priorityNum === 0) {
+            color = '#10b981'; // Green - Complete
+            title = `Priority ${priorityNum} - Complete`;
+        } else if (priorityNum === 1) {
+            color = '#ef4444'; // Red - Urgent
+            title = `Priority ${priorityNum} - Urgent`;
+        } else if (priorityNum === 2) {
+            color = '#f97316'; // Orange - High
+            title = `Priority ${priorityNum} - High`;
+        } else if (priorityNum === 3) {
+            color = '#f59e0b'; // Amber - Medium-High
+            title = `Priority ${priorityNum} - Medium-High`;
+        } else if (priorityNum === 4) {
+            color = '#eab308'; // Yellow - Medium
+            title = `Priority ${priorityNum} - Medium`;
+        } else if (priorityNum === 5) {
+            color = '#84cc16'; // Lime - Medium-Low
+            title = `Priority ${priorityNum} - Medium-Low`;
+        } else if (priorityNum === 6) {
+            color = '#22c55e'; // Light Green - Low-Medium
+            title = `Priority ${priorityNum} - Low-Medium`;
+        } else if (priorityNum === 7) {
+            color = '#06b6d4'; // Cyan - Low
+            title = `Priority ${priorityNum} - Low`;
+        } else if (priorityNum === 8) {
+            color = '#3b82f6'; // Blue - Very Low
+            title = `Priority ${priorityNum} - Very Low`;
+        } else if (priorityNum === 9) {
+            color = '#8b5cf6'; // Purple - Minimal
+            title = `Priority ${priorityNum} - Minimal`;
+        } else if (priorityNum === 10) {
+            color = '#a855f7'; // Violet - Lowest
+            title = `Priority ${priorityNum} - Lowest`;
+        } else {
+            color = '#6b7280'; // Grey for out of range
+            title = `Priority ${priorityNum} - Out of range`;
+        }
+    } else if (priority.trim()) {
+        // Text-based priority fallback
+        const priorityLower = priority.toLowerCase();
+        if (priorityLower.includes('done') || priorityLower.includes('complete')) {
+            color = '#10b981';
+            title = `${priority} - Complete`;
+        } else if (priorityLower.includes('urgent') || priorityLower.includes('stat')) {
+            color = '#ef4444';
+            title = `${priority} - Urgent`;
+        } else if (priorityLower.includes('high')) {
+            color = '#f97316';
+            title = `${priority} - High`;
+        } else if (priorityLower.includes('medium')) {
+            color = '#f59e0b';
+            title = `${priority} - Medium`;
+        } else if (priorityLower.includes('low')) {
+            color = '#22c55e';
+            title = `${priority} - Low`;
+        } else {
+            title = `${priority}`;
+        }
     }
     
-    // Check for checklist status only if priority is not 0
-    const hasChecklist = patient.Type === 'Consult' || tempChecklistStates[`${index}_${patient.Name || 'unnamed'}`];
-    
-    if (hasChecklist) {
-        // Checklist-based status
-        const status = getChecklistStatus(patient, index);
-        const isComplete = status.percentage === 100;
-        const color = isComplete ? '#10b981' : '#ef4444'; // green : red
-        const title = `Checklist: ${status.completed}/${status.total} (${status.percentage}%)`;
-        
-        return `
-            <div class="status-dot" 
-                 style="background: ${color};" 
-                 title="${title}">
-            </div>`;
-    } else {
-        // Priority-based status (for priorities 1-10)
-        const priorityStatus = getPriorityStatus(patient);
-        
-        return `
-            <div class="status-dot" 
-                 style="background: ${priorityStatus.color};" 
-                 title="${priorityStatus.title}">
-            </div>`;
-    }
+    return `
+        <div class="status-dot" 
+             style="background: ${color};" 
+             title="${title}">
+        </div>`;
 }
+		
 		
 
 
@@ -3533,31 +3552,47 @@ const CONSULT_MODE_LABELS = {
             }
         }
 
-        function convertEntryType() {
-            const patient = patientData[currentPatientIndex];
-            
-            if (patient.Type === 'Consult') {
-                if (confirm('Convert this consult to a regular patient?')) {
-                    patient.Type = 'Patient';
-                    if (!patient.Problems && patient.HPI) {
-                        patient.Problems = patient.HPI;
-                    }
-                    saveToLocalStorage();
-                    switchView('consult');
-                    displayRows();
-                }
-            } else {
-                if (confirm('Convert this patient to a consult?')) {
-                    patient.Type = 'Consult';
-                    if (!patient.HPI && patient.Problems) {
-                        patient.HPI = patient.Problems;
-                    }
-                    saveToLocalStorage();
-                    switchView('consult');
-                    displayRows();
-                }
+
+
+
+
+
+
+
+		function convertEntryType() {
+    const patient = patientData[currentPatientIndex];
+    
+    if (patient.Type === 'Consult') {
+        if (confirm('Convert this consult to a regular patient?')) {
+            patient.Type = 'Patient';
+            if (!patient.Problems && patient.HPI) {
+                patient.Problems = patient.HPI;
             }
+            saveToLocalStorage();
+            switchView('consult');
+            displayRows();
         }
+    } else {
+        if (confirm('Convert this patient to a consult?')) {
+            patient.Type = 'Consult';
+            if (!patient.HPI && patient.Problems) {
+                patient.HPI = patient.Problems;
+            }
+            
+            // AUTO-ASSIGN PRIORITY 1 WHEN CONVERTING TO CONSULT
+            const consultFields = ['CC', 'HPI', 'ROS', 'PMH', 'Meds', 'All', 'Surg hx', 'FSH', 'PE'];
+            const hasConsultData = consultFields.some(field => patient[field] && patient[field].trim());
+            if (hasConsultData && (!patient.Priority || patient.Priority.trim() === '')) {
+                patient.Priority = '1'; // Set to urgent/red when converting to consult with data
+            }
+            
+            saveToLocalStorage();
+            switchView('consult');
+            displayRows();
+        }
+    }
+}
+		
 
         function exportToRTF(type) {
             if (currentPatientIndex === -1) return;
@@ -8555,15 +8590,24 @@ function showPriorityStatus(index) {
 
 
 
+
+
+
+
 		function showStatusSelector(patient, index, statusDotElement) {
-    const statusOptions = [
-        { color: 'red', name: 'Red - Urgent' },
-        { color: 'yellow', name: 'Yellow - In Progress' }, 
-        { color: 'green', name: 'Green - Complete' },
-        { color: 'blue', name: 'Blue - Waiting' },
-        { color: 'purple', name: 'Purple - On Hold' },
-        { color: 'orange', name: 'Orange - Review' },
-        { color: 'grey', name: 'Grey - No Status' }
+    const priorityOptions = [
+        { num: '0', name: 'Priority 0 - Complete/Done', color: '#10b981' },
+        { num: '1', name: 'Priority 1 - Urgent', color: '#ef4444' },
+        { num: '2', name: 'Priority 2 - High', color: '#f97316' },
+        { num: '3', name: 'Priority 3 - Medium-High', color: '#f59e0b' },
+        { num: '4', name: 'Priority 4 - Medium', color: '#eab308' },
+        { num: '5', name: 'Priority 5 - Medium-Low', color: '#84cc16' },
+        { num: '6', name: 'Priority 6 - Low-Medium', color: '#22c55e' },
+        { num: '7', name: 'Priority 7 - Low', color: '#06b6d4' },
+        { num: '8', name: 'Priority 8 - Very Low', color: '#3b82f6' },
+        { num: '9', name: 'Priority 9 - Minimal', color: '#8b5cf6' },
+        { num: '10', name: 'Priority 10 - Lowest', color: '#a855f7' },
+        { num: '', name: 'No Priority', color: '#6b7280' }
     ];
     
     const modal = document.createElement('div');
@@ -8572,11 +8616,11 @@ function showPriorityStatus(index) {
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px;">
             <h3 style="color: var(--primary); margin-bottom: 1rem;">
-                Set Status for ${patient.Name || 'Unnamed'}
+                Set Priority for ${patient.Name || 'Unnamed'}
             </h3>
-            <div style="display: grid; gap: 0.5rem; margin-bottom: 1rem;">
-                ${statusOptions.map(option => `
-                    <button onclick="setPatientStatus('${option.color}', ${index}, this.closest('.modal'))" 
+            <div style="display: grid; gap: 0.5rem; margin-bottom: 1rem; max-height: 400px; overflow-y: auto;">
+                ${priorityOptions.map(option => `
+                    <button onclick="setPatientPriority('${option.num}', ${index}, this.closest('.modal'))" 
                             style="padding: 0.75rem; text-align: left; background: var(--card-bg); 
                                    border: 1px solid var(--border); border-radius: 0.375rem; 
                                    color: var(--text-primary); cursor: pointer; display: flex; 
@@ -8584,7 +8628,7 @@ function showPriorityStatus(index) {
                             onmouseover="this.style.background='var(--card-hover)'"
                             onmouseout="this.style.background='var(--card-bg)'">
                         <div style="width: 12px; height: 12px; border-radius: 50%; 
-                                    background: ${getStatusColor(option.color)};"></div>
+                                    background: ${option.color};"></div>
                         ${option.name}
                     </button>
                 `).join('')}
@@ -8596,6 +8640,10 @@ function showPriorityStatus(index) {
     `;
     document.body.appendChild(modal);
 }
+
+
+
+		
 
 function getStatusColor(colorName) {
     const colors = {
@@ -8610,9 +8658,15 @@ function getStatusColor(colorName) {
     return colors[colorName] || '#6b7280';
 }
 
-function setPatientStatus(color, index, modal) {
-    // Save the status to the patient data
-    patientData[index].SavedStatus = color;
+
+
+
+		function setPatientPriority(priorityNum, index, modal) {
+    // Set the priority number
+    patientData[index].Priority = priorityNum;
+    
+    // Remove any saved status since we're now using priority-based system
+    delete patientData[index].SavedStatus;
     
     // Save to localStorage
     saveToLocalStorage();
