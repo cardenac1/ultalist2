@@ -8957,7 +8957,14 @@ function rotateImage(degrees) {
 
 		
 
-function extractPatientInfo(text) {
+
+
+
+
+
+
+
+		function extractPatientInfo(text) {
     console.log('=== Extracting patient info ===');
     console.log('Input text:', text);
     
@@ -8976,8 +8983,9 @@ function extractPatientInfo(text) {
     
     console.log('Processed lines:', lines);
     
-    // Extract MRN - Enhanced patterns
     const fullText = cleanText.replace(/\n/g, ' ');
+    
+    // Extract MRN - keeping existing logic since it works
     const mrnPatterns = [
         /(?:MRN|Medical\s*Record|Record\s*#?|Patient\s*ID)[:\s#]*([0-9]{5,12})/i,
         /(?:ID|#)\s*([0-9]{6,10})/i,
@@ -9006,42 +9014,137 @@ function extractPatientInfo(text) {
         if (extractedData.mrn) break;
     }
     
-    // Extract Name - Improved logic
-    for (let i = 0; i < Math.min(lines.length, 6); i++) {
-        const line = lines[i];
+    // ALL CAPS name extraction for medical labels
+    console.log('Starting ALL CAPS name extraction...');
+    
+    // Strategy 1: Look for comma-separated ALL CAPS names (LAST, FIRST)
+    const allCapsCommaPattern = /\b([A-Z]{2,20})\s*,\s*([A-Z]{2,20})\b/;
+    const commaMatch = fullText.match(allCapsCommaPattern);
+    if (commaMatch) {
+        const lastName = commaMatch[1].trim();
+        const firstName = commaMatch[2].trim();
         
-        if (/^[0-9\s\-\./]+$/.test(line)) continue;
-        if (line.length < 3 || line.length > 60) continue;
-        if (/^(MRN|DOB|AGE|ROOM|BIRTH|GENDER|MALE|FEMALE|DATE)/i.test(line)) continue;
-        if (/^\d/.test(line)) continue;
-        if (extractedData.mrn && line.includes(extractedData.mrn)) continue;
-        
-        if (/[a-zA-Z]{2,}/.test(line) && line.split(' ').length <= 5) {
-            extractedData.name = line.replace(/[^\w\s,.-]/g, '').trim();
-            console.log('Found name:', extractedData.name);
-            break;
+        // Skip if it contains numbers
+        if (!/\d/.test(lastName + firstName)) {
+            extractedData.name = `${firstName} ${lastName}`.toLowerCase()
+                .replace(/\b\w/g, l => l.toUpperCase());
+            console.log('Found ALL CAPS comma-separated name:', extractedData.name);
         }
     }
     
-    // Fallback name extraction
+    // Strategy 2: Look for ALL CAPS name patterns (2-3 words)
     if (!extractedData.name) {
-        const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g;
-        const nameMatches = [...fullText.matchAll(namePattern)];
+        const allCapsNamePattern = /\b([A-Z]{2,20}(?:\s+[A-Z]{2,20}){1,2})\b/g;
+        const nameMatches = [...fullText.matchAll(allCapsNamePattern)];
         
         for (const match of nameMatches) {
-            const potentialName = match[1];
-            if (potentialName.length > 3 && potentialName.length < 50 && 
-                !potentialName.match(/^(MRN|DOB|AGE|ROOM|BIRTH|GENDER|MALE|FEMALE|DATE)/i)) {
-                extractedData.name = potentialName;
-                console.log('Fallback name found:', extractedData.name);
+            const candidate = match[1].trim();
+            
+            // Skip if contains numbers or MRN
+            if (/\d/.test(candidate)) continue;
+            if (extractedData.mrn && candidate.includes(extractedData.mrn)) continue;
+            
+            // Skip only specific label prefixes
+            if (/^(DOB|ATT|AKA|FIN|MRN)/.test(candidate)) {
+                console.log('Skipping label field:', candidate);
+                continue;
+            }
+            
+            // Check if it looks like a name (2-3 words, reasonable length)
+            const words = candidate.split(/\s+/);
+            if (words.length >= 2 && words.length <= 3 && candidate.length >= 6 && candidate.length <= 40) {
+                // Convert to proper case
+                extractedData.name = candidate.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                console.log('Found ALL CAPS name:', extractedData.name);
                 break;
             }
+        }
+    }
+    
+    // Strategy 3: Line-by-line search for ALL CAPS names
+    if (!extractedData.name) {
+        for (let i = 0; i < Math.min(lines.length, 8); i++) {
+            const line = lines[i].trim();
+            
+            // Skip obvious non-name lines
+            if (line.length < 6 || line.length > 50) continue;
+            if (/^\d/.test(line)) continue;
+            if (extractedData.mrn && line.includes(extractedData.mrn)) continue;
+            
+            // Skip lines that start with label prefixes
+            if (/^(DOB:|ATT:|AKA:|FIN:|MRN:)/i.test(line)) continue;
+            
+            // Check if line is predominantly ALL CAPS letters
+            const allCapsLetters = (line.match(/[A-Z]/g) || []).length;
+            const totalLetters = (line.match(/[A-Za-z]/g) || []).length;
+            const isAllCaps = totalLetters > 0 && (allCapsLetters / totalLetters) > 0.8;
+            
+            if (isAllCaps && !/\d/.test(line)) {
+                const words = line.split(/\s+/).filter(word => word.length > 1);
+                
+                if (words.length >= 2 && words.length <= 4) {
+                    // Clean and convert to proper case
+                    const cleanName = line.replace(/[^\w\s,.-]/g, '').trim();
+                    if (cleanName.length >= 6) {
+                        extractedData.name = cleanName.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                        console.log('Found ALL CAPS name via line analysis:', extractedData.name);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Strategy 4: Broader ALL CAPS search as final fallback
+    if (!extractedData.name) {
+        const broadAllCapsPattern = /\b([A-Z]{3,15})\s+([A-Z]{3,15})\b/g;
+        const broadMatches = [...fullText.matchAll(broadAllCapsPattern)];
+        
+        for (const match of broadMatches) {
+            const word1 = match[1];
+            const word2 = match[2];
+            const candidate = `${word1} ${word2}`;
+            
+            // Skip if contains numbers or MRN
+            if (/\d/.test(candidate)) continue;
+            if (extractedData.mrn && candidate.includes(extractedData.mrn)) continue;
+            if (candidate.length < 6 || candidate.length > 30) continue;
+            
+            // Skip only specific label prefixes
+            if (/^(DOB|ATT|AKA|FIN|MRN)/.test(candidate)) continue;
+            
+            // Convert to proper case
+            extractedData.name = candidate.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            console.log('Found ALL CAPS name via broad search:', extractedData.name);
+            break;
         }
     }
     
     console.log('Final extracted data:', extractedData);
     displayExtractedInfo();
 }
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+		
 
 function displayExtractedInfo() {
     const extractedDiv = document.getElementById('extractedInfo');
