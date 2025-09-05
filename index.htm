@@ -2366,7 +2366,7 @@ function getChecklistStatus(patient, patientIndex) {
         const statusDot = document.createElement('div');
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
-        statusDot.style.right = '2.5rem'; // Small gap from clipboard button
+        statusDot.style.right = '5rem'; // Small gap from clipboard button
         statusDot.style.top = '50%';
         statusDot.style.transform = 'translateY(-50%)';
         contentContainer.appendChild(statusDot);
