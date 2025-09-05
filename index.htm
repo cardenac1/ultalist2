@@ -1020,85 +1020,7 @@ textarea, input[type="text"] {
 }
 
 
-/* Add these CSS rules to your existing <style> section */
 
-/* Improved camera preview for mobile */
-#cameraPreview {
-    width: 100% !important;
-    max-width: 400px;
-    height: auto;
-    object-fit: cover;
-    border-radius: 0.5rem;
-    border: 2px solid var(--border);
-}
-
-/* Better canvas sizing for high-quality capture */
-#captureCanvas {
-    display: none; /* Hidden canvas for processing */
-}
-
-/* Improved preview image display */
-#previewImage {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.5rem;
-    border: 2px solid var(--border);
-    object-fit: contain;
-}
-
-/* Better camera section layout */
-#cameraSection {
-    text-align: center;
-}
-
-/* Improve button spacing in camera section */
-#cameraSection button {
-    margin: 0.5rem 0.25rem;
-    min-height: 44px;
-    padding: 0.75rem 1rem;
-}
-
-/* Mobile-specific improvements */
-@media (max-width: 768px) {
-    #cameraPreview {
-        max-width: 100%;
-        width: 100%;
-    }
-    
-    #previewImage {
-        max-width: 100%;
-        width: 100%;
-    }
-    
-    /* Larger touch targets for mobile */
-    #cameraSection button,
-    #cropInterface button {
-        min-height: 48px;
-        padding: 0.8rem 1.2rem;
-        font-size: 0.9rem;
-    }
-    
-    /* Better crop canvas sizing on mobile */
-    #cropCanvas {
-        max-width: 100%;
-        width: 100%;
-        height: auto;
-        touch-action: none;
-    }
-}
-
-/* Prevent zoom on double-tap for better UX */
-#cameraPreview,
-#previewImage,
-#cropCanvas {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
   
 
 
@@ -1496,6 +1418,42 @@ select,
 
 
 
+
+
+		/* Improve mobile camera input */
+#labelImageInput {
+    width: 100%;
+}
+
+#labelImageInput[capture] {
+    /* Ensures camera opens on mobile */
+    -webkit-appearance: none;
+}
+
+/* Crop canvas improvements */
+#cropCanvas {
+    max-width: 100%;
+    border: 2px solid var(--primary);
+    border-radius: 0.5rem;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Better mobile touch targets */
+@media (max-width: 768px) {
+    .crop-instructions {
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+    
+    #cropInterface button {
+        min-height: 44px;
+        padding: 0.75rem;
+        margin: 0.25rem;
+    }
+}
 
 
 		
