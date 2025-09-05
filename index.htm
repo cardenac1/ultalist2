@@ -1468,49 +1468,41 @@ select,
 
 
 	<!-- Replace the existing Tesseract script tag with this updated one -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
 	
 <script>
-let tesseractWorker = null;
-let tesseractInitialized = false;
+// Simple function to check if Tesseract is available
+function isTesseractAvailable() {
+    return typeof Tesseract !== 'undefined';
+}
 
-async function initTesseract() {
-    if (tesseractInitialized && tesseractWorker) {
-        return true;
+// Test function for OCR availability
+async function testOCRAvailability() {
+    if (!isTesseractAvailable()) {
+        throw new Error('Tesseract.js not loaded');
     }
     
     try {
-        console.log('Initializing Tesseract worker...');
-        tesseractWorker = await Tesseract.createWorker({
-            logger: m => {
-                if (m.status === 'loading tesseract core') {
-                    console.log('Loading Tesseract core...');
-                }
-            }
-        });
+        // Create a simple test canvas with text
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 50;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 200, 50);
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText('TEST', 50, 30);
         
-        await tesseractWorker.loadLanguage('eng');
-        await tesseractWorker.initialize('eng');
+        const imageData = canvas.toDataURL();
+        const { data: { text } } = await Tesseract.recognize(imageData, 'eng');
         
-        tesseractInitialized = true;
-        console.log('Tesseract worker initialized successfully');
-        return true;
+        return text.toLowerCase().includes('test');
     } catch (error) {
-        console.error('Failed to initialize Tesseract worker:', error);
-        tesseractInitialized = false;
+        console.error('OCR test failed:', error);
         return false;
     }
 }
-
-// Initialize on page load
-window.addEventListener('load', function() {
-    if (typeof Tesseract === 'undefined') {
-        console.error('Tesseract.js failed to load');
-    } else {
-        console.log('Tesseract.js loaded successfully');
-        // Don't initialize immediately, wait for user action
-    }
-});
 </script>
 
 
@@ -8889,7 +8881,10 @@ function rotateImage(degrees) {
     console.log('Image rotated by', degrees, 'degrees. Total rotation:', currentRotation);
 }
 
-async function processCurrentImage() {
+
+
+
+		async function processCurrentImage() {
     console.log('=== Starting image processing ===');
     
     if (!currentImageCanvas) {
@@ -8897,7 +8892,7 @@ async function processCurrentImage() {
         return;
     }
     
-    if (typeof Tesseract === 'undefined') {
+    if (!isTesseractAvailable()) {
         alert('OCR system is not loaded. Please refresh the page and try again.');
         return;
     }
@@ -8907,57 +8902,42 @@ async function processCurrentImage() {
     const progressPercent = document.getElementById('ocrProgressPercent');
     
     progressDiv.style.display = 'block';
-    progressPercent.textContent = 'Initializing OCR...';
-    progressBar.style.width = '10%';
+    progressPercent.textContent = 'Processing image...';
+    progressBar.style.width = '20%';
     
     try {
-        console.log('Initializing Tesseract...');
-        const isReady = await initTesseract();
-        if (!isReady) {
-            throw new Error('OCR engine failed to initialize');
-        }
-        
-        progressPercent.textContent = 'Preparing image...';
-        progressBar.style.width = '30%';
-        
         const imageData = currentImageCanvas.toDataURL('image/png', 1.0);
-        console.log('Image data prepared, size:', imageData.length);
+        console.log('Starting OCR with image data size:', imageData.length);
         
+        progressBar.style.width = '60%';
         progressPercent.textContent = 'Reading text...';
-        progressBar.style.width = '50%';
         
-        console.log('Starting OCR recognition...');
-        const { data: { text, confidence } } = await tesseractWorker.recognize(imageData, {
+        // Use direct recognition without worker management
+        const result = await Tesseract.recognize(imageData, 'eng', {
             logger: m => {
-                console.log('OCR Progress:', m);
                 if (m.status === 'recognizing text') {
-                    const percent = Math.round(50 + (m.progress * 40));
+                    const progress = Math.round(60 + (m.progress * 30));
+                    progressBar.style.width = progress + '%';
                     progressPercent.textContent = `Reading text... ${Math.round(m.progress * 100)}%`;
-                    progressBar.style.width = percent + '%';
                 }
             }
         });
         
-        progressPercent.textContent = 'Processing results...';
-        progressBar.style.width = '95%';
+        progressBar.style.width = '100%';
+        progressPercent.textContent = 'Complete!';
+        
+        const text = result.data.text;
+        const confidence = result.data.confidence;
         
         console.log('OCR completed. Confidence:', confidence);
-        console.log('Raw text length:', text ? text.length : 0);
-        console.log('Raw text:', text);
+        console.log('Extracted text:', text);
         
         lastOCRText = text || '';
         updateDebugInfo();
         
         if (!text || text.trim().length < 3) {
-            throw new Error('No text could be extracted from the image. Try:\n• Rotating the image\n• Taking a clearer photo\n• Ensuring good lighting\n• Making sure text is clearly visible');
+            throw new Error('No text could be extracted from the image. Try:\n• Rotating the image\n• Taking a clearer photo\n• Ensuring good lighting');
         }
-        
-        if (confidence < 30) {
-            console.warn('Low confidence OCR result:', confidence);
-        }
-        
-        progressPercent.textContent = 'Complete!';
-        progressBar.style.width = '100%';
         
         setTimeout(() => {
             progressDiv.style.display = 'none';
@@ -8968,15 +8948,14 @@ async function processCurrentImage() {
     } catch (error) {
         console.error('OCR Error:', error);
         progressDiv.style.display = 'none';
-        
-        let errorMessage = 'Error processing image: ' + error.message;
-        if (error.message.includes('Network') || error.message.includes('fetch')) {
-            errorMessage += '\n\nCheck your internet connection and try again.';
-        }
-        
-        alert(errorMessage);
+        alert('Error processing image: ' + error.message);
     }
 }
+
+
+
+
+		
 
 function extractPatientInfo(text) {
     console.log('=== Extracting patient info ===');
@@ -9162,27 +9141,27 @@ async function testOCRSystem() {
     button.style.background = 'linear-gradient(135deg, var(--secondary), #0891b2)';
     
     try {
-        if (typeof Tesseract === 'undefined') {
+        if (!isTesseractAvailable()) {
             throw new Error('Tesseract.js is not loaded. Check the script tag.');
         }
         
-        console.log('Tesseract is available, testing initialization...');
-        const success = await initTesseract();
+        console.log('Testing OCR functionality...');
+        const success = await testOCRAvailability();
         
         if (success) {
             console.log('OCR system test: SUCCESS');
-            button.textContent = '✅ OCR Working!';
+            button.textContent = 'OCR Working!';
             button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
             alert('OCR system is working correctly!\n\nYou can now upload and process images.');
         } else {
-            throw new Error('OCR initialization failed');
+            throw new Error('OCR test failed - could not recognize test text');
         }
         
     } catch (error) {
         console.error('OCR test error:', error);
-        button.textContent = '❌ OCR Failed';
+        button.textContent = 'OCR Failed';
         button.style.background = 'linear-gradient(135deg, var(--danger), #dc2626)';
-        alert('OCR test failed: ' + error.message + '\n\nCheck browser console for details.');
+        alert('OCR test failed: ' + error.message);
     }
     
     setTimeout(() => {
