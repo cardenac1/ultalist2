@@ -2381,8 +2381,8 @@ function generateStatusIndicator(patient, index) {
         // Display the selected columns vertically with proper left margin
         const columnsDiv = document.createElement('div');
         columnsDiv.style.flex = '1';
-        columnsDiv.style.marginLeft = '1rem'; // THIS IS THE KEY - creates space between dot and text
-        columnsDiv.style.paddingLeft = '0.5rem'; // Additional padding for visual comfort
+        columnsDiv.style.marginLeft = '0.9rem'; // THIS IS THE KEY - creates space between dot and text
+        columnsDiv.style.paddingLeft = '0rem'; // Additional padding for visual comfort
         
         selectedColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
