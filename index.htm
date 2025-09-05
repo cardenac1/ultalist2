@@ -8391,8 +8391,8 @@ function toggleFishboneDisplay() {
     preElement.style.wordWrap = 'break-word';
     
     // Apply red styling while preserving exact spacing
-    preElement.innerHTML = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>');
-    
+preElement.innerHTML = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
+			
     fishboneContent.appendChild(preElement);
             
             // Add missing values if available
