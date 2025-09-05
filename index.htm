@@ -7483,21 +7483,22 @@ function generateFullChecklistHTML() {
         sections[item.section].push({...item, index});
     });
     
-    // Generate HTML for each section
-    Object.entries(sections).forEach(([sectionName, sectionItems]) => {
-        const sectionColor = sectionItems[0].color;
-        
-        html += `
-            <div style="margin-bottom: 1.5rem;">
-                <h4 style="color: ${sectionColor}; margin-bottom: 0.75rem; font-size: 1.1em; font-weight: bold;">
-                    ${sectionName}
-                </h4>
-                <div style="margin-left: 1rem; display: grid; gap: 0.5rem;">`;
+
+// Generate HTML for each section
+Object.entries(sections).forEach(([sectionName, sectionItems]) => {
+    const sectionColor = sectionItems[0].color;
+    
+    html += `
+        <div style="margin-bottom: 0.75rem;">
+            <h4 style="color: ${sectionColor}; margin-bottom: 0.25rem; font-size: 1.1em; font-weight: bold;">
+                ${sectionName}
+            </h4>
+            <div style="margin-left: 1rem; display: grid; gap: 0.15rem;">`;
         
         sectionItems.forEach(item => {
             const isChecked = states[`item_${item.index}`] || false;
             html += `
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; padding: 0.75rem; border-radius: 0.375rem; transition: background 0.2s; border: 1px solid transparent;" 
+    <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 0.25rem; transition: background 0.2s; border: 1px solid transparent;"
                        onmouseover="this.style.background='var(--card-hover)'; this.style.borderColor='${sectionColor}30';" 
                        onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
                     <input type="checkbox" ${isChecked ? 'checked' : ''} 
