@@ -1467,46 +1467,34 @@ select,
 
 
 
-		.status-indicator {
-    width: 40px;
-    height: 40px;
+
+
+
+
+
+		.status-dot {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.status-dot:hover {
+    transform: scale(1.3);
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    min-width: 40px;
-}
-
-.status-indicator:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-}
-
-.checklist-status {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-}
-
-.priority-status {
-    background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
-    .status-indicator {
-        width: 35px;
-        height: 35px;
-        min-width: 35px;
-    }
-    
-    .row-item {
-        padding-right: 5rem; /* Adjust for smaller status indicator */
+    .status-dot {
+        width: 10px;
+        height: 10px;
     }
 }
-
+		
 
 
 
@@ -1977,23 +1965,43 @@ const helpContent = {
             }
         }
 
-        function loadFromLocalStorage() {
-            try {
-                const saved = localStorage.getItem('ultimatePatientList');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.patients && Array.isArray(parsed.patients)) {
-                        patientData = parsed.patients;
-                        displayRows();
-                        populateColumnSelector();
-                        populateColumnSelect();
-                        updateCensus();
-                    }
-                }
-            } catch (e) {
-                console.error('Error loading from localStorage:', e);
+
+
+
+
+
+
+
+
+
+		function loadFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem('ultimatePatientList');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.patients && Array.isArray(parsed.patients)) {
+                patientData = parsed.patients;
+                displayRows();
+                populateColumnSelector();
+                populateColumnSelect();
+                updateCensus();
             }
         }
+        
+        // LOAD CHECKLIST STATES
+        const savedChecklists = localStorage.getItem('checklistStates');
+        if (savedChecklists) {
+            tempChecklistStates = JSON.parse(savedChecklists);
+        }
+    } catch (e) {
+        console.error('Error loading from localStorage:', e);
+    }
+}
+
+
+
+
+		
 
 
 
@@ -2204,38 +2212,80 @@ function getChecklistStatus(patient, patientIndex) {
     return { completed, total: totalItems, percentage };
 }
 
-// Function to get priority-based status
-function getPriorityStatus(patient) {
+
+
+
+
+
+
+
+
+
+
+		function getPriorityStatus(patient) {
     const priority = patient.Priority || '';
     
     if (!priority.trim()) {
-        return 'none'; // No priority set
+        return { color: '#6b7280', title: 'No priority set' }; // Gray
     }
     
     const priorityNum = parseInt(priority);
     if (!isNaN(priorityNum)) {
-        if (priorityNum === 1) return 'high';
-        if (priorityNum === 2) return 'medium'; 
-        if (priorityNum >= 3) return 'low';
+        if (priorityNum === 0) {
+            return { color: '#10b981', title: `Priority ${priorityNum} - Complete` }; // Green
+        } else if (priorityNum === 1) {
+            return { color: '#ef4444', title: `Priority ${priorityNum} - Urgent` }; // Red
+        } else if (priorityNum === 2) {
+            return { color: '#f97316', title: `Priority ${priorityNum} - High` }; // Orange
+        } else if (priorityNum === 3) {
+            return { color: '#f59e0b', title: `Priority ${priorityNum} - Medium-High` }; // Amber
+        } else if (priorityNum === 4) {
+            return { color: '#eab308', title: `Priority ${priorityNum} - Medium` }; // Yellow
+        } else if (priorityNum === 5) {
+            return { color: '#84cc16', title: `Priority ${priorityNum} - Medium-Low` }; // Lime
+        } else if (priorityNum === 6) {
+            return { color: '#22c55e', title: `Priority ${priorityNum} - Low-Medium` }; // Light Green
+        } else if (priorityNum === 7) {
+            return { color: '#06b6d4', title: `Priority ${priorityNum} - Low` }; // Cyan
+        } else if (priorityNum === 8) {
+            return { color: '#3b82f6', title: `Priority ${priorityNum} - Very Low` }; // Blue
+        } else if (priorityNum === 9) {
+            return { color: '#8b5cf6', title: `Priority ${priorityNum} - Minimal` }; // Purple
+        } else if (priorityNum === 10) {
+            return { color: '#a855f7', title: `Priority ${priorityNum} - Lowest` }; // Violet
+        } else if (priorityNum > 10) {
+            return { color: '#6b7280', title: `Priority ${priorityNum} - Out of range` }; // Gray
+        }
     }
     
-    // Text-based priority
+    // Text-based priority fallback
     const priorityLower = priority.toLowerCase();
-    if (priorityLower.includes('high') || priorityLower.includes('urgent') || priorityLower.includes('stat')) {
-        return 'high';
-    }
-    if (priorityLower.includes('medium') || priorityLower.includes('moderate')) {
-        return 'medium';
-    }
-    if (priorityLower.includes('low') || priorityLower.includes('routine')) {
-        return 'low';
+    if (priorityLower.includes('done') || priorityLower.includes('complete')) {
+        return { color: '#10b981', title: `${priority} - Complete` }; // Green
+    } else if (priorityLower.includes('urgent') || priorityLower.includes('stat')) {
+        return { color: '#ef4444', title: `${priority} - Urgent` }; // Red
+    } else if (priorityLower.includes('high')) {
+        return { color: '#f97316', title: `${priority} - High` }; // Orange
+    } else if (priorityLower.includes('medium')) {
+        return { color: '#f59e0b', title: `${priority} - Medium` }; // Amber
+    } else if (priorityLower.includes('low')) {
+        return { color: '#22c55e', title: `${priority} - Low` }; // Light Green
     }
     
-    return 'medium'; // Default for any other text
+    return { color: '#6b7280', title: `${priority}` }; // Default gray
 }
 
-// Function to generate status indicator HTML
-function generateStatusIndicator(patient, index) {
+
+
+
+
+
+
+
+
+
+
+		function generateStatusIndicator(patient, index) {
     const hasChecklist = patient.Type === 'Consult' || tempChecklistStates[`${index}_${patient.Name || 'unnamed'}`];
     
     if (hasChecklist) {
@@ -2243,53 +2293,25 @@ function generateStatusIndicator(patient, index) {
         const status = getChecklistStatus(patient, index);
         const isComplete = status.percentage === 100;
         const color = isComplete ? '#10b981' : '#ef4444'; // green : red
-        const title = `Checklist: ${status.completed}/${status.total} (${status.percentage}%) - Click for details`;
+        const title = `Checklist: ${status.completed}/${status.total} (${status.percentage}%)`;
         
         return `
-            <div class="status-indicator checklist-status" 
+            <div class="status-dot" 
                  style="background: ${color};" 
-                 title="${title}"
-                 onclick="event.stopPropagation(); showChecklistStatus(${index})">
-                <span style="color: white; font-size: 0.7rem; font-weight: bold;">
-                    ${status.percentage}%
-                </span>
+                 title="${title}">
             </div>`;
     } else {
         // Priority-based status
         const priorityStatus = getPriorityStatus(patient);
-        let color = '#6b7280'; // Default gray
-        let symbol = '○';
-        let title = 'No priority set';
-        
-        switch(priorityStatus) {
-            case 'high':
-                color = '#ef4444';
-                symbol = '●';
-                title = `High Priority: ${patient.Priority}`;
-                break;
-            case 'medium':
-                color = '#f59e0b';
-                symbol = '●';
-                title = `Medium Priority: ${patient.Priority}`;
-                break;
-            case 'low':
-                color = '#10b981';
-                symbol = '●';
-                title = `Low Priority: ${patient.Priority}`;
-                break;
-        }
         
         return `
-            <div class="status-indicator priority-status" 
-                 style="background: ${color};" 
-                 title="${title}"
-                 onclick="event.stopPropagation(); showPriorityStatus(${index})">
-                <span style="color: white; font-size: 0.8rem; font-weight: bold;">
-                    ${symbol}
-                </span>
+            <div class="status-dot" 
+                 style="background: ${priorityStatus.color};" 
+                 title="${priorityStatus.title}">
             </div>`;
     }
 }
+		
 
 
 
@@ -7457,6 +7479,13 @@ function updateFullChecklist(patientKey, index, checked, totalItems) {
     }
     tempChecklistStates[patientKey][`item_${index}`] = checked;
     
+    // SAVE TO LOCALSTORAGE FOR PERSISTENCE
+    try {
+        localStorage.setItem('checklistStates', JSON.stringify(tempChecklistStates));
+    } catch (e) {
+        console.error('Failed to save checklist states:', e);
+    }
+    
     // Update progress display
     const states = tempChecklistStates[patientKey];
     const completed = Object.values(states).filter(Boolean).length;
@@ -7468,7 +7497,6 @@ function updateFullChecklist(patientKey, index, checked, totalItems) {
     if (progressBar) progressBar.style.width = `${progress}%`;
     if (progressText) progressText.textContent = `${completed}/${totalItems} (${progress}%)`;
 }
-
 
 
 
