@@ -2170,7 +2170,7 @@ function getChecklistStatus(patient, patientIndex) {
     const priority = patient.Priority || '';
     
     if (!priority.trim()) {
-        return { color: '#6b7280', title: 'No priority set' }; // Gray
+        return { color: 'var(--card-bg)', title: 'No priority set' }; // Gray
     }
     
     const priorityNum = parseInt(priority);
@@ -2216,7 +2216,7 @@ function getChecklistStatus(patient, patientIndex) {
         return { color: '#22c55e', title: `${priority} - Low` }; // Light Green
     }
     
-    return { color: '#6b7280', title: `${priority}` }; // Default gray
+    return { color: 'var(--card-bg)', title: `${priority}` }; // Default gray
 }
 
 
