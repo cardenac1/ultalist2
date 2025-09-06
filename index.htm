@@ -9026,8 +9026,7 @@ function rotateImage(degrees) {
         
         // Skip if it contains numbers
         if (!/\d/.test(lastName + firstName)) {
-            extractedData.name = `${firstName} ${lastName}`.toLowerCase()
-                .replace(/\b\w/g, l => l.toUpperCase());
+            extractedData.name = `${firstName} ${lastName}`;
             console.log('Found ALL CAPS comma-separated name:', extractedData.name);
         }
     }
@@ -9053,8 +9052,7 @@ function rotateImage(degrees) {
             // Check if it looks like a name (2-3 words, reasonable length)
             const words = candidate.split(/\s+/);
             if (words.length >= 2 && words.length <= 3 && candidate.length >= 6 && candidate.length <= 40) {
-                // Convert to proper case
-                extractedData.name = candidate.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                extractedData.name = candidate;
                 console.log('Found ALL CAPS name:', extractedData.name);
                 break;
             }
@@ -9083,10 +9081,10 @@ function rotateImage(degrees) {
                 const words = line.split(/\s+/).filter(word => word.length > 1);
                 
                 if (words.length >= 2 && words.length <= 4) {
-                    // Clean and convert to proper case
+                    // Clean but keep original case
                     const cleanName = line.replace(/[^\w\s,.-]/g, '').trim();
                     if (cleanName.length >= 6) {
-                        extractedData.name = cleanName.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                        extractedData.name = cleanName;
                         console.log('Found ALL CAPS name via line analysis:', extractedData.name);
                         break;
                     }
@@ -9113,8 +9111,7 @@ function rotateImage(degrees) {
             // Skip only specific label prefixes
             if (/^(DOB|ATT|AKA|FIN|MRN)/.test(candidate)) continue;
             
-            // Convert to proper case
-            extractedData.name = candidate.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            extractedData.name = candidate;
             console.log('Found ALL CAPS name via broad search:', extractedData.name);
             break;
         }
