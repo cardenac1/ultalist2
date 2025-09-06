@@ -1378,9 +1378,18 @@ select,
 
 
 
-		/* First three rows button styling */
+/* First three rows button styling */
 .first-three-btn {
     transition: all 0.2s ease;
+    font-size: inherit !important; /* Match parent font size */
+    font-family: inherit !important; /* Match parent font family */
+    line-height: inherit !important; /* Match parent line height */
+}
+
+.first-three-btn span {
+    font-size: inherit !important; /* Ensure spans inherit the size */
+    font-family: inherit !important;
+    line-height: inherit !important;
 }
 
 .first-three-btn:hover {
@@ -1392,8 +1401,6 @@ select,
     background: var(--success) !important;
     border-color: var(--success) !important;
 }
-
-		
 
 
     </style>
@@ -2335,9 +2342,15 @@ function generateStatusIndicator(patient, index) {
         firstThreeButton.style.cursor = 'pointer';
         firstThreeButton.style.color = 'inherit';
         firstThreeButton.style.alignSelf = 'flex-start';
+        
+        // Store the column data on the button element for the reset function
+        firstThreeButton.patientData = patient;
+        firstThreeButton.columnIndexes = selectedColumns.slice(0, 3);
+        firstThreeButton.colorClasses = colors;
+        
         firstThreeButton.onclick = (e) => {
             e.stopPropagation();
-            copyPatientInfo(patient, firstThreeButton);
+            copyPatientInfoImproved(firstThreeButton);
         };
         
         // Add first 3 selected columns to the button (displayed as rows)
@@ -7253,7 +7266,8 @@ function copyStaffPresentation() {
 
 	    
 	
-function copyPatientInfo(patient, button) {
+function copyPatientInfoImproved(button) {
+    const patient = button.patientData;
     const name = patient.Name || 'Unknown';
     const rm = patient.RM || 'Unknown';
     const mrn = patient.MRN || 'Unknown';
@@ -7261,19 +7275,19 @@ function copyPatientInfo(patient, button) {
     // Format the text to copy
     const textToCopy = `${name}\n${rm}\n${mrn}`;
     
-    // Store the original content AND create a function to rebuild it
+    // Store data needed for rebuild
+    const columnIndexes = button.columnIndexes;
+    const colorClasses = button.colorClasses;
+    
     const rebuildOriginalContent = () => {
-        // Clear the button first
         button.innerHTML = '';
         
-        // Rebuild the spans exactly as they were created
-        const firstThreeColumns = selectedColumns.slice(0, 3);
-        firstThreeColumns.forEach((colIndex, idx) => {
+        columnIndexes.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
             const value = patient[header] || '';
             if (value) {
                 const span = document.createElement('span');
-                span.className = colors[idx % colors.length];
+                span.className = colorClasses[idx % colorClasses.length];
                 span.textContent = value;
                 span.style.display = 'block';
                 button.appendChild(span);
@@ -7283,17 +7297,15 @@ function copyPatientInfo(patient, button) {
     
     // Copy to clipboard
     navigator.clipboard.writeText(textToCopy).then(() => {
-        // Success feedback
         button.innerHTML = '<span style="color: var(--success); font-weight: bold;">COPIED!</span>';
         button.classList.add('copied');
         
-        // Reset after 2 seconds
         setTimeout(() => {
             rebuildOriginalContent();
             button.classList.remove('copied');
         }, 2000);
     }).catch(err => {
-        // Fallback for older browsers
+        // Fallback
         const textArea = document.createElement('textarea');
         textArea.value = textToCopy;
         textArea.style.position = 'fixed';
@@ -7317,7 +7329,6 @@ function copyPatientInfo(patient, button) {
         document.body.removeChild(textArea);
     });
 }
-
 
     
 
