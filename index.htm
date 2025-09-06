@@ -7304,7 +7304,7 @@ function copyPatientInfoImproved(button) {
         setTimeout(() => {
             rebuildOriginalContent();
             button.classList.remove('copied');
-        }, 2000);
+        }, 500);
     }).catch(err => {
         // Fallback
         const textArea = document.createElement('textarea');
