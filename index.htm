@@ -646,29 +646,7 @@ textarea, input[type="text"] {
 }
 
 
-/* Name/Room clickable button */
-.name-room-btn {
-    transition: all 0.2s ease;
-    border-radius: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    margin: -0.25rem -0.5rem;
-}
 
-.name-room-btn:hover {
-    background: var(--card-hover) !important;
-    transform: translateX(2px);
-}
-
-.name-room-btn:active {
-    background: var(--primary) !important;
-    transform: translateX(0px);
-}
-
-/* Remove padding adjustment for row items since no clipboard button */
-.row-item {
-    padding-right: 1rem; /* Reduced since status dot is smaller */
-}
-	  
 
 
 
@@ -1397,6 +1375,24 @@ select,
 }
 
 		
+
+
+
+		/* First three rows button styling */
+.first-three-btn {
+    transition: all 0.2s ease;
+}
+
+.first-three-btn:hover {
+    background: var(--card-hover) !important;
+    border-color: var(--primary) !important;
+}
+
+.first-three-btn.copied {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
 		
 
 
@@ -2311,7 +2307,7 @@ function generateStatusIndicator(patient, index) {
 
 
 
-  function displayRows() {
+ function displayRows() {
     const rowList = document.getElementById('rowList');
     rowList.innerHTML = '';
     
@@ -2323,63 +2319,58 @@ function generateStatusIndicator(patient, index) {
         const contentContainer = document.createElement('div');
         contentContainer.style.width = '100%';
         contentContainer.style.display = 'flex';
-        contentContainer.style.alignItems = 'flex-start';
+        contentContainer.style.flexDirection = 'column';
         contentContainer.style.position = 'relative';
         contentContainer.style.paddingRight = '2.5rem'; // Space for status dot
         
-        // Create Name/Room button (only first 2 selected columns, limited width)
-        const nameRoomButton = document.createElement('button');
-        nameRoomButton.className = 'name-room-btn';
-        nameRoomButton.style.width = '180px'; // Fixed width - doesn't span full row
-        nameRoomButton.style.minWidth = '180px';
-        nameRoomButton.style.textAlign = 'left';
-        nameRoomButton.style.background = 'transparent';
-        nameRoomButton.style.border = 'none';
-        nameRoomButton.style.padding = '0.25rem 0.5rem';
-        nameRoomButton.style.cursor = 'pointer';
-        nameRoomButton.style.color = 'inherit';
-        nameRoomButton.style.borderRadius = '0.25rem';
-        nameRoomButton.onclick = (e) => {
+        // Create button containing first 3 rows
+        const firstThreeButton = document.createElement('button');
+        firstThreeButton.className = 'first-three-btn';
+        firstThreeButton.style.width = 'fit-content';
+        firstThreeButton.style.textAlign = 'left';
+        firstThreeButton.style.background = 'transparent';
+        firstThreeButton.style.border = '1px solid transparent';
+        firstThreeButton.style.borderRadius = '0.25rem';
+        firstThreeButton.style.padding = '0.25rem 0.5rem';
+        firstThreeButton.style.cursor = 'pointer';
+        firstThreeButton.style.color = 'inherit';
+        firstThreeButton.style.alignSelf = 'flex-start';
+        firstThreeButton.onclick = (e) => {
             e.stopPropagation();
-            copyPatientInfo(patient, nameRoomButton);
+            copyPatientInfo(patient, firstThreeButton);
         };
         
-        // Only show first 2 selected columns (typically Name and Room) in the button
-        const buttonColumns = selectedColumns.slice(0, 2);
-        buttonColumns.forEach((colIndex, idx) => {
+        // Add first 3 selected columns to the button (displayed as rows)
+        const firstThreeColumns = selectedColumns.slice(0, 3);
+        firstThreeColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
             const value = patient[header] || '';
             if (value) {
                 const span = document.createElement('span');
                 span.className = colors[idx % colors.length];
                 span.textContent = value;
-                span.style.display = 'block';
-                nameRoomButton.appendChild(span);
+                span.style.display = 'block'; // Each on its own row
+                firstThreeButton.appendChild(span);
             }
         });
         
-        contentContainer.appendChild(nameRoomButton);
+        contentContainer.appendChild(firstThreeButton);
         
-        // Show remaining columns as regular text (not in button)
-        if (selectedColumns.length > 2) {
-            const remainingColumnsDiv = document.createElement('div');
-            remainingColumnsDiv.style.flex = '1';
-            remainingColumnsDiv.style.paddingLeft = '1rem';
-            
-            const remainingColumns = selectedColumns.slice(2);
+        // Add remaining columns as regular text rows (not in button)
+        if (selectedColumns.length > 3) {
+            const remainingColumns = selectedColumns.slice(3);
             remainingColumns.forEach((colIndex, idx) => {
                 const header = MASTER_HEADERS[colIndex];
                 const value = patient[header] || '';
                 if (value) {
                     const span = document.createElement('span');
-                    span.className = colors[(idx + 2) % colors.length];
+                    span.className = colors[(idx + 3) % colors.length];
                     span.textContent = value;
-                    span.style.display = 'block';
-                    remainingColumnsDiv.appendChild(span);
+                    span.style.display = 'block'; // Each on its own row
+                    span.style.marginLeft = '0.5rem'; // Slight indent to show they're separate
+                    contentContainer.appendChild(span);
                 }
             });
-            
-            contentContainer.appendChild(remainingColumnsDiv);
         }
         
         // Add status dot on the RIGHT side
@@ -2387,8 +2378,7 @@ function generateStatusIndicator(patient, index) {
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
         statusDot.style.right = '0.25rem';
-        statusDot.style.top = '50%';
-        statusDot.style.transform = 'translateY(-50%)';
+        statusDot.style.top = '0.5rem';
         statusDot.style.cursor = 'pointer';
         statusDot.style.zIndex = '10';
         statusDot.title = 'Click to change status';
