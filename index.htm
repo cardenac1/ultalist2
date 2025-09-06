@@ -7261,8 +7261,25 @@ function copyPatientInfo(patient, button) {
     // Format the text to copy
     const textToCopy = `${name}\n${rm}\n${mrn}`;
     
-    // Store the original content before changing it
-    const originalContent = button.innerHTML;
+    // Store the original content AND create a function to rebuild it
+    const rebuildOriginalContent = () => {
+        // Clear the button first
+        button.innerHTML = '';
+        
+        // Rebuild the spans exactly as they were created
+        const firstThreeColumns = selectedColumns.slice(0, 3);
+        firstThreeColumns.forEach((colIndex, idx) => {
+            const header = MASTER_HEADERS[colIndex];
+            const value = patient[header] || '';
+            if (value) {
+                const span = document.createElement('span');
+                span.className = colors[idx % colors.length];
+                span.textContent = value;
+                span.style.display = 'block';
+                button.appendChild(span);
+            }
+        });
+    };
     
     // Copy to clipboard
     navigator.clipboard.writeText(textToCopy).then(() => {
@@ -7272,7 +7289,7 @@ function copyPatientInfo(patient, button) {
         
         // Reset after 2 seconds
         setTimeout(() => {
-            button.innerHTML = originalContent; // Restore original spans
+            rebuildOriginalContent();
             button.classList.remove('copied');
         }, 2000);
     }).catch(err => {
@@ -7290,7 +7307,7 @@ function copyPatientInfo(patient, button) {
             button.classList.add('copied');
             
             setTimeout(() => {
-                button.innerHTML = originalContent; // Restore original spans
+                rebuildOriginalContent();
                 button.classList.remove('copied');
             }, 2000);
         } catch (err) {
