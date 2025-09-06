@@ -646,40 +646,28 @@ textarea, input[type="text"] {
 }
 
 
-	    /* Clipboard Button */
-.clipboard-btn {
-    position: absolute;
-    right: 2px;  /* Small gap from edge */
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--card-bg);
-    border: 1px solid var(--border);  /* Thinner border */
+/* Name/Room clickable button */
+.name-room-btn {
+    transition: all 0.2s ease;
     border-radius: 0.25rem;
-    padding: 0.25rem;  /* Reduced padding */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;  /* Slightly smaller icon */
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;  /* Smaller minimum width */
-    min-height: 30px;  /* Smaller minimum height */
-}
-	    
-
-.clipboard-btn:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    padding: 0.25rem 0.5rem;
+    margin: -0.25rem -0.5rem;
 }
 
-.clipboard-btn.copied {
-    background: var(--success);
-    border-color: var(--success);
+.name-room-btn:hover {
+    background: var(--card-hover) !important;
+    transform: translateX(2px);
 }
 
+.name-room-btn:active {
+    background: var(--primary) !important;
+    transform: translateX(0px);
+}
+
+/* Remove padding adjustment for row items since no clipboard button */
+.row-item {
+    padding-right: 1rem; /* Reduced since status dot is smaller */
+}
 	  
 
 
@@ -1297,19 +1285,6 @@ select,
 
 
 
-
-.clipboard-btn {
-    min-width: 28px;  /* Smaller on mobile */
-    min-height: 28px;
-    padding: 0.2rem;  /* Less padding */
-    font-size: 0.9rem;  /* Slightly smaller icon */
-    right: 2px;  /* Small gap from edge */
-}
-/* Adjust row item padding to make room for clipboard button */
-.row-item {
-        padding-right: 1rem; /* Less padding needed with smaller button */
-
-}
 
 
 		
@@ -2350,13 +2325,43 @@ function generateStatusIndicator(patient, index) {
         contentContainer.style.display = 'flex';
         contentContainer.style.alignItems = 'center';
         contentContainer.style.position = 'relative';
-        contentContainer.style.paddingRight = '3.5rem'; // Space for clipboard button
+        contentContainer.style.paddingRight = '3rem'; // Space for status dot
         
-        // Add status dot at the beginning (left side)
+        // Create clickable name/room button (replaces columns div)
+        const nameRoomButton = document.createElement('button');
+        nameRoomButton.className = 'name-room-btn';
+        nameRoomButton.style.flex = '1';
+        nameRoomButton.style.textAlign = 'left';
+        nameRoomButton.style.background = 'transparent';
+        nameRoomButton.style.border = 'none';
+        nameRoomButton.style.padding = '0';
+        nameRoomButton.style.cursor = 'pointer';
+        nameRoomButton.style.color = 'inherit';
+        nameRoomButton.onclick = (e) => {
+            e.stopPropagation();
+            copyPatientInfo(patient, nameRoomButton);
+        };
+        
+        // Display the selected columns vertically inside the button
+        selectedColumns.forEach((colIndex, idx) => {
+            const header = MASTER_HEADERS[colIndex];
+            const value = patient[header] || '';
+            if (value) {
+                const span = document.createElement('span');
+                span.className = colors[idx % colors.length];
+                span.textContent = value;
+                span.style.display = 'block';
+                nameRoomButton.appendChild(span);
+            }
+        });
+        
+        contentContainer.appendChild(nameRoomButton);
+        
+        // Add status dot on the RIGHT side (where clipboard button was)
         const statusDot = document.createElement('div');
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
-        statusDot.style.left = '0rem'; // Left justified
+        statusDot.style.right = '0.5rem'; // Right side
         statusDot.style.top = '50%';
         statusDot.style.transform = 'translateY(-50%)';
         statusDot.style.cursor = 'pointer';
@@ -2368,48 +2373,16 @@ function generateStatusIndicator(patient, index) {
         };
         contentContainer.appendChild(statusDot);
         
-        // Display the selected columns vertically with proper left margin
-        const columnsDiv = document.createElement('div');
-        columnsDiv.style.flex = '1';
-        columnsDiv.style.marginLeft = '1.1rem'; // THIS IS THE KEY - creates space between dot and text
-        columnsDiv.style.paddingLeft = '0rem'; // Additional padding for visual comfort
-        
-        selectedColumns.forEach((colIndex, idx) => {
-            const header = MASTER_HEADERS[colIndex];
-            const value = patient[header] || '';
-            if (value) {
-                const span = document.createElement('span');
-                span.className = colors[idx % colors.length];
-                span.textContent = value;
-                span.style.display = 'block';
-                columnsDiv.appendChild(span);
-            }
-        });
-        
-        contentContainer.appendChild(columnsDiv);
-        
-        // Add clipboard button
-        const clipboardBtn = document.createElement('button');
-        clipboardBtn.className = 'clipboard-btn';
-        clipboardBtn.innerHTML = '📋';
-        clipboardBtn.title = 'Copy patient info';
-        clipboardBtn.onclick = (e) => {
-            e.stopPropagation();
-            copyPatientInfo(patient, clipboardBtn);
-        };
-        
-        contentContainer.appendChild(clipboardBtn);
         listItem.appendChild(contentContainer);
         
-        // Make the row clickable
-        columnsDiv.onclick = () => showDetails(index);
+        // Make the button double-clickable to show details
+        nameRoomButton.ondblclick = () => showDetails(index);
         
         rowList.appendChild(listItem);
     });
     
     updateCensus();
 }
-
 
 
 
