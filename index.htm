@@ -7322,7 +7322,7 @@ function copyPatientInfoImproved(button) {
             setTimeout(() => {
                 rebuildOriginalContent();
                 button.classList.remove('copied');
-            }, 2000);
+            }, 500);
         } catch (err) {
             alert('Failed to copy. Please copy manually: ' + textToCopy);
         }
