@@ -2323,27 +2323,30 @@ function generateStatusIndicator(patient, index) {
         const contentContainer = document.createElement('div');
         contentContainer.style.width = '100%';
         contentContainer.style.display = 'flex';
-        contentContainer.style.alignItems = 'center';
+        contentContainer.style.alignItems = 'flex-start';
         contentContainer.style.position = 'relative';
-        contentContainer.style.paddingRight = '3rem'; // Space for status dot
+        contentContainer.style.paddingRight = '2.5rem'; // Space for status dot
         
-        // Create clickable name/room button (replaces columns div)
+        // Create Name/Room button (only first 2 selected columns, limited width)
         const nameRoomButton = document.createElement('button');
         nameRoomButton.className = 'name-room-btn';
-        nameRoomButton.style.flex = '1';
+        nameRoomButton.style.width = '180px'; // Fixed width - doesn't span full row
+        nameRoomButton.style.minWidth = '180px';
         nameRoomButton.style.textAlign = 'left';
         nameRoomButton.style.background = 'transparent';
         nameRoomButton.style.border = 'none';
-        nameRoomButton.style.padding = '0';
+        nameRoomButton.style.padding = '0.25rem 0.5rem';
         nameRoomButton.style.cursor = 'pointer';
         nameRoomButton.style.color = 'inherit';
+        nameRoomButton.style.borderRadius = '0.25rem';
         nameRoomButton.onclick = (e) => {
             e.stopPropagation();
             copyPatientInfo(patient, nameRoomButton);
         };
         
-        // Display the selected columns vertically inside the button
-        selectedColumns.forEach((colIndex, idx) => {
+        // Only show first 2 selected columns (typically Name and Room) in the button
+        const buttonColumns = selectedColumns.slice(0, 2);
+        buttonColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
             const value = patient[header] || '';
             if (value) {
@@ -2357,11 +2360,33 @@ function generateStatusIndicator(patient, index) {
         
         contentContainer.appendChild(nameRoomButton);
         
-        // Add status dot on the RIGHT side (where clipboard button was)
+        // Show remaining columns as regular text (not in button)
+        if (selectedColumns.length > 2) {
+            const remainingColumnsDiv = document.createElement('div');
+            remainingColumnsDiv.style.flex = '1';
+            remainingColumnsDiv.style.paddingLeft = '1rem';
+            
+            const remainingColumns = selectedColumns.slice(2);
+            remainingColumns.forEach((colIndex, idx) => {
+                const header = MASTER_HEADERS[colIndex];
+                const value = patient[header] || '';
+                if (value) {
+                    const span = document.createElement('span');
+                    span.className = colors[(idx + 2) % colors.length];
+                    span.textContent = value;
+                    span.style.display = 'block';
+                    remainingColumnsDiv.appendChild(span);
+                }
+            });
+            
+            contentContainer.appendChild(remainingColumnsDiv);
+        }
+        
+        // Add status dot on the RIGHT side
         const statusDot = document.createElement('div');
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
-        statusDot.style.right = '0.5rem'; // Right side
+        statusDot.style.right = '0.25rem';
         statusDot.style.top = '50%';
         statusDot.style.transform = 'translateY(-50%)';
         statusDot.style.cursor = 'pointer';
@@ -2375,8 +2400,8 @@ function generateStatusIndicator(patient, index) {
         
         listItem.appendChild(contentContainer);
         
-        // Make the button double-clickable to show details
-        nameRoomButton.ondblclick = () => showDetails(index);
+        // Make the entire row clickable for details
+        listItem.onclick = () => showDetails(index);
         
         rowList.appendChild(listItem);
     });
