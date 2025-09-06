@@ -1404,21 +1404,28 @@ select,
 
 
 
-		@media (max-width: 768px) {
-   
-    .first-three-btn span {
-        display: block !important;
-        line-height: 1.2 !important;
-        margin-bottom: 2px !important;
+	@media (max-width: 768px) {
+    
+    /* Force first three button spans to display as separate lines */
+    .first-three-btn {
+        white-space: normal !important;
+        text-align: left !important;
+        line-height: 1.3 !important;
+        height: auto !important;
+        min-height: 60px !important;
+        padding: 0.5rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }
     
-    .first-three-btn {
-        text-align: left !important;
+    .first-three-btn span {
+        display: block !important;
+        width: 100% !important;
+        line-height: 1.2 !important;
+        margin-bottom: 3px !important;
         white-space: normal !important;
-        line-height: normal !important;
-        height: auto !important;
-        min-height: 44px !important;
-        padding: 0.5rem !important;
+        word-wrap: break-word !important;
     }
 }
 
@@ -2353,18 +2360,21 @@ function generateStatusIndicator(patient, index) {
         contentContainer.style.position = 'relative';
         contentContainer.style.paddingRight = '2.5rem'; // Space for status dot
         
-        // Create button containing first 3 rows
-        const firstThreeButton = document.createElement('button');
-        firstThreeButton.className = 'first-three-btn';
-        firstThreeButton.style.width = 'fit-content';
-        firstThreeButton.style.textAlign = 'left';
-        firstThreeButton.style.background = 'transparent';
-        firstThreeButton.style.border = '1px solid transparent';
-        firstThreeButton.style.borderRadius = '0.25rem';
-        firstThreeButton.style.padding = '0.25rem 0.5rem';
-        firstThreeButton.style.cursor = 'pointer';
-        firstThreeButton.style.color = 'inherit';
-        firstThreeButton.style.alignSelf = 'flex-start';
+		  // Create button containing first 3 rows
+		const firstThreeButton = document.createElement('button');
+		firstThreeButton.className = 'first-three-btn';
+		firstThreeButton.style.width = 'fit-content';
+		firstThreeButton.style.textAlign = 'left';
+		firstThreeButton.style.background = 'transparent';
+		firstThreeButton.style.border = '1px solid transparent';
+		firstThreeButton.style.borderRadius = '0.25rem';
+		firstThreeButton.style.padding = '0.25rem 0.5rem';
+		firstThreeButton.style.cursor = 'pointer';
+		firstThreeButton.style.color = 'inherit';
+		firstThreeButton.style.alignSelf = 'flex-start';
+		firstThreeButton.style.display = 'flex';           // ← Add this
+		firstThreeButton.style.flexDirection = 'column';   // ← Add this
+		firstThreeButton.style.whiteSpace = 'normal';      // ← Add this
         
         // Store the column data on the button element for the reset function
         firstThreeButton.patientData = patient;
