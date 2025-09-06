@@ -2391,7 +2391,8 @@ function generateStatusIndicator(patient, index) {
         statusDot.innerHTML = generateStatusIndicator(patient, index);
         statusDot.style.position = 'absolute';
         statusDot.style.right = '0.25rem';
-        statusDot.style.top = '0.5rem';
+        statusDot.style.top = '50%';
+		statusDot.style.transform = 'translateY(-50%)';
         statusDot.style.cursor = 'pointer';
         statusDot.style.zIndex = '10';
         statusDot.title = 'Click to change status';
