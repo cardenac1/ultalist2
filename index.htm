@@ -7271,35 +7271,19 @@ function copyPatientInfo(patient, button) {
     // Format the text to copy
     const textToCopy = `${name}\n${rm}\n${mrn}`;
     
+    // Store the original content before changing it
+    const originalContent = button.innerHTML;
+    
     // Copy to clipboard
     navigator.clipboard.writeText(textToCopy).then(() => {
         // Success feedback
-        button.innerHTML = '✅';
+        button.innerHTML = '<span style="color: var(--success); font-weight: bold;">COPIED!</span>';
         button.classList.add('copied');
-        
-        // Show tooltip
-        const tooltip = document.createElement('div');
-        tooltip.style.position = 'absolute';
-        tooltip.style.bottom = '100%';
-        tooltip.style.right = '0';
-        tooltip.style.marginBottom = '5px';
-        tooltip.style.background = 'var(--success)';
-        tooltip.style.color = 'white';
-        tooltip.style.padding = '0.5rem';
-        tooltip.style.borderRadius = '0.25rem';
-        tooltip.style.fontSize = '0.8rem';
-        tooltip.style.whiteSpace = 'nowrap';
-        tooltip.style.zIndex = '1000';
-        tooltip.textContent = 'Copied!';
-        button.appendChild(tooltip);
         
         // Reset after 2 seconds
         setTimeout(() => {
-            button.innerHTML = '📋';
+            button.innerHTML = originalContent; // Restore original spans
             button.classList.remove('copied');
-            if (tooltip.parentNode) {
-                tooltip.remove();
-            }
         }, 2000);
     }).catch(err => {
         // Fallback for older browsers
@@ -7312,11 +7296,11 @@ function copyPatientInfo(patient, button) {
         
         try {
             document.execCommand('copy');
-            button.innerHTML = '✅';
+            button.innerHTML = '<span style="color: var(--success); font-weight: bold;">COPIED!</span>';
             button.classList.add('copied');
             
             setTimeout(() => {
-                button.innerHTML = '📋';
+                button.innerHTML = originalContent; // Restore original spans
                 button.classList.remove('copied');
             }, 2000);
         } catch (err) {
