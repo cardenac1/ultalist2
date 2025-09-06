@@ -1388,13 +1388,11 @@ select,
 
 
 
-
-
-		/* Replace the existing .status-dot CSS (around line 2818 in your HTML) with this: */
+/* Replace the existing .status-dot CSS (around line 2818 in your HTML) with this: */
 
 .status-dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     transition: all 0.3s ease;
     border: 2px solid currentColor;
@@ -1503,8 +1501,14 @@ select,
 
 
 
-
-
+/* Force clean status dots - add this at the very end of your CSS */
+.status-dot {
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
 
 		
 		
