@@ -7327,7 +7327,7 @@ function copyPatientInfoImproved(button) {
         setTimeout(() => {
             rebuildOriginalContent();
             button.classList.remove('copied');
-        }, 500);
+        }, 200);
     }).catch(err => {
         // Fallback
         const textArea = document.createElement('textarea');
@@ -7345,7 +7345,7 @@ function copyPatientInfoImproved(button) {
             setTimeout(() => {
                 rebuildOriginalContent();
                 button.classList.remove('copied');
-            }, 500);
+            }, 200);
         } catch (err) {
             alert('Failed to copy. Please copy manually: ' + textToCopy);
         }
