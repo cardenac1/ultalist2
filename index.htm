@@ -9017,16 +9017,20 @@ function rotateImage(degrees) {
     // ALL CAPS name extraction for medical labels
     console.log('Starting ALL CAPS name extraction...');
     
-    // Strategy 1: Look for comma-separated ALL CAPS names (LAST, FIRST)
-    const allCapsCommaPattern = /\b([A-Z]{2,20})\s*,\s*([A-Z]{2,20})\b/;
-    const commaMatch = fullText.match(allCapsCommaPattern);
-        
-        // Skip if it contains numbers
-        if (!/\d/.test(lastName + firstName)) {
-            extractedData.name = `${firstName} ${lastName}`;
-            console.log('Found ALL CAPS comma-separated name:', extractedData.name);
-        }
+   // Strategy 1: Look for comma-separated ALL CAPS names (LAST, FIRST) - KEEP SAME FORMAT
+const allCapsCommaPattern = /\b([A-Z]{2,20})\s*,\s*([A-Z]{2,20})\b/;
+const commaMatch = fullText.match(allCapsCommaPattern);
+if (commaMatch) {
+    const fullMatch = commaMatch[0].trim(); // Get the entire match as-is
+    
+    // Skip if it contains numbers
+    if (!/\d/.test(fullMatch)) {
+        extractedData.name = fullMatch; // Keep original format: "SAWYER, JAMES"
+        console.log('Found ALL CAPS comma-separated name:', extractedData.name);
     }
+}
+
+			
     
     // Strategy 2: Look for ALL CAPS name patterns (2-3 words)
     if (!extractedData.name) {
