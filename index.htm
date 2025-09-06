@@ -9020,8 +9020,6 @@ function rotateImage(degrees) {
     // Strategy 1: Look for comma-separated ALL CAPS names (LAST, FIRST)
     const allCapsCommaPattern = /\b([A-Z]{2,20})\s*,\s*([A-Z]{2,20})\b/;
     const commaMatch = fullText.match(allCapsCommaPattern);
-    if (commaMatch) {
-    const fullMatch = commaMatch[0].trim(); // Keep the entire match as-is
         
         // Skip if it contains numbers
         if (!/\d/.test(lastName + firstName)) {
