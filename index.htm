@@ -2289,6 +2289,7 @@ async function testOCRAvailability() {
         let lastImportedData = '';
         let fullOrdersText = '';
         let showFullOrders = false;
+	let ioData = {};
         let currentChart = null;
 		let currentSortColumn = ''; // Track current sort column
 		let violinRedStylingApplied = false; // Add this flag
@@ -3486,10 +3487,7 @@ case 'chartcheck':
 
 
 } else if (header === 'VIOLIN') {
-                    const warningDiv = document.createElement('div');
-                    warningDiv.id = 'warningMessages';
-                    warningDiv.className = 'warning-messages hidden';
-                    leftPanel.appendChild(warningDiv);
+                   
                     
                     const btnContainer = document.createElement('div');
                     btnContainer.className = 'violin-button-container';
@@ -3771,11 +3769,7 @@ if (currentViewMode === 'consult' && CONSULT_MODE_LABELS[header]) {
 						
 					
 					} else if (header === 'VIOLIN') {
-    // Add warning messages before VIOLIN field
-    const warningDiv = document.createElement('div');
-    warningDiv.id = 'warningMessages';
-    warningDiv.className = 'warning-messages hidden';
-    leftPanel.appendChild(warningDiv);
+
     
     // Create button container with special class for mobile styling
     const btnContainer = document.createElement('div');
@@ -4745,12 +4739,7 @@ function showImportModal() {
     // Reset the paste button to its original state
     resetPasteButton();
     
-    // Also clear any existing warnings when opening the import modal
-    const warningDiv = document.getElementById('warningMessages');
-    if (warningDiv) {
-        warningDiv.innerHTML = '';
-        warningDiv.classList.add('hidden');
-    }
+
 }
 
 
@@ -4809,7 +4798,6 @@ function showImportModal() {
     
     labData = extractLabValues(importText);
     const fishbone = generateFishbone(labData);
-    const warnings = generateWarnings(labData);
     
     // Update patient data
     patient.VIOLIN = fishbone;
@@ -4821,17 +4809,7 @@ function showImportModal() {
         autoResizeTextarea(violinField);
     }
     
-    // Update warnings
-    const warningDiv = document.getElementById('warningMessages');
-    if (warningDiv) {
-        if (warnings.length > 0) {
-            warningDiv.innerHTML = warnings.map(w => `<div class="warning-message">${w}</div>`).join('');
-            warningDiv.classList.remove('hidden');
-        } else {
-            warningDiv.innerHTML = '<div class="warning-message" style="color: var(--accent-3);">All values within normal limits</div>';
-            warningDiv.classList.remove('hidden');
-        }
-    }
+ 
     
     saveToLocalStorage();
     closeImportModal();
@@ -4893,187 +4871,6 @@ setTimeout(() => {
 
 
 
-
-function generateWarnings(data) {
-    const warnings = [];
-    const currentDate = new Date().toLocaleDateString('en-US', { 
-        month: '2-digit', 
-        day: '2-digit', 
-        year: '2-digit' 
-    });
-    
-    // Check for date mismatches by category (KEEP THIS)
-    const dateCategories = {
-        'CBC': ['wbc', 'hgb', 'hct', 'plt'],
-        'CMP': ['na', 'k', 'cl', 'co2', 'bun', 'cr', 'glu', 'ca', 'mg', 'phos'],
-        'LFTs': ['ast', 'alt', 'tbil', 'dbil', 'alk', 'ggt'],
-        'Coags': ['pt', 'ptt', 'inr', 'fib'],
-        'ABG': ['ph', 'po2', 'pco2', 'bicarb', 'lactate']
-    };
-    
-    // Check each category for outdated values (KEEP THIS)
-    for (const [category, labs] of Object.entries(dateCategories)) {
-        let outdated = false;
-        let lastDate = '';
-        
-        for (const lab of labs) {
-            if (data.dates[lab] && data.dates[lab] !== currentDate) {
-                outdated = true;
-                lastDate = data.dates[lab];
-                break;
-            }
-        }
-        
-        if (outdated) {
-            let labTime = '';
-            for (const lab of labs) {
-                if (data.times && data.times[lab]) {
-                    labTime = data.times[lab];
-                    break;
-                }
-            }
-            if (labTime) {
-                warnings.push(`Last ${category} from ${lastDate} ${labTime}!!`);
-            } else {
-                warnings.push(`Last ${category} from ${lastDate}!!`);
-            }
-        }
-    }
-    
-    // KEEP ONLY ELECTROLYTE REPLACEMENT WARNINGS:
-    
-    // Sodium check
-    if (data.labs.na && data.labs.na[0] !== undefined) {
-        const na = data.labs.na[0];
-        const naPrev = data.labs.na[1];
-        const naStr = naPrev !== undefined ? `*${na}* (*${naPrev}*)` : `*${na}*`;
-        
-        if (na < 135) {
-            warnings.push(`Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}`);
-        } else if (na > 145) {
-            warnings.push(`Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS`);
-        }
-    } else {
-        warnings.push('no Na');
-    }
-    
-    // Potassium check
-    if (data.labs.k && data.labs.k[0] !== undefined) {
-        const k = data.labs.k[0];
-        const kPrev = data.labs.k[1];
-        
-        // Always mark abnormal K with asterisks for visualization
-        let kStr = '';
-        let isAbnormal = false;
-        
-        if (k < 4.0 || k > 5.0) {
-            isAbnormal = true;
-        }
-        
-        kStr = isAbnormal ? `*${k}*` : k.toString();
-        if (kPrev !== undefined) {
-            kStr += kPrev !== undefined ? `(*${kPrev}*)` : '';
-        }
-        
-        if (k >= 3.3 && k <= 3.9) {
-            warnings.push(`Give 40 meq K PO or IV, K=${kStr}`);
-        } else if (k >= 3 && k <= 3.2) {
-            warnings.push(`Give 60 meq K IV, K=${kStr}`);
-        } else if (k >= 2.6 && k <= 2.9) {
-            warnings.push(`Give 80 meq K IV and NHO, K=${kStr}`);
-        } else if (k > 0 && k <= 2.6) {
-            warnings.push(`Give 100 meq K and NHO, K=${kStr}`);
-        } else if (k > 5) {
-            warnings.push(`Hyperkalemic!!, K=${kStr}`);
-        } else if (k >= 3.9 && k <= 5.0) {
-            // Normal range - show without asterisks
-            kStr = kPrev !== undefined ? `${k}(${kPrev})` : k.toString();
-            warnings.push(`K=${kStr}`);
-        }
-    } else {
-        warnings.push('No K');
-    }
-    
-    // Calcium check (KEEP FULL CALCIUM LOGIC)
-    if (data.labs.ca && data.labs.ca[0] !== undefined) {
-        const ca = data.labs.ca[0];
-        const caPrev = data.labs.ca[1];
-        const caType = data.labs.caType;
-        const isIonized = ca < 7 && !caType;
-        
-        if (isIonized) {
-            const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
-            if (ca >= 3.5 && ca < 4) {
-                warnings.push(`Give 4g calcium gluconate, 2g/hr, iCa=${caStr}`);
-            } else if (ca >= 3 && ca <= 3.4) {
-                warnings.push(`Give 6g calcium gluconate 2g/hr, iCa=${caStr}`);
-            } else if (ca >= 2.5 && ca <= 2.9) {
-                warnings.push(`Give 8g calcium gluconate 2g/hr, iCa=${caStr}`);
-            } else if (ca > 0 && ca < 2.5) {
-                warnings.push(`Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}`);
-            } else if (ca > 5.3) {
-                warnings.push(`Hypercalcemia! iCa=${caStr}`);
-            }
-        } else {
-            const caLabel = caType === 'corrected' ? 'Corrected Ca' : 'Total Ca';
-            const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
-            
-            if (ca < 8.5) {
-                if (ca >= 8.0 && ca < 8.5) {
-                    warnings.push(`Mild hypocalcemia: ${caLabel}=${caStr}`);
-                } else if (ca >= 7.0 && ca < 8.0) {
-                    warnings.push(`Moderate hypocalcemia: ${caLabel}=${caStr}, give calcium`);
-                } else if (ca < 7.0) {
-                    warnings.push(`Severe hypocalcemia: ${caLabel}=${caStr}, give IV calcium!`);
-                }
-            } else if (ca > 10.2) {
-                if (ca > 10.2 && ca <= 11.5) {
-                    warnings.push(`Mild hypercalcemia: ${caLabel}=${caStr}`);
-                } else if (ca > 11.5 && ca <= 13.0) {
-                    warnings.push(`Moderate hypercalcemia: ${caLabel}=${caStr}`);
-                } else if (ca > 13.0) {
-                    warnings.push(`Severe hypercalcemia: ${caLabel}=${caStr}, urgent treatment!`);
-                }
-            }
-        }
-    } else {
-        warnings.push('Calcium not found');
-    }
-    
-    // Magnesium check
-    if (data.labs.mg && data.labs.mg[0] !== undefined) {
-        const mg = data.labs.mg[0];
-        const mgPrev = data.labs.mg[1];
-        const mgStr = mgPrev !== undefined ? `*${mg}* (*${mgPrev}*)` : `*${mg}*`;
-        
-        if (mg >= 1.6 && mg <= 1.9) {
-            warnings.push(`Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}`);
-        } else if (mg >= 1 && mg <= 1.5) {
-            warnings.push(`Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}`);
-        } else if (mg > 0 && mg <= 1) {
-            warnings.push(`Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}`);
-        }
-    } else {
-        warnings.push('No mag');
-    }
-    
-    // Phosphorus check
-    if (data.labs.phos && data.labs.phos[0] !== undefined) {
-        const p = data.labs.phos[0];
-        const pPrev = data.labs.phos[1];
-        const pStr = pPrev !== undefined ? `*${p}* (*${pPrev}*)` : `*${p}*`;
-        
-        if (p >= 2 && p < 2.5) {
-            warnings.push(`Give 15 mmol phos (22.5 Meq K IV), P=${pStr}`);
-        } else if (p >= 1.6 && p <= 1.9) {
-            warnings.push(`Give 30 mmol phos (45 Meq K IV), P=${pStr}`);
-        } else if (p > 0 && p <= 1.6) {
-            warnings.push(`Give 40 mmol phos (60 Meq K IV), P=${pStr}`);
-        }
-    }
-    
-    return warnings;
-}
 
 
 
@@ -6641,150 +6438,6 @@ ioData.counts = countData;
     return ioData;
 }
 
-function generateIntakeOutputWarnings(ioData, weight) {
-    const warnings = [];
-    
-    // Get elapsed hours and cutoff time
-    const elapsedHours = ioData.elapsedHours || 24;
-    const elapsedHoursDisplay = Math.round(elapsedHours);
-    const cutoffTime = ioData.cutoffTime || new Date();
-    
-    // Format cutoff time for display
-    const cutoffStr = cutoffTime.toLocaleString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
- 
-
-
-
-// 1. Check urine output
-if (ioData.outputs.urine.length > 0) {
-    const totalUrine = ioData.outputs.urine.reduce((sum, entry) => sum + entry.volume, 0);
-    const hourlyOutput = Math.round(totalUrine / elapsedHours);
-    
-    if (weight) {
-        const urinePerKgHr = (hourlyOutput / weight).toFixed(2);
-        
-        if (urinePerKgHr < 0.1) {
-            warnings.push(`*ANURIA!* ${urinePerKgHr} mL/kg/hr - total *${totalUrine} mL* in ${elapsedHoursDisplay}hr - last: ${ioData.outputs.lastUrineTimeStr}`);
-        } else if (urinePerKgHr < 0.5) {
-            warnings.push(`LOW URINE OUTPUT! ${urinePerKgHr} mL/kg/hr, expected: ≥0.5 mL/kg/hr - total *${totalUrine} mL* in ${elapsedHoursDisplay}hr - last: ${ioData.outputs.lastUrineTimeStr}`);
-        } else {
-            warnings.push(`Urine output: (${urinePerKgHr} mL/kg/hr) - total ${totalUrine} mL in ${elapsedHoursDisplay}hr - last: ${ioData.outputs.lastUrineTimeStr}`);
-        }
-    } else {
-        warnings.push(`Urine output: total ${totalUrine} mL in ${elapsedHoursDisplay}hr - last: ${ioData.outputs.lastUrineTimeStr} (no weight available)`);
-    }
-    
-    if (ioData.outputs.urinaryCatheter) {
-        warnings.push(`*Has urinary catheter*`);
-    }
-} else {
-    warnings.push(`*No urine output recorded since ${cutoffStr}!*`);
-}
-
-
-
-
-
-
-
-
-
-
-    
-// 2. Check drains
-Object.entries(ioData.outputs.drains).forEach(([drainType, entries]) => {
-    if (entries.length > 0) {
-        const total = entries.reduce((sum, entry) => sum + entry.volume, 0);
-        const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-        
-        if (total > (30 * elapsedHours)) {
-            warnings.push(`${drainType}: *${total} mL* (HIGH OUTPUT) in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-        } else {
-            warnings.push(`${drainType}: ${total} mL in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-        }
-    }
-});
-    
-// 3. Check blood loss
-if (ioData.outputs.other['Estimated Blood Loss']) {
-    const bloodLoss = ioData.outputs.other['Estimated Blood Loss'];
-    const total = bloodLoss.reduce((sum, entry) => sum + entry.volume, 0);
-    
-    warnings.push(`*Estimated Blood Loss: ${total} mL* in ${elapsedHoursDisplay}hr`);
-}
-    
-    // 4. Check intakes
-    if (ioData.intakes.enteral.length > 0) {
-        const totalEnteral = ioData.intakes.enteral.reduce((sum, entry) => sum + entry.volume, 0);
-        const hourlyEnteral = Math.round(totalEnteral / elapsedHours);
-        const latestEnteral = ioData.intakes.enteral.sort((a, b) => b.dateTime - a.dateTime)[0];
-        
-        if (weight) {
-            const enteralPerKgHr = (hourlyEnteral / weight).toFixed(2);
-            warnings.push(`*Enteral feeding: ${hourlyEnteral} mL/hr* (${enteralPerKgHr} mL/kg/hr) - total ${totalEnteral} mL in ${elapsedHoursDisplay}hr - last: ${latestEnteral.dateTimeStr}`);
-        } else {
-            warnings.push(`*Enteral feeding: ${hourlyEnteral} mL/hr* - total ${totalEnteral} mL in ${elapsedHoursDisplay}hr - last: ${latestEnteral.dateTimeStr}`);
-        }
-    }
-    
-    // 5. Check blood products
-    if (ioData.intakes.bloodProducts.length > 0) {
-        const totalBlood = ioData.intakes.bloodProducts.reduce((sum, entry) => sum + entry.volume, 0);
-        const latestBlood = ioData.intakes.bloodProducts.sort((a, b) => b.dateTime - a.dateTime)[0];
-        warnings.push(`*Blood products: ${totalBlood} mL* in ${elapsedHoursDisplay}hr - last: ${latestBlood.dateTimeStr}`);
-    }
-    
-    // 6. Check if no intake at all
-    if (ioData.intakes.enteral.length === 0 && 
-        ioData.intakes.bloodProducts.length === 0 && 
-        ioData.intakes.other.length === 0) {
-        warnings.push(`*No intake recorded since ${cutoffStr}* (${elapsedHoursDisplay}hr)`);
-    }
-    
-// 7. Check other outputs
-Object.entries(ioData.outputs.other).forEach(([outputType, entries]) => {
-    if (outputType !== 'Estimated Blood Loss' && entries.length > 0) {
-        const total = entries.reduce((sum, entry) => sum + entry.volume, 0);
-        const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-        
-        warnings.push(`${outputType}: ${total} mL in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-    }
-});
-
-
-
-
-// 8. Check counts
-Object.entries(ioData.counts || {}).forEach(([countType, entries]) => {
-    if (entries.length > 0) {
-        const totalCount = entries.reduce((sum, entry) => sum + entry.count, 0);
-        const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-        
-        if (countType.toLowerCase().includes('stool') && totalCount > 3) {
-            warnings.push(`*${countType} Total: ${totalCount}* in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-        } else if (countType.toLowerCase().includes('vomit') && totalCount > 0) {
-            warnings.push(`*${countType} Total: ${totalCount}* in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-        } else {
-            warnings.push(`${countType} Total: ${totalCount} in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}`);
-        }
-    }
-});
-
-
-
-
-
-
-
-    
-    return warnings;
-}
 
 
 
@@ -7193,50 +6846,118 @@ if (fluidBalance !== null) {
     }
 
    
+
+// ===== DATE CHECKING FUNCTION (MUST BE HERE) =====
+const currentDate = new Date();
+currentDate.setHours(0, 0, 0, 0);
+const yesterday = new Date(currentDate);
+yesterday.setDate(yesterday.getDate() - 1);
+
+const isRecentDate = (dateStr) => {
+    if (!dateStr) return false;
+    const [month, day, year] = dateStr.split('/').map(n => parseInt(n));
+    const labDate = new Date(2000 + year, month - 1, day);
+    labDate.setHours(0, 0, 0, 0);
+    return labDate >= yesterday && labDate <= currentDate;
+};
+
+
+
 	
 	
-	// ===== CBC FISHBONE (with proper pair alignment) =====
+
+
+
+// ===== CBC FISHBONE =====
+// Layout: X1=WBC, X2=Hgb, X3=PLT
+//         X4=blank, X5=Hct, X6=blank
+// Visual:
+// WBC  \ Hgb  / PLT
+//      / Hct  \
+
 const wbc = data.labs.wbc?.[0];
 const hgb = data.labs.hgb?.[0];
-const hct = data.labs.hct?.[0];
 const plt = data.labs.plt?.[0];
+const hct = data.labs.hct?.[0];
 
 const wbcPrev = data.labs.wbc?.[1];
 const hgbPrev = data.labs.hgb?.[1];
-const hctPrev = data.labs.hct?.[1];
 const pltPrev = data.labs.plt?.[1];
+const hctPrev = data.labs.hct?.[1];
 
-// Format each value
-let wbcStr = wbc !== undefined ? (wbc < 4.5 || wbc > 11 ? markAbnormal(wbc) : wbc.toString()) : '--';
-let hgbStr = hgb !== undefined ? (hgb <= 7 || (hgbPrev !== undefined && hgbPrev - hgb >= 1) ? markAbnormal(hgb) : hgb.toString()) : '--';
-let hctStr = hct !== undefined ? (hct < 21 ? markAbnormal(hct) : hct.toString()) : '--';
-let pltStr = plt !== undefined ? (plt < 150 || plt > 400 ? markAbnormal(plt) : plt.toString()) : '--';
+// Format values with previous values for abnormals
+let wbcStr = '--';
+if (wbc !== undefined) {
+    if (wbc < 4.5 || wbc > 11) {
+        wbcStr = wbcPrev !== undefined ? `${markAbnormal(wbc)}(${wbcPrev})` : markAbnormal(wbc);
+    } else {
+        wbcStr = wbc.toString();
+    }
+}
 
-// Create matched pairs: (wbc, hct), (hgb, plt)
-// Pair 1: wbc (top) / hct (bottom)
-const pair1Top = wbcStr;
-const pair1Bottom = hctStr;
-const pair1Width = Math.max(pair1Top.length, pair1Bottom.length);
-const pair1TopPadded = pair1Top.padEnd(pair1Width);
-const pair1BottomPadded = pair1Bottom.padEnd(pair1Width);
+let hgbStr = '--';
+if (hgb !== undefined) {
+    if (hgb <= 7 || (hgbPrev !== undefined && hgbPrev - hgb >= 1)) {
+        hgbStr = hgbPrev !== undefined ? `${markAbnormal(hgb)}(${hgbPrev})` : markAbnormal(hgb);
+    } else {
+        hgbStr = hgb.toString();
+    }
+}
 
-// Pair 2: hgb (top) / plt (bottom)
-const pair2Top = hgbStr;
-const pair2Bottom = pltStr;
-const pair2Width = Math.max(pair2Top.length, pair2Bottom.length);
-const pair2TopPadded = pair2Top.padEnd(pair2Width);
-const pair2BottomPadded = pair2Bottom.padEnd(pair2Width);
+let pltStr = '--';
+if (plt !== undefined) {
+    if (plt < 150 || plt > 400) {
+        pltStr = pltPrev !== undefined ? `${markAbnormal(plt)}(${pltPrev})` : markAbnormal(plt);
+    } else {
+        pltStr = plt.toString();
+    }
+}
 
-// Build top line: pair1 \ pair2 / pair1bottom
-const topLine = `${pair1TopPadded}\\${pair2TopPadded} /${pair1BottomPadded}`;
-fishbone += topLine + '\n';
+let hctStr = '--';
+if (hct !== undefined) {
+    if (hct < 21) {
+        hctStr = hctPrev !== undefined ? `${markAbnormal(hct)}(${hctPrev})` : markAbnormal(hct);
+    } else {
+        hctStr = hct.toString();
+    }
+}
 
-// Build bottom line: positions match up via padding
-const bottomLine = `${pair1BottomPadded}/${pair2BottomPadded}\\`;
-fishbone += bottomLine + '\n';
+// Pair matching for CBC:
+// Pair 1: X1(WBC) top / X4(blank) bottom
+const cbcPair1Top = wbcStr;
+const cbcPair1Bottom = ''; // X4 is blank
+const cbcPair1Width = Math.max(cbcPair1Top.length, cbcPair1Bottom.length);
+const cbcPair1TopPadded = cbcPair1Top.padEnd(cbcPair1Width);
+const cbcPair1BottomPadded = cbcPair1Bottom.padEnd(cbcPair1Width);
 
+// Pair 2: X2(Hgb) top / X5(Hct) bottom
+const cbcPair2Top = hgbStr;
+const cbcPair2Bottom = hctStr;
+const cbcPair2Width = Math.max(cbcPair2Top.length, cbcPair2Bottom.length);
+const cbcPair2TopPadded = cbcPair2Top.padEnd(cbcPair2Width);
+const cbcPair2BottomPadded = cbcPair2Bottom.padEnd(cbcPair2Width + 1);
 
-	// ===== BMP FISHBONE (with proper alignment) =====
+// Pair 3: X3(PLT) top / X6(blank) bottom
+const cbcPair3Top = pltStr;
+const cbcPair3Bottom = ''; // X6 is blank
+const cbcPair3Width = Math.max(cbcPair3Top.length, cbcPair3Bottom.length);
+const cbcPair3TopPadded = cbcPair3Top.padEnd(cbcPair3Width);
+const cbcPair3BottomPadded = cbcPair3Bottom.padEnd(cbcPair3Width);
+
+// Build CBC lines
+const cbcTopLine = `${cbcPair1TopPadded}\\${cbcPair2TopPadded} /${cbcPair3TopPadded}`;
+fishbone += cbcTopLine + '\n';
+
+const cbcBottomLine = `${cbcPair1BottomPadded}/${cbcPair2BottomPadded}\\${cbcPair3BottomPadded}`;
+fishbone += cbcBottomLine + '\n';
+
+// ===== BMP FISHBONE =====
+// Layout: X1=Na,  X2=Cl,  X3=BUN, X4=Glu
+//         X5=K,   X6=CO2, X7=Cr
+// Visual:
+// Na  | Cl  | BUN / Glu
+// K   | CO2 | Cr  \
+
 const na  = data.labs.na?.[0];
 const k   = data.labs.k?.[0];
 const cl  = data.labs.cl?.[0];
@@ -7245,53 +6966,146 @@ const bun = data.labs.bun?.[0];
 const cr  = data.labs.cr?.[0];
 const glu = data.labs.glu?.[0];
 
-// Format values
-let naStr = na !== undefined ? (na < 135 || na > 145 ? markAbnormal(na) : na.toString()) : '--';
-let kStr  = k !== undefined ? (k < 3.5 || k > 5.0 ? markAbnormal(k) : k.toString()) : '--';
-let clStr = cl !== undefined ? (cl < 96 || cl > 106 ? markAbnormal(cl) : cl.toString()) : '--';
-let co2Str = co2 !== undefined ? co2.toString() : '--';
-let bunStr = bun !== undefined ? (bun > 24 ? markAbnormal(bun) : bun.toString()) : '--';
+const naPrev = data.labs.na?.[1];
+const kPrev = data.labs.k?.[1];
+const clPrev = data.labs.cl?.[1];
+const co2Prev = data.labs.co2?.[1];
+const bunPrev = data.labs.bun?.[1];
+const crPrev = data.labs.cr?.[1];
+const gluPrev = data.labs.glu?.[1];
 
-let crStr;
-if (cr !== undefined) {
-    const prevCr = data.labs.cr?.[1];
-    crStr = (cr > 1.2 || (prevCr !== undefined && cr - prevCr > 0.3)) 
-        ? (prevCr !== undefined ? `${markAbnormal(cr)}(${prevCr})` : markAbnormal(cr))
-        : cr.toString();
-} else {
-    crStr = '--';
+// Format BMP values with previous values for abnormals
+let naStr = '--';
+if (na !== undefined) {
+    if (na < 135 || na > 145) {
+        naStr = naPrev !== undefined ? `${markAbnormal(na)}(${naPrev})` : markAbnormal(na);
+    } else {
+        naStr = na.toString();
+    }
 }
 
-let gluStr = glu !== undefined ? (glu > 200 || glu < 70 ? markAbnormal(glu) : glu.toString()) : '--';
+let kStr = '--';
+if (k !== undefined) {
+    if (k < 4.0 || k > 5.0) {
+        kStr = kPrev !== undefined ? `${markAbnormal(k)}(${kPrev})` : markAbnormal(k);
+    } else {
+        kStr = k.toString();
+    }
+}
 
-// Create matched pairs: (na, bun), (k, cr), (cl, glu)
-// Pair 1: na (top) / bun (bottom)
+let clStr = '--';
+if (cl !== undefined) {
+    if (cl < 96 || cl > 106) {
+        clStr = clPrev !== undefined ? `${markAbnormal(cl)}(${clPrev})` : markAbnormal(cl);
+    } else {
+        clStr = cl.toString();
+    }
+}
+
+let co2Str = '--';
+if (co2 !== undefined) {
+    co2Str = co2.toString();
+}
+
+let bunStr = '--';
+if (bun !== undefined) {
+    if (bun > 24) {
+        bunStr = bunPrev !== undefined ? `${markAbnormal(bun)}(${bunPrev})` : markAbnormal(bun);
+    } else {
+        bunStr = bun.toString();
+    }
+}
+
+let crStr = '--';
+if (cr !== undefined) {
+    if (cr > 1.2 || (crPrev !== undefined && cr - crPrev > 0.3)) {
+        crStr = crPrev !== undefined ? `${markAbnormal(cr)}(${crPrev})` : markAbnormal(cr);
+    } else {
+        crStr = cr.toString();
+    }
+}
+
+let gluStr = '--';
+if (glu !== undefined) {
+    if (glu > 200 || glu < 70) {
+        gluStr = gluPrev !== undefined ? `${markAbnormal(glu)}(${gluPrev})` : markAbnormal(glu);
+    } else {
+        gluStr = glu.toString();
+    }
+}
+
+// Pair matching for BMP:
+// Pair 1: X1(Na) top / X5(K) bottom
 const bmpPair1Top = naStr;
-const bmpPair1Bottom = bunStr;
+const bmpPair1Bottom = kStr;
 const bmpPair1Width = Math.max(bmpPair1Top.length, bmpPair1Bottom.length);
 const bmpPair1TopPadded = bmpPair1Top.padEnd(bmpPair1Width);
 const bmpPair1BottomPadded = bmpPair1Bottom.padEnd(bmpPair1Width);
 
-// Pair 2: k (top) / cr (bottom)
-const bmpPair2Top = kStr;
-const bmpPair2Bottom = crStr;
+// Pair 2: X2(Cl) top / X6(CO2) bottom
+const bmpPair2Top = clStr;
+const bmpPair2Bottom = co2Str;
 const bmpPair2Width = Math.max(bmpPair2Top.length, bmpPair2Bottom.length);
 const bmpPair2TopPadded = bmpPair2Top.padEnd(bmpPair2Width);
 const bmpPair2BottomPadded = bmpPair2Bottom.padEnd(bmpPair2Width);
 
-// Pair 3: cl (top) / glu (bottom)
-const bmpPair3Top = clStr;
-const bmpPair3Bottom = gluStr;
+// Pair 3: X3(BUN) top / X7(Cr) bottom
+const bmpPair3Top = bunStr;
+const bmpPair3Bottom = crStr;
 const bmpPair3Width = Math.max(bmpPair3Top.length, bmpPair3Bottom.length);
 const bmpPair3TopPadded = bmpPair3Top.padEnd(bmpPair3Width);
 const bmpPair3BottomPadded = bmpPair3Bottom.padEnd(bmpPair3Width);
 
-// Build lines
-const bmpTopLine = `${bmpPair1TopPadded}|${bmpPair2TopPadded}|${bmpPair3TopPadded}/${co2Str}`;
+// Build BMP lines
+const bmpTopLine = `${bmpPair1TopPadded}|${bmpPair2TopPadded}|${bmpPair3TopPadded}/${gluStr}`;
 fishbone += bmpTopLine + '\n';
 
 const bmpBottomLine = `${bmpPair1BottomPadded}|${bmpPair2BottomPadded}|${bmpPair3BottomPadded}\\`;
 fishbone += bmpBottomLine + '\n';
+
+
+
+
+
+// ===== ELECTROLYTES (Ca/Mg/Phos) SECTION =====
+const ca = data.labs.ca?.[0];
+const caPrev = data.labs.ca?.[1];
+const mg = data.labs.mg?.[0];
+const mgPrev = data.labs.mg?.[1];
+const phos = data.labs.phos?.[0];
+const phosPrev = data.labs.phos?.[1];
+
+let caStr = '--';
+if (ca !== undefined) {
+    if (ca < 8.5 || ca > 10.2) {
+        caStr = caPrev !== undefined ? `${markAbnormal(ca)}(${caPrev})` : markAbnormal(ca);
+    } else {
+        caStr = ca.toString();
+    }
+}
+
+let mgStr = '--';
+if (mg !== undefined) {
+    if (mg < 1.7 || mg > 2.2) {
+        mgStr = mgPrev !== undefined ? `${markAbnormal(mg)}(${mgPrev})` : markAbnormal(mg);
+    } else {
+        mgStr = mg.toString();
+    }
+}
+
+let phosStr = '--';
+if (phos !== undefined) {
+    if (phos < 2.5 || phos > 4.5) {
+        phosStr = phosPrev !== undefined ? `${markAbnormal(phos)}(${phosPrev})` : markAbnormal(phos);
+    } else {
+        phosStr = phos.toString();
+    }
+}
+
+fishbone += `Ca:${caStr}, Mg:${mgStr}, P:${phosStr}\n`;
+
+
+
 
 	
 
@@ -10586,17 +10400,6 @@ function updateChartCheckProgress() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 let violinEditMode = false;
 
 function toggleViolinMode() {
@@ -10621,67 +10424,526 @@ function toggleViolinMode() {
 
 
 
-function updateViolinDisplay() {
-    const patient = patientData[currentPatientIndex];
-    if (!patient || !patient.VIOLIN) return;
-    
-    let violinDisplay = document.getElementById('violinDisplay');
-    if (!violinDisplay) {
-        violinDisplay = document.createElement('div');
-        violinDisplay.id = 'violinDisplay';
-        violinDisplay.style.cssText = `
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            font-family: monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            white-space: pre;
-            word-wrap: break-word;
-            margin-top: 0.5rem;
-            overflow-x: auto;
-        `;
-        const violinTextarea = document.getElementById('field_VIOLIN');
-        violinTextarea.parentNode.insertBefore(violinDisplay, violinTextarea.nextSibling);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function updateViolinDisplay(ctx = {}) {
+  // -------- Inputs (globals are OK) --------
+  const _patientData = ctx.patientData || (typeof patientData !== 'undefined' ? patientData : null);
+  const _currentIdx  = Number.isInteger(ctx.currentPatientIndex) ? ctx.currentPatientIndex :
+                       (typeof currentPatientIndex !== 'undefined' ? currentPatientIndex : -1);
+  const _labData     = ctx.labData || (typeof labData !== 'undefined' ? labData : null);
+  const _ioData      = ctx.ioData  || (typeof ioData  !== 'undefined' ? ioData  : null);
+
+  if (!_patientData || _currentIdx < 0 || !_patientData[_currentIdx]) {
+    console.log('updateViolinDisplay: No patient selected or patientData missing');
+    return;
+  }
+  const patient = _patientData[_currentIdx];
+  if (!patient || !patient.VIOLIN) {
+    console.log('updateViolinDisplay: No VIOLIN text to render');
+    return;
+  }
+
+  // -------- Helpers --------
+  const today = new Date();
+  const todayStrMMDDYYYY = today.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+  const todayStrMMDDYY   = today.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'2-digit' });
+
+  const normalizeDateStr = (s) => {
+    if (!s) return '';
+    // Accept "MM/DD/YY" or "MM/DD/YYYY"; compare on MMDDYY
+    const m = String(s).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (!m) return String(s).trim();
+    const mm = m[1].padStart(2, '0');
+    const dd = m[2].padStart(2, '0');
+    let yy = m[3];
+    if (yy.length === 4) yy = yy.slice(2);
+    return `${mm}${dd}${yy}`;
+  };
+  const todayKey = normalizeDateStr(todayStrMMDDYYYY); // matches both forms
+
+  function dateWarning(category, dates, times) {
+    const categoryLabels = {
+      'CBC': ['wbc', 'hgb', 'hct', 'plt'],
+      'BMP': ['na', 'k', 'cl', 'co2', 'bun', 'cr', 'glu']
+    };
+    const labs = categoryLabels[category];
+    if (!labs) return null;
+    for (const key of labs) {
+      const d = dates?.[key];
+      if (!d) continue;
+      if (normalizeDateStr(d) !== todayKey) {
+        const t = times?.[key] ? (' ' + times[key]) : '';
+        return `Last ${category} from ${d}${t}!!`;
+      }
     }
-    
-    // Process the fishbone line by line to preserve formatting
-    const lines = patient.VIOLIN.split('\n');
-    let html = '';
-    
-    lines.forEach(line => {
-        // Format abnormal values in red while keeping asterisks
-        const formattedLine = line.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
-        html += formattedLine + '\n';
+    return null;
+  }
+
+  const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
+  const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
+  const second = (arr) => (Array.isArray(arr) ? arr[1] : undefined);
+
+  function electrolyteWarnings(data) {
+    const warnings = [];
+    if (!data?.labs) return warnings;
+
+    // Na
+    if (data.labs.na && first(data.labs.na) !== undefined) {
+      const na = num(first(data.labs.na));
+      const naPrev = num(second(data.labs.na));
+      const naStr = naPrev !== undefined ? `*${na}* (*${naPrev}*)` : `*${na}*`;
+      if (na < 135) warnings.push(`Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}`);
+      else if (na > 145) warnings.push(`Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS`);
+    }
+
+    // K
+    if (data.labs.k && first(data.labs.k) !== undefined) {
+      const k = num(first(data.labs.k));
+      const kPrev = num(second(data.labs.k));
+      const kStr = (k < 4.0 || k > 5.0) ? `*${k}*` : String(k);
+      const kPrevStr = kPrev !== undefined ? `(${kPrev})` : '(--) ';
+      if (k >= 3.3 && k <= 3.9) warnings.push(`Give 40 meq K PO or IV, K=${kStr}${kPrevStr}`);
+      else if (k >= 3.0 && k <= 3.2) warnings.push(`Give 60 meq K IV, K=${kStr}${kPrevStr}`);
+      else if (k > 0 && k <= 2.6) warnings.push(`Give 100 meq K and NHO, K=${kStr}${kPrevStr}`);
+      else if (k > 5) warnings.push(`Hyperkalemic!!, K=${kStr}${kPrevStr}`);
+    }
+
+    // iCa
+    if (data.labs.ca && first(data.labs.ca) !== undefined) {
+      const ca = num(first(data.labs.ca));
+      const caPrev = num(second(data.labs.ca));
+      const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
+      if (ca >= 3.5 && ca < 4) warnings.push(`Give 4g calcium gluconate, 2g/hr, iCa=${caStr}`);
+      else if (ca >= 3 && ca <= 3.4) warnings.push(`Give 6g calcium gluconate 2g/hr, iCa=${caStr}`);
+      else if (ca >= 2.5 && ca <= 2.9) warnings.push(`Give 8g calcium gluconate 2g/hr, iCa=${caStr}`);
+      else if (ca > 0 && ca < 2.5) warnings.push(`Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}`);
+    }
+
+    // Mg
+    if (data.labs.mg && first(data.labs.mg) !== undefined) {
+      const mg = num(first(data.labs.mg));
+      const mgPrev = num(second(data.labs.mg));
+      const mgStr = mgPrev !== undefined ? `*${mg}* (*${mgPrev}*)` : `*${mg}*`;
+      if (mg >= 1.6 && mg <= 1.9) warnings.push(`Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}`);
+      else if (mg >= 1 && mg <= 1.5) warnings.push(`Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}`);
+      else if (mg > 0 && mg <= 1) warnings.push(`Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}`);
+    }
+
+    // Phos
+    if (data.labs.phos && first(data.labs.phos) !== undefined) {
+      const p = num(first(data.labs.phos));
+      const pPrev = num(second(data.labs.phos));
+      const pStr = pPrev !== undefined ? `*${p}* (*${pPrev}*)` : `*${p}*`;
+      if (p >= 2 && p < 2.5) warnings.push(`Give 15 mmol phos (22.5 Meq K IV), P=${pStr}`);
+      else if (p >= 1.6 && p <= 1.9) warnings.push(`Give 30 mmol phos (45 Meq K IV), P=${pStr}`);
+      else if (p > 0 && p <= 1.6) warnings.push(`Give 40 mmol phos (60 Meq K IV), P=${pStr}`);
+    }
+
+    return warnings;
+  }
+
+  const insertBeforeFirstMatch = (text, re, insert) => {
+    const m = text.match(re);
+    if (!m) return text;
+    return text.slice(0, m.index) + insert + text.slice(m.index);
+  };
+  const insertAfterTwoLineBlock = (text, headerRe, insert) => {
+    const lines = text.split('\n');
+    const idx = lines.findIndex(line => headerRe.test(line));
+    if (idx === -1) return text;
+    const afterIdx = Math.min(idx + 2, lines.length);
+    lines.splice(afterIdx, 0, insert);
+    return lines.join('\n');
+  };
+
+  // -------- Build display text --------
+  let displayText = String(patient.VIOLIN);
+
+  // Reformat single-line vitals
+  const vitalsLinePattern = /^(T\s+[^,]+,?\s*HR\s+[^,]+,?\s*SBP\s+[^,]+,?\s*DBP\s+[^,]+,?\s*O2[^,\n]+)$/mi;
+  const vitalMatch = displayText.match(vitalsLinePattern);
+  if (vitalMatch) {
+    const vitalsLine = vitalMatch[1];
+    const reformatted = vitalsLine
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => `  ${s}`)
+      .join('\n');
+    displayText = displayText.replace(vitalsLinePattern, `VITALS:\n${reformatted}`);
+  }
+
+  // Robust header regexes (accept spaces, case, Unicode pipes)
+  const PIPE = '[\\|│┃‖]'; // common vertical bar glyphs
+  const CBC_HEADER_RE = new RegExp(`^\\s*WBC\\s*${PIPE}.*$`, 'mi');
+  const BMP_HEADER_RE = new RegExp(`^\\s*Na\\s*${PIPE}.*$`, 'mi');
+
+  // ---- Date warnings (insert BEFORE headers). If header not found, append at top.
+  if (_labData?.dates) {
+    const cbcWarn = dateWarning('CBC', _labData.dates, _labData.times);
+    if (cbcWarn) {
+      const line = `*${cbcWarn}*`;
+      if (CBC_HEADER_RE.test(displayText)) {
+        displayText = insertBeforeFirstMatch(displayText, CBC_HEADER_RE, line + '\n');
+      } else {
+        displayText = line + '\n' + displayText; // fallback
+      }
+    }
+    const bmpWarn = dateWarning('BMP', _labData.dates, _labData.times);
+    if (bmpWarn) {
+      const line = `*${bmpWarn}*`;
+      if (BMP_HEADER_RE.test(displayText)) {
+        displayText = insertBeforeFirstMatch(displayText, BMP_HEADER_RE, line + '\n');
+      } else {
+        displayText = line + '\n' + displayText; // fallback
+      }
+    }
+  }
+
+  // ---- Electrolyte warnings (insert AFTER BMP block; fallback: append at end)
+  if (_labData?.labs) {
+    const ew = electrolyteWarnings(_labData);
+    if (ew.length > 0) {
+      const block = '\n' + ew.join('\n');
+      if (BMP_HEADER_RE.test(displayText)) {
+        displayText = insertAfterTwoLineBlock(displayText, BMP_HEADER_RE, block);
+      } else {
+        displayText += '\n' + ew.join('\n');
+      }
+    }
+  }
+
+  // ---- Ca/Mg/P line (always try to show)
+  if (_labData?.labs) {
+    const ca0 = first(_labData.labs.ca);
+    const mg0 = first(_labData.labs.mg);
+    const p0  = first(_labData.labs.phos);
+    const caOut = (ca0 !== undefined && (num(ca0) < 8.5 || num(ca0) > 10.2)) ? `*${ca0}*` : (ca0 ?? '--');
+    const mgOut = (mg0 !== undefined && (num(mg0) < 1.7 || num(mg0) > 2.2))  ? `*${mg0}*` : (mg0 ?? '--');
+    const pOut  = (p0  !== undefined && (num(p0)  < 2.5 || num(p0)  > 4.5))  ? `*${p0}*`  : (p0  ?? '--');
+    const cmpLine = `Ca: ${caOut}, Mg: ${mgOut}, P: ${pOut}`;
+    if (BMP_HEADER_RE.test(displayText)) {
+      displayText = insertAfterTwoLineBlock(displayText, BMP_HEADER_RE, cmpLine);
+    } else {
+      displayText += '\n' + cmpLine;
+    }
+  }
+
+  // ---- I/O warnings block
+  const ioWarnings = [];
+  if (_ioData?.outputs) {
+    const elapsedHours = Math.max(1, Number(_ioData.elapsedHours || 24));
+    const elapsedHoursDisplay = Math.round(elapsedHours);
+    const cutoffTime = _ioData.cutoffTime instanceof Date ? _ioData.cutoffTime : new Date();
+    const cutoffStr = cutoffTime.toLocaleString('en-US', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+    // Urine
+    const urine = Array.isArray(_ioData.outputs.urine) ? _ioData.outputs.urine : [];
+    if (urine.length > 0) {
+      const totalUrine = urine.reduce((s,e)=>s+(num(e.volume)||0), 0);
+      const hourly = totalUrine / elapsedHours;
+      if (patient.weight) {
+        const upkh = (hourly / patient.weight);
+        const upkhStr = upkh.toFixed(2);
+        if (upkh < 0.1) ioWarnings.push(`*ANURIA!* ${upkhStr} mL/kg/hr - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr - last: ${_ioData.outputs.lastUrineTimeStr || '--'}`);
+        else if (upkh < 0.5) ioWarnings.push(`LOW URINE OUTPUT! ${upkhStr} mL/kg/hr, expected: ≥0.5 mL/kg/hr - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr - last: ${_ioData.outputs.lastUrineTimeStr || '--'}`);
+        else ioWarnings.push(`Urine output: (${upkhStr} mL/kg/hr) - total ${Math.round(totalUrine)} mL in ${elapsedHoursDisplay}hr - last: ${_ioData.outputs.lastUrineTimeStr || '--'}`);
+      } else {
+        ioWarnings.push(`Urine output: total ${Math.round(totalUrine)} mL in ${elapsedHoursDisplay}hr - last: ${_ioData.outputs.lastUrineTimeStr || '--'} (no weight available)`);
+      }
+      if (_ioData.outputs.urinaryCatheter) ioWarnings.push(`*Has urinary catheter*`);
+    } else {
+      ioWarnings.push(`*No urine output recorded since ${cutoffStr}!*`);
+    }
+
+    // Drains
+    const drains = _ioData.outputs.drains || {};
+    Object.entries(drains).forEach(([type, entries]) => {
+      const arr = Array.isArray(entries) ? entries : [];
+      if (arr.length > 0) {
+        const total = arr.reduce((s,e)=>s+(num(e.volume)||0), 0);
+        const latest = [...arr].sort((a,b)=> (b.dateTime||0) - (a.dateTime||0))[0] || {};
+        if (total > (30 * elapsedHours)) ioWarnings.push(`${type}: *${Math.round(total)} mL* (HIGH OUTPUT) in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+        else ioWarnings.push(`${type}: ${Math.round(total)} mL in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+      }
     });
-    
-    // Convert to HTML while preserving all spacing
-    violinDisplay.innerHTML = html
-        .split('\n')
-        .map(line => line ? line : '')
-        .join('\n')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    
-    // Reapply the red formatting after escaping
-    const displayText = violinDisplay.textContent;
-    violinDisplay.innerHTML = '';
-    
-    lines.forEach(line => {
-        const span = document.createElement('span');
-        const formattedLine = line.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
-        span.innerHTML = formattedLine + '\n';
-        violinDisplay.appendChild(span);
+
+    // EBL
+    const eblArr = _ioData.outputs.other?.['Estimated Blood Loss'] || [];
+    if (Array.isArray(eblArr) && eblArr.length > 0) {
+      const total = eblArr.reduce((s,e)=>s+(num(e.volume)||0), 0);
+      ioWarnings.push(`*Estimated Blood Loss: ${Math.round(total)} mL* in ${elapsedHoursDisplay}hr`);
+    }
+
+    // Enteral intake
+    const enteral = Array.isArray(_ioData.intakes?.enteral) ? _ioData.intakes.enteral : [];
+    if (enteral.length > 0) {
+      const totalEnteral = enteral.reduce((s,e)=>s+(num(e.volume)||0), 0);
+      const hourlyEnteral = totalEnteral / elapsedHours;
+      const latestEnteral = [...enteral].sort((a,b)=> (b.dateTime||0) - (a.dateTime||0))[0] || {};
+      if (patient.weight) {
+        const perKgHr = (hourlyEnteral / patient.weight).toFixed(2);
+        ioWarnings.push(`*Enteral feeding: ${Math.round(hourlyEnteral)} mL/hr* (${perKgHr} mL/kg/hr) - total ${Math.round(totalEnteral)} mL in ${elapsedHoursDisplay}hr - last: ${latestEnteral.dateTimeStr || '--'}`);
+      } else {
+        ioWarnings.push(`*Enteral feeding: ${Math.round(hourlyEnteral)} mL/hr* - total ${Math.round(totalEnteral)} mL in ${elapsedHoursDisplay}hr - last: ${latestEnteral.dateTimeStr || '--'}`);
+      }
+    }
+
+    // Blood products
+    const blood = Array.isArray(_ioData.intakes?.bloodProducts) ? _ioData.intakes.bloodProducts : [];
+    if (blood.length > 0) {
+      const totalBlood = blood.reduce((s,e)=>s+(num(e.volume)||0), 0);
+      const latestBlood = [...blood].sort((a,b)=> (b.dateTime||0) - (a.dateTime||0))[0] || {};
+      ioWarnings.push(`*Blood products: ${Math.round(totalBlood)} mL* in ${elapsedHoursDisplay}hr - last: ${latestBlood.dateTimeStr || '--'}`);
+    }
+
+    // No intake at all
+    const otherIntake = Array.isArray(_ioData.intakes?.other) ? _ioData.intakes.other : [];
+    if (enteral.length === 0 && blood.length === 0 && otherIntake.length === 0) {
+      ioWarnings.push(`*No intake recorded since ${cutoffStr}* (${elapsedHoursDisplay}hr)`);
+    }
+
+    // Other outputs
+    const otherOutputs = _ioData.outputs.other || {};
+    Object.entries(otherOutputs).forEach(([type, entries]) => {
+      if (type === 'Estimated Blood Loss') return;
+      const arr = Array.isArray(entries) ? entries : [];
+      if (arr.length > 0) {
+        const total = arr.reduce((s,e)=>s+(num(e.volume)||0), 0);
+        const latest = [...arr].sort((a,b)=> (b.dateTime||0) - (a.dateTime||0))[0] || {};
+        ioWarnings.push(`${type}: ${Math.round(total)} mL in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+      }
     });
-    
-    // Hide textarea by default, show display
+
+    // Counts
+    const counts = _ioData.counts || {};
+    Object.entries(counts).forEach(([countType, entries]) => {
+      const arr = Array.isArray(entries) ? entries : [];
+      if (arr.length > 0) {
+        const totalCount = arr.reduce((s,e)=>s+(Number(e.count)||0), 0);
+        const latest = [...arr].sort((a,b)=> (b.dateTime||0) - (a.dateTime||0))[0] || {};
+        if (countType.toLowerCase().includes('stool') && totalCount > 3) {
+          ioWarnings.push(`*${countType} Total: ${totalCount}* in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+        } else if (countType.toLowerCase().includes('vomit') && totalCount > 0) {
+          ioWarnings.push(`*${countType} Total: ${totalCount}* in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+        } else {
+          ioWarnings.push(`${countType} Total: ${totalCount} in ${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr || '--'}`);
+        }
+      }
+    });
+  }
+
+  if (ioWarnings.length > 0) {
+    displayText += '\n\nINTAKE/OUTPUT WARNINGS:\n' + ioWarnings.join('\n');
+  }
+
+  // -------- Render --------
+  let violinDisplay = document.getElementById('violinDisplay');
+  if (!violinDisplay) {
+    violinDisplay = document.createElement('div');
+    violinDisplay.id = 'violinDisplay';
+    violinDisplay.style.cssText = `
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      white-space: pre;
+      word-wrap: break-word;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+      display: block;
+    `;
     const violinTextarea = document.getElementById('field_VIOLIN');
-    violinTextarea.style.display = 'none';
-    violinDisplay.style.display = 'block';
-    violinEditMode = false;
+    if (violinTextarea?.parentNode) {
+      violinTextarea.parentNode.insertBefore(violinDisplay, violinTextarea.nextSibling);
+    } else {
+      document.body.appendChild(violinDisplay);
+    }
+  }
+
+  violinDisplay.innerHTML = '';
+  displayText.split('\n').forEach(line => {
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-bottom: 0; white-space: pre-wrap; word-wrap: break-word;';
+    div.innerHTML = line.replace(/\*([^*]+)\*/g, '<span style="color:#ff4444;font-weight:bold;">*$1*</span>');
+    violinDisplay.appendChild(div);
+  });
+  violinDisplay.style.display = 'block';
+
+  const violinTextarea = document.getElementById('field_VIOLIN');
+  if (violinTextarea) violinTextarea.style.display = 'none';
+
+  window.violinEditMode = false;
+
+  // ---------- DEBUG HOOKS (remove if you want) ----------
+  const debug = {
+    cbcHeaderFound: /WBC/.test(violinDisplay.textContent || ''),
+    bmpHeaderFound: /Na/.test(violinDisplay.textContent || ''),
+    todayKey,
+    hadLabData: !!_labData,
+    hadIODATA: !!_ioData
+  };
+  console.log('updateViolinDisplay: rendered with debug ->', debug);
 }
+
 
 		
     </script>
