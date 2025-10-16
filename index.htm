@@ -7192,152 +7192,108 @@ if (fluidBalance !== null) {
         fishbone += '\n';
     }
 
-    // ===== CBC FISHBONE =====
-    const wbc = data.labs.wbc?.[0];
-    const hgb = data.labs.hgb?.[0];
-    const hct = data.labs.hct?.[0];
-    const plt = data.labs.plt?.[0];
+   
+	
+	
+	// ===== CBC FISHBONE (with proper pair alignment) =====
+const wbc = data.labs.wbc?.[0];
+const hgb = data.labs.hgb?.[0];
+const hct = data.labs.hct?.[0];
+const plt = data.labs.plt?.[0];
 
-    const wbcPrev = data.labs.wbc?.[1];
-    const hgbPrev = data.labs.hgb?.[1];
-    const hctPrev = data.labs.hct?.[1];
-    const pltPrev = data.labs.plt?.[1];
+const wbcPrev = data.labs.wbc?.[1];
+const hgbPrev = data.labs.hgb?.[1];
+const hctPrev = data.labs.hct?.[1];
+const pltPrev = data.labs.plt?.[1];
 
-   let wbcStr = '--';
-    if (wbc !== undefined) {
-        if (wbc < 4.5 || wbc > 11) {
-            // Abnormal WBC - show current and previous if available
-            wbcStr = wbcPrev !== undefined ? `${markAbnormal(wbc)}(${wbcPrev})` : markAbnormal(wbc);
-        } else {
-            // Normal WBC - just show current value
-            wbcStr = wbc.toString();
-        }
-    }
+// Format each value
+let wbcStr = wbc !== undefined ? (wbc < 4.5 || wbc > 11 ? markAbnormal(wbc) : wbc.toString()) : '--';
+let hgbStr = hgb !== undefined ? (hgb <= 7 || (hgbPrev !== undefined && hgbPrev - hgb >= 1) ? markAbnormal(hgb) : hgb.toString()) : '--';
+let hctStr = hct !== undefined ? (hct < 21 ? markAbnormal(hct) : hct.toString()) : '--';
+let pltStr = plt !== undefined ? (plt < 150 || plt > 400 ? markAbnormal(plt) : plt.toString()) : '--';
 
-    
+// Create matched pairs: (wbc, hct), (hgb, plt)
+// Pair 1: wbc (top) / hct (bottom)
+const pair1Top = wbcStr;
+const pair1Bottom = hctStr;
+const pair1Width = Math.max(pair1Top.length, pair1Bottom.length);
+const pair1TopPadded = pair1Top.padEnd(pair1Width);
+const pair1BottomPadded = pair1Bottom.padEnd(pair1Width);
+
+// Pair 2: hgb (top) / plt (bottom)
+const pair2Top = hgbStr;
+const pair2Bottom = pltStr;
+const pair2Width = Math.max(pair2Top.length, pair2Bottom.length);
+const pair2TopPadded = pair2Top.padEnd(pair2Width);
+const pair2BottomPadded = pair2Bottom.padEnd(pair2Width);
+
+// Build top line: pair1 \ pair2 / pair1bottom
+const topLine = `${pair1TopPadded}\\${pair2TopPadded} /${pair1BottomPadded}`;
+fishbone += topLine + '\n';
+
+// Build bottom line: positions match up via padding
+const bottomLine = `${pair1BottomPadded}/${pair2BottomPadded}\\`;
+fishbone += bottomLine + '\n';
 
 
+	// ===== BMP FISHBONE (with proper alignment) =====
+const na  = data.labs.na?.[0];
+const k   = data.labs.k?.[0];
+const cl  = data.labs.cl?.[0];
+const co2 = data.labs.co2?.[0];
+const bun = data.labs.bun?.[0];
+const cr  = data.labs.cr?.[0];
+const glu = data.labs.glu?.[0];
 
+// Format values
+let naStr = na !== undefined ? (na < 135 || na > 145 ? markAbnormal(na) : na.toString()) : '--';
+let kStr  = k !== undefined ? (k < 3.5 || k > 5.0 ? markAbnormal(k) : k.toString()) : '--';
+let clStr = cl !== undefined ? (cl < 96 || cl > 106 ? markAbnormal(cl) : cl.toString()) : '--';
+let co2Str = co2 !== undefined ? co2.toString() : '--';
+let bunStr = bun !== undefined ? (bun > 24 ? markAbnormal(bun) : bun.toString()) : '--';
 
-
-
-
-
-
-
-
-
-
-let hgbStr = '--';
-if (hgb !== undefined) {
-    if (hgb <= 7 || (hgbPrev !== undefined && hgbPrev - hgb >= 1)) {
-        hgbStr = `${markAbnormal(hgb)}${hgbPrev !== undefined ? `(${hgbPrev})` : ''}`;
-    } else {
-        hgbStr = hgb.toString();
-    }
+let crStr;
+if (cr !== undefined) {
+    const prevCr = data.labs.cr?.[1];
+    crStr = (cr > 1.2 || (prevCr !== undefined && cr - prevCr > 0.3)) 
+        ? (prevCr !== undefined ? `${markAbnormal(cr)}(${prevCr})` : markAbnormal(cr))
+        : cr.toString();
+} else {
+    crStr = '--';
 }
 
+let gluStr = glu !== undefined ? (glu > 200 || glu < 70 ? markAbnormal(glu) : glu.toString()) : '--';
 
+// Create matched pairs: (na, bun), (k, cr), (cl, glu)
+// Pair 1: na (top) / bun (bottom)
+const bmpPair1Top = naStr;
+const bmpPair1Bottom = bunStr;
+const bmpPair1Width = Math.max(bmpPair1Top.length, bmpPair1Bottom.length);
+const bmpPair1TopPadded = bmpPair1Top.padEnd(bmpPair1Width);
+const bmpPair1BottomPadded = bmpPair1Bottom.padEnd(bmpPair1Width);
 
+// Pair 2: k (top) / cr (bottom)
+const bmpPair2Top = kStr;
+const bmpPair2Bottom = crStr;
+const bmpPair2Width = Math.max(bmpPair2Top.length, bmpPair2Bottom.length);
+const bmpPair2TopPadded = bmpPair2Top.padEnd(bmpPair2Width);
+const bmpPair2BottomPadded = bmpPair2Bottom.padEnd(bmpPair2Width);
 
+// Pair 3: cl (top) / glu (bottom)
+const bmpPair3Top = clStr;
+const bmpPair3Bottom = gluStr;
+const bmpPair3Width = Math.max(bmpPair3Top.length, bmpPair3Bottom.length);
+const bmpPair3TopPadded = bmpPair3Top.padEnd(bmpPair3Width);
+const bmpPair3BottomPadded = bmpPair3Bottom.padEnd(bmpPair3Width);
 
-    let hctStr = '--';
-    if (hct !== undefined) {
-        if (hct < 21 && hctPrev !== undefined) {
-            hctStr = `${markAbnormal(hct)}(${hctPrev})`;
-        } else if (hct < 21) {
-            hctStr = markAbnormal(hct);
-        } else {
-            hctStr = hct.toString();
-        }
-    }
+// Build lines
+const bmpTopLine = `${bmpPair1TopPadded}|${bmpPair2TopPadded}|${bmpPair3TopPadded}/${co2Str}`;
+fishbone += bmpTopLine + '\n';
 
-    let pltStr = '--';
-    if (plt !== undefined) {
-        if ((plt < 150 || plt > 400) && pltPrev !== undefined) {
-            pltStr = `${markAbnormal(plt)}(${pltPrev})`;
-        } else if (plt < 150 || plt > 400) {
-            pltStr = markAbnormal(plt);
-        } else {
-            pltStr = plt.toString();
-        }
-    }
-
-    const posBack = wbcStr.length;
-    const hctEndPos = posBack + 1 + hctStr.length;
-    const slashPos = hctEndPos;
-    const spacesAfterHgb = Math.max(0, slashPos - (wbcStr.length + 1 + hgbStr.length + 1));
-    
-    fishbone += `${wbcStr}\\${hgbStr} ${' '.repeat(spacesAfterHgb)}/${pltStr}\n`;
-    
-    let bottom = Array(slashPos + 1).fill(' ');
-    bottom[posBack] = '/';
-    for (let i = 0; i < hctStr.length; i++) {
-        bottom[posBack + 1 + i] = hctStr[i];
-    }
-    bottom[slashPos] = '\\';
-    fishbone += bottom.join('').trimEnd() + '\n';
-
-    // ===== BMP FISHBONE =====
-    const na  = data.labs.na?.[0],
-          k   = data.labs.k?.[0],
-          cl  = data.labs.cl?.[0],
-          co2 = data.labs.co2?.[0],
-          bun = data.labs.bun?.[0],
-          cr  = data.labs.cr?.[0],
-          glu = data.labs.glu?.[0];
-
-   let naStr = na !== undefined ? (na < 135 || na > 145 ? markAbnormal(na) : na.toString()) : '--';
-    let kStr    = k   !== undefined ? (k < 3.5 || k > 5.0 ? markAbnormal(k) : k.toString()) : '--';
-    let clStr   = cl  !== undefined ? (cl < 96 || cl > 106 ? markAbnormal(cl) : cl.toString()) : '--';
-    let co2Str  = co2 !== undefined ? co2.toString()  : '--';
-    let bunStr  = bun !== undefined ? (bun > 24 ? markAbnormal(bun) : bun.toString()) : '--';
-
-   let crStr;
-    if (cr !== undefined) {
-        const prevCr = data.labs.cr?.[1];
-        if (cr > 1.2 || (prevCr !== undefined && cr - prevCr > 0.3)) {
-            // Abnormal creatinine - show current and previous if available
-            crStr = prevCr !== undefined ? `${markAbnormal(cr)}(${prevCr})` : markAbnormal(cr);
-        } else {
-            // Normal creatinine - just show current value
-            crStr = cr.toString();
-        }
-    } else {
-        crStr = '--';
-    }
+const bmpBottomLine = `${bmpPair1BottomPadded}|${bmpPair2BottomPadded}|${bmpPair3BottomPadded}\\`;
+fishbone += bmpBottomLine + '\n';
 
 	
-
-    let gluStr  = glu !== undefined ? (glu > 200 || glu < 70 ? markAbnormal(glu) : glu.toString()) : '--';
-
-    const col1 = Math.max(naStr.length, kStr.length);
-    const col2 = Math.max(clStr.length, co2Str.length);
-    const col3 = Math.max(bunStr.length, crStr.length);
-
-    fishbone +=
-        `${naStr.padEnd(col1)} |` +
-        `${clStr.padEnd(col2)} |` +
-        `${bunStr.padEnd(col3)}/${gluStr}\n`;
-
-    fishbone +=
-        `${kStr.padEnd(col1)} |` +
-        `${co2Str.padEnd(col2)} |` +
-        `${crStr.padEnd(col3)}\\\n`;
-
-    // Check if labs are recent
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    const yesterday = new Date(currentDate);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const isRecentDate = (dateStr) => {
-        if (!dateStr) return false;
-        const [month, day, year] = dateStr.split('/').map(n => parseInt(n));
-        const labDate = new Date(2000 + year, month - 1, day);
-        labDate.setHours(0, 0, 0, 0);
-        return labDate >= yesterday && labDate <= currentDate;
-    };
 
     // ===== LFTs SECTION =====
     if ((data.labs.ast || data.labs.alt || data.labs.tbil || data.labs.alk) && 
