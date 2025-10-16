@@ -114,6 +114,55 @@
             width: 100%;
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		.help-collapsible summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.section-header {
+  color: #1e40af; /* your blue */
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.section-check {
+  transform: scale(1.2);
+  margin-left: 8px;
+  accent-color: #1e40af;
+}
+
+
+
+
+		
+
         .controls .file-input-label {
             padding: 0.75rem 1rem;
             border: none;
@@ -186,35 +235,16 @@
             font-family: inherit;
         }
 
-        /* Row List */
-        .row-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
+     
 
-        .row-item {
-            background: var(--card-bg);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            border-left: 4px solid transparent;
-            font-size: 1rem;
-            position: relative;
-        }
-
-        .row-item:hover {
-            background: var(--card-hover);
-            transform: translateX(5px);
-            border-left-color: var(--primary);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
+      /* Fixed hover rule - removes border-left-color override */
+		.row-item:hover {
+		    background: var(--card-hover);
+		    transform: translateX(5px);
+		    /* border-left-color: var(--primary); ← REMOVED THIS LINE */
+		    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		    border-left-width: 6px; /* Keep the width increase on hover */
+		}
 
         /* Colored Text */
         .colored-text-1 { color: var(--accent-1); }
@@ -484,6 +514,184 @@
 
 
 
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Help Modal */
+.help-modal {
+    display: none;
+    position: fixed;
+    z-index: 2500;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    animation: fadeIn 0.3s ease;
+}
+
+.help-modal-content {
+    background: var(--card-bg);
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease;
+    position: relative;
+}
+
+.help-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.help-modal-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 0;
+}
+
+.help-modal-close {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.help-modal-close:hover {
+    transform: scale(1.1);
+    background: #dc2626;
+}
+
+.help-modal-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.help-modal-body ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.help-modal-body li {
+    margin: 0.5rem 0;
+}
+
+.help-modal-body strong {
+    color: var(--accent-4);
+}
+
+.help-modal-body a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.help-modal-body a:hover {
+    text-decoration: underline;
+}
+
+/* Custom scrollbar for modal */
+.help-modal-content::-webkit-scrollbar {
+    width: 12px;
+}
+
+.help-modal-content::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+    border-radius: 6px;
+}
+
+.help-modal-content::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 6px;
+}
+
+.help-modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+
 textarea, input[type="text"] {
     width: 100%;
     padding: 0.75rem;
@@ -728,115 +936,14 @@ textarea, input[type="text"] {
     transform: scale(1.05);
 }
 
-/* Help Modal */
-.help-modal {
-    display: none;
-    position: fixed;
-    z-index: 2500;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    animation: fadeIn 0.3s ease;
-}
 
-.help-modal-content {
-    background: var(--card-bg);
-    margin: 5% auto;
-    padding: 2rem;
-    border-radius: 1rem;
-    width: 90%;
-    max-width: 900px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    animation: slideIn 0.3s ease;
-    position: relative;
-}
 
-.help-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border);
-}
 
-.help-modal-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--primary);
-    margin: 0;
-}
 
-.help-modal-close {
-    background: var(--danger);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
 
-.help-modal-close:hover {
-    transform: scale(1.1);
-    background: #dc2626;
-}
 
-.help-modal-body {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-}
 
-.help-modal-body ul {
-    margin: 1rem 0;
-    padding-left: 1.5rem;
-}
-
-.help-modal-body li {
-    margin: 0.5rem 0;
-}
-
-.help-modal-body strong {
-    color: var(--accent-4);
-}
-
-.help-modal-body a {
-    color: var(--primary);
-    text-decoration: none;
-}
-
-.help-modal-body a:hover {
-    text-decoration: underline;
-}
-
-/* Custom scrollbar for modal */
-.help-modal-content::-webkit-scrollbar {
-    width: 12px;
-}
-
-.help-modal-content::-webkit-scrollbar-track {
-    background: var(--dark-bg);
-    border-radius: 6px;
-}
-
-.help-modal-content::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 6px;
-}
-
-.help-modal-content::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-dark);
-}
+		
 
 
 
@@ -1019,9 +1126,7 @@ textarea, input[type="text"] {
 
 
 
-.row-item {
-    padding-right: 1rem; /* Increased padding to prevent text overlap */
-}
+
 	.violin-button-container {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
@@ -1205,13 +1310,7 @@ select,
     font-size: 0.8rem;
     min-height: 40px;
   }
-  .row-list {
-    gap: 0.75rem;
-  }
-  .row-item {
-    padding: 0.75rem;
-    font-size: 0.9rem;
-  }
+ 
   .fab {
     bottom: 1rem;
     right: 1rem;
@@ -1429,16 +1528,384 @@ select,
         word-wrap: break-word !important;
     }
     
-    /* Also reduce row-item padding on mobile */
-    .row-item {
-        padding: 0.5rem !important;  /* Reduced from default */
+ 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		/* Fixed Chart Check Tab Navigation */
+.chart-check-tab-nav {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    gap: 0.5rem;
+}
+
+.chart-check-tab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.chart-check-tab-arrow {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.chart-check-tab-arrow:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.chart-check-tab-arrow:disabled {
+    background: var(--border);
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.5;
+}
+
+.chart-check-tab-title {
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 1.1rem;
+    padding: 0.5rem;
+}
+
+.chart-check-tab-counter {
+    background: var(--secondary);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.chart-check-tab-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+}
+
+.chart-check-tab-button {
+    background: var(--card-hover);
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chart-check-tab-button:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.chart-check-tab-button.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .chart-check-tab-nav {
+        padding: 0.25rem;
+        gap: 0.25rem;
     }
+    
+    .chart-check-tab-header {
+        gap: 0.25rem;
+    }
+    
+    .chart-check-tab-arrow {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    
+    .chart-check-tab-title {
+        font-size: 0.95rem;
+        padding: 0.25rem;
+    }
+    
+    .chart-check-tab-counter {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .chart-check-tab-buttons {
+        gap: 0.2rem;
+    }
+    
+    .chart-check-tab-button {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.7rem;
+        min-height: 36px;
+    }
+}
+		
+
+
+/* Chart Check Mode Colorful Borders */
+.chart-check-left label:nth-of-type(1) + input,
+.chart-check-left label:nth-of-type(1) + textarea {
+    border-color: #your-new-color-1;
+    box-shadow: 0 0 0 1px rgba(your-rgba-values, 0.2);
+}
+
+.chart-check-left label:nth-of-type(2) + input,
+.chart-check-left label:nth-of-type(2) + textarea {
+    border-color: #your-new-color-2;
+    box-shadow: 0 0 0 1px rgba(your-rgba-values, 0.2);
+}
+
+.chart-check-left label:nth-of-type(3) + input,
+.chart-check-left label:nth-of-type(3) + textarea {
+    border-color: #your-new-color-3;
+    box-shadow: 0 0 0 1px rgba(your-rgba-values, 0.2);
+}
+
+.chart-check-left label:nth-of-type(4) + input,
+.chart-check-left label:nth-of-type(4) + textarea {
+    border-color: #your-new-color-4;
+    box-shadow: 0 0 0 1px rgba(your-rgba-values, 0.2);
 }
 
 
 		
 
 
+
+
+/* Priority Color Variables - Red to Blue Gradient (Excluding Green) */
+.priority-0 { --priority-color: #00ff41; } /* Complete - Keep bright green */
+.priority-1 { --priority-color: #ff0000; } /* Urgent - Bright red */
+.priority-2 { --priority-color: #ff2400; } /* High - Red-orange */
+.priority-3 { --priority-color: #ff4900; } /* Medium-High - Orange */
+.priority-4 { --priority-color: #ff6d00; } /* Medium - Orange-yellow */
+.priority-5 { --priority-color: #ff9200; } /* Medium-Low - Yellow */
+.priority-6 { --priority-color: #ffb600; } /* Low-Medium - Dark yellow */
+.priority-7 { --priority-color: #ffdb00; } /* Low - Light blue */
+.priority-8 { --priority-color: #ffff00; } /* Very Low - Blue */
+.priority-9 { --priority-color: #800080; } /* Minimal - Dark blue */
+.priority-10 { --priority-color: #bf00bf; } /* Lowest - Deep blue */
+.priority-default { --priority-color: #444444; } /* No priority - Dark gray */
+
+
+		
+.row-item {
+    position: relative;
+    border-left: 4px solid var(--priority-color, #444444);
+    transition: all 0.3s ease, border-left-width 0.3s ease;
+    display: grid;
+    grid-template-columns: 1fr 8px;
+    min-height: 60px;
+    gap: 1rem;
+}
+
+.row-item-content {
+    grid-column: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.priority-sidebar {
+    grid-column: 2;
+    background: var(--priority-color, #444444);
+    border-radius: 0 0.5rem 0.5rem 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		/* === Scoped help styling inside the existing modal body === */
+.help-modal-body .help-section { color: var(--text-primary); background: transparent; line-height: 1.55; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+
+/* Section chips (bold headers) */
+.help-modal-body .section-header {
+  display: inline-block; font-weight: 800; letter-spacing: .2px;
+  padding: 6px 10px; border-radius: 999px; margin: 8px 0 12px;
+  background: #111827; border: 1px solid #374151; color: #fff;
+}
+
+/* Color accents by tag */
+.help-modal-body .section-header[data-tag="problems"]{ box-shadow: inset 0 0 0 9999px rgba(96,165,250,.18); border-color: rgba(96,165,250,.38); }
+.help-modal-body .section-header[data-tag="ros"]     { box-shadow: inset 0 0 0 9999px rgba(52,211,153,.18); border-color: rgba(52,211,153,.38); }
+.help-modal-body .section-header[data-tag="pmh"]     { box-shadow: inset 0 0 0 9999px rgba(245,158,11,.18); border-color: rgba(245,158,11,.38); }
+.help-modal-body .section-header[data-tag="meds"]    { box-shadow: inset 0 0 0 9999px rgba(167,139,250,.18); border-color: rgba(167,139,250,.38); }
+.help-modal-body .section-header[data-tag="allg"]    { box-shadow: inset 0 0 0 9999px rgba(244,114,182,.18); border-color: rgba(244,114,182,.38); }
+.help-modal-body .section-header[data-tag="cex"]     { box-shadow: inset 0 0 0 9999px rgba(248,113,113,.18); border-color: rgba(248,113,113,.38); }
+.help-modal-body .section-header[data-tag="trauma"]  { box-shadow: inset 0 0 0 9999px rgba(244,63,94,.18);  border-color: rgba(244,63,94,.38);  }
+
+/* Collapsible groups */
+.help-modal-body .help-collapsible { background: #0f172a; border: 1px solid #27324a; border-radius: 10px; padding: 8px 10px; margin: 10px 0; }
+.help-modal-body .help-collapsible summary { cursor: pointer; font-weight: 800; color: var(--text-primary); outline: none; }
+.help-modal-body .help-collapsible[open] { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,.15) inset; }
+
+/* Topic chip + lists + subnote */
+.help-modal-body .topic-header { font-weight: 800; display: inline-block; margin: 6px 0 4px; padding: 2px 8px; border-radius: 9px; background: #152036; color: #fca5a5; border: 1px solid #2a3a62; }
+.help-modal-body ul { margin: 6px 0 10px 1.1rem; }
+.help-modal-body li { margin: 4px 0; }
+.help-modal-body .subnote { color: var(--text-secondary, #9ca3af); font-size: .9em; }
+
+		
+
+
+
+
+
+
+/* Chart Check Mode Split Layout */
+.chart-check-layout {
+    display: flex;
+    gap: 1rem;
+    height: calc(100vh - 250px);
+    border: 3px solid var(--border);
+    border-radius: 0.5rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    padding: 1rem;
+    background: var(--card-bg);
+}
+
+.chart-check-left-panel {
+    flex: 2;
+    overflow-y: auto;
+    padding-right: 1rem;
+    border-right: 1px solid var(--border);
+}
+
+.chart-check-right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--dark-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 2px solid var(--primary);
+}
+
+.chart-check-right-panel h3 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.chart-check-right-panel textarea {
+    flex: 1;
+    resize: none;
+    background: var(--dark-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.chart-check-field-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    accent-color: var(--primary);
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .chart-check-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .chart-check-left-panel {
+        padding-right: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1rem;
+    }
+    
+    .chart-check-right-panel {
+        margin-top: 1rem;
+        max-height: 300px;
+    }
+}
+
+
+
+
+		
     </style>
 </head>
 
@@ -1867,9 +2334,9 @@ async function testOCRAvailability() {
 
 // Help Tips for Modal 
 const helpContent = {
-    'Problems': '<b>A/G</b><br><br>• DX<br> HPI <br> PMH:<br>',
-    'ICS': '<ul><li><strong>Diagnostic imaging</strong></li><li><strong>Pathology + Microbiology</strong></li>  <li><strong>Overnight events</strong></li><li><strong>Latest consult notes</strong></li><li><strong>Procedures/Interventions</strong></li><li><strong>Non Primary: plan of care</strong></li></ul>',
-    'VIOLIN': '<ul><li><strong>Vitals (HR, SBP, DBP, MAP, Temp, RR, SPO2, O2 therapy, Vent: Mode, RR, Vt, PEEP, FIO2, PIP, ETCO2, Cardiac: CVP, PASP/PADP, PAMAP, CO, CI, SvO2, SV, SVI, SVR) </strong></li> <li><strong> Intake (Blood products, oral, IVF, meds, tube feeds) and Outputs (BM, ostomy, urostomy, drains/tubes, UOP, emesis, blood loss, dialysis), Fluid balance </strong></li> <li><strong> CBC and left shift, BMP, Ca, Mg, P, Tbil, Dbili, ALK, GGT, AST/ALT, PT, PTT, INR, pH, PO2, PCO2, Bicarb, Base excess, Lactate, Trops, Misc: albumin, prealbumin, Procal, UA, Urine studies</strong></li><li><strong>Replete electrolytes: electrolytes</strong></li></ul> <strong><li> Primary review of imaging: https://docs.google.com/document/d/12lbPO5K7jMPhruuoedT-piCaQSr9dja2OObAeMD2NWk/edit?tab=t.0 </li> </strong>',
+'Problems': `<details class="help-collapsible"><summary><span class="section-header" data-tag="problems">HPI</span><input type="checkbox" class="section-check"></summary><h3>Story</h3><p><strong>ASK EVERYTHING BUT WRITE DOWN THE POSITIVES! FOCUS ON WHAT IS RELEVANT TO THE SURGICAL CONSULTATION → What is the DDX before seeing, and what possible surgical interventions or assistance may actually be required?</strong></p><ul><li><strong>Onset</strong><ul><li>Sequence of events and why presenting today; preceding events</li><li>Where coming from</li><li>What did they do there? Interventions, medications, studies, consultations</li><li>If they have tubes, drains or devices: are they functioning? What have the outputs been?</li></ul></li><li>Palliating, provoking</li><li>Quality, radiation, severity</li><li>Prior episodes, evolution over time</li><li><strong>Trauma Details:</strong><ul><li>Time of injury</li><li>Mechanism: MVC/MCC speed, location of force transfer</li><li>Seatbelt / helmet / airbags / protective devices</li><li>Post-injury course</li><li>Identified injuries</li><li>Therapies/interventions</li></ul></li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="ros">Review of Systems</span><input type="checkbox" class="section-check"></summary><ul><li><strong>Constitutional:</strong> fever, chills, night sweats, weight loss, anorexia (last MEAL), travel, sick contacts, diet changes <span class="subnote">(traveling guy, sun overhead, get tired, vacation)</span></li><li><strong>Neurologic:</strong> headache, dizziness, numbness, tingling, weakness, presyncope/syncope, tremors, convulsions/seizures, unsteady gait <span class="subnote">(head)</span></li><li><strong>Skin:</strong> jaundice, rash, lesions, petechiae, itching <span class="subnote">(sunburnt)</span></li><li><strong>ENMT:</strong> vision changes, hearing changes, ear or eye pain, sore throat, congestion, runny nose, hoarseness, dysphagia <span class="subnote">(eyes/ears)</span></li><li><strong>Respiratory:</strong> shortness of breath, cough, wheezing <span class="subnote">(chest)</span></li><li><strong>Cardiovascular:</strong> chest pain, palpitations <span class="subnote">(chest)</span></li><li><strong>Gastrointestinal:</strong> nausea, vomiting, last BM and gas, change in bowel habits, abdominal pain <span class="subnote">(stomach, colon)</span></li><li><strong>Genitourinary:</strong> dysuria, urine retention (last void: ___), hematuria, discharge <span class="subnote">(groin)</span></li><li><strong>Musculoskeletal:</strong> pain, joint swelling, stiffness, myalgias, trauma</li><li><strong>Psychiatric:</strong> anxiety, depression, restlessness, suicidal ideation</li><li><strong>Heme/Lymph:</strong> bleeding tendency, bruising tendency, petechiae, swollen nodes</li><li><strong>Menstrual:</strong> LMP, menopausal</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="pmh">Past Medical and Surgical History</span><input type="checkbox" class="section-check"></summary><ul><li>Previous diagnoses</li><li>Chronic conditions</li><li>Previous surgeries</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="meds">Current Medications</span><input type="checkbox" class="section-check"></summary><ul><li>Home medications</li><li>Current hospital medications</li><li>Allergies (cross-check)</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="allg">Allergies</span><input type="checkbox" class="section-check"></summary><ul><li>Drug allergies</li><li>Environmental allergies</li><li>Type of reaction</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="soc">Social History/Colonoscopy/EGD</span><input type="checkbox" class="section-check"></summary><ul><li>Emergency contact #</li><li>Smoking history</li><li>Alcohol use</li><li>Recreational/illicit drugs</li><li>Caffeine intake</li><li>Sexual history</li><li>Nutrition/diet</li><li>Stressors/mental health</li><li>Occupation/work environment</li><li>Religion/spiritual beliefs</li><li>Constipation help / bowel habits</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="fhx">Family History</span><input type="checkbox" class="section-check"></summary><ul><li>Major hereditary diseases (cardiovascular, diabetes, cancer, bleeding disorders)</li><li>Liver/biliary/pancreatic disease</li><li>Other significant familial conditions</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="cex">Clinical Examination</span><input type="checkbox" class="section-check"></summary><ul><li><strong>Gen:</strong> Well appearing in no acute distress. Alert and oriented x3.</li><li><strong>Neuro:</strong> strength and sensation intact BUE+BLE, CN II–XII grossly intact, EOMI</li><li><strong>Resp:</strong> Non-labored breathing. No use of accessory muscles, no retractions.</li><li><strong>CV:</strong> Hemodynamically stable</li><li><strong>Pulse:</strong> palpable b/l DP/PT pulses, radial/ulnar pulses</li><li><strong>Abd:</strong> soft, non-tender, non-distended; no voluntary or involuntary guarding; no rebound or jolt tenderness</li><li><strong>Wound:</strong> Incisions clean, dry, intact.</li><li><strong>LTD:</strong> __________________</li></ul></details><details class="help-collapsible"><summary><span class="section-header" data-tag="trauma">Trauma Examination</span><input type="checkbox" class="section-check"></summary><ul><li><strong>Head:</strong> Normocephalic, atraumatic, no deformities, abrasions, tenderness, oropharynx clear, no blood in nares or ears, hearing intact</li><li><strong>Neuro:</strong> GCS 15, Pupils equal and reactive to light bilaterally, extraocular muscles intact, gross motor and sensory intact in all 4 extremities</li><li><strong>Face:</strong> Atraumatic, no deformities, abrasions, tenderness</li><li><strong>Chest:</strong> clear to auscultation bilaterally, non-tender, atraumatic, pulling on incentive spirometer</li><li><strong>CVS:</strong> RRR, hemodynamically stable</li><li><strong>Abdomen:</strong> soft, non-tender, non-distended, no voluntary or involuntary guarding, no jolt or rebound tenderness</li><li><strong>Pelvis:</strong> Stable</li><li><strong>Upper Extremities:</strong> Atraumatic, no deformities, abrasions, tenderness, Bilateral radial pulses palpable, brisk capillary refill</li><li><strong>Lower Extremities:</strong> Atraumatic, no deformities, abrasions, tenderness, brisk capillary refill, Bilateral femoral, DP, PT pulses palpable</li><li><strong>Spine:</strong> No obvious cervical, lumbar, or thoracic spine deformities, no step offs, no tenderness, trachea midline</li><li><strong>Perineum:</strong> No gross blood in the perineum, rectal exam deferred, anal wink reflex intact</li><li>GCS: Eye opening (E) (Think: Eyes = “four eyes”) -> 4—Opens spontaneously, 3—Opens to voice (command), 2—Opens to painful stimulus, 1—Does not open eyes. Verbal response (V) (Think: Verbal = “Jackson 5”), 5—Appropriate and oriented, 4—Confused, 3—Inappropriate words, 2—Incomprehensible sounds, 1—No sounds. Motor response (M) 6—Obeys commands, 5—Localizes pain, 4—Withdraws from pain, 3—Decorticate posture, 2—Decerebrate posture, 1—No movement</li></ul></details><p style="margin-top:1rem;"><a href="https://www.isncscialgorithm.com/Form" target="_blank" style="color:#3b82f6; text-decoration:underline;">ASIA Neurological Exam Form & Algorithm</a></p>`, 
+	'ICS': '<ul><li><strong>Diagnostic imaging</strong></li><li><strong>Pathology + Microbiology</strong></li>  <li><strong>Overnight events</strong></li><li><strong>Latest consult notes</strong></li><li><strong>Procedures/Interventions</strong></li><li><strong>Non Primary: plan of care</strong></li></ul>',
+    'VIOLIN': '<ul><li><strong>Vitals (HR, SBP, DBP, MAP, Temp, RR, SPO2, O2 therapy, Vent: Mode, RR, Vt, PEEP, FIO2, PIP, ETCO2, Cardiac: CVP, PASP/PADP, PAMAP, CO, CI, SvO2, SV, SVI, SVR) </strong></li> <li><strong> Intake (Blood products, oral, IVF, meds, tube feeds) and Outputs (BM, ostomy, urostomy, drains/tubes, UOP, emesis, blood loss, dialysis), Fluid balance </strong></li> <li><strong> CBC and left shift, BMP, Ca, Mg, P, Tbil, Dbili, ALK, GGT, AST/ALT, PT, PTT, INR, pH, PO2, PCO2, Bicarb, Base excess, Lactate, Trops, Misc: albumin, prealbumin, Procal, UA, Urine studies</strong></li><li><strong>Replete electrolytes: electrolytes</strong></li></ul> <li><strong> <a href="//docs.google.com/document/d/12lbPO5K7jMPhruuoedT-piCaQSr9dja2OObAeMD2NWk/edit?tab=t.0"> Review Imaging https:</a> </strong></li>', 
 'ORDERS': '<ul><li><strong>Renew orders</strong></li><li><strong>Nutrition/fluids:</strong><ul><li><strong>Diet order/IVFs/tube feeds/TPN</strong></li></ul></li><li><strong>Pain medications:</strong></li><li><strong>LTD:</strong><ul><li><strong>Orders for any lines (central line, PICC, peripheral IVs, arterial line, chest tubes, drains, ports, NG tubes, respiratory support NC or facemask, ETT)</strong></li><li><strong>Inc. Types of trach and size ex. #8 cuffed subglottic tracheostomy, date placed</strong></li><li><strong>Record accurate outputs, suction/maintenance settings ex. CT -20 mmHg suction, quality of output</strong></li></ul></li><li><strong>Antibiotics/special medications/home meds:</strong><ul><li><strong>Note any IV or oral antibiotics or special therapies and the duration required.</strong></li><li><strong>Record doses of all pressors and sedation</strong></li></ul></li><li><strong>Anticoagulation/DVT prophylaxis:</strong><ul></ul></li><li><strong>Disposition</strong></li></ul>',   
 	'Priority': '',
     'CC': '<b>Chief Complaint/Level</b><br><br>• Primary reason for consultation<br>• Trauma level if applicable<br>• Brief description of problem',
@@ -2177,60 +2644,75 @@ function getChecklistStatus(patient, patientIndex) {
 
 
 
-		function getPriorityStatus(patient) {
-    const priority = patient.Priority || '';
-    
-    if (!priority.trim()) {
+	function getPriorityStatus(patient) {
+    // Normalize priority: handle undefined, null, or non-string values
+    const priority = (patient.Priority || '').toString().trim().toLowerCase();
+    console.log('getPriorityStatus: Normalized priority:', priority); // Debug log
+
+    if (!priority) {
+        console.log('getPriorityStatus: No priority, returning default');
         return { color: 'var(--card-bg)', title: 'No priority set' }; // Gray
     }
-    
+
+    // Handle priority "C" explicitly for green
+    if (priority === 'c') {
+        console.log('getPriorityStatus: Matched priority C, returning green');
+        return { color: '#10b981', title: 'Priority C - Complete' }; // Green (emerald-500)
+    }
+
+    // Handle numeric priorities
     const priorityNum = parseInt(priority);
     if (!isNaN(priorityNum)) {
-        if (priorityNum === 0) {
-            return { color: '#10b981', title: `Priority ${priorityNum} - Complete` }; // Green
-        } else if (priorityNum === 1) {
-            return { color: '#ef4444', title: `Priority ${priorityNum} - Urgent` }; // Red
-        } else if (priorityNum === 2) {
-            return { color: '#f97316', title: `Priority ${priorityNum} - High` }; // Orange
-        } else if (priorityNum === 3) {
-            return { color: '#f59e0b', title: `Priority ${priorityNum} - Medium-High` }; // Amber
-        } else if (priorityNum === 4) {
-            return { color: '#eab308', title: `Priority ${priorityNum} - Medium` }; // Yellow
-        } else if (priorityNum === 5) {
-            return { color: '#84cc16', title: `Priority ${priorityNum} - Medium-Low` }; // Lime
-        } else if (priorityNum === 6) {
-            return { color: '#22c55e', title: `Priority ${priorityNum} - Low-Medium` }; // Light Green
-        } else if (priorityNum === 7) {
-            return { color: '#06b6d4', title: `Priority ${priorityNum} - Low` }; // Cyan
-        } else if (priorityNum === 8) {
-            return { color: '#3b82f6', title: `Priority ${priorityNum} - Very Low` }; // Blue
-        } else if (priorityNum === 9) {
-            return { color: '#8b5cf6', title: `Priority ${priorityNum} - Minimal` }; // Purple
-        } else if (priorityNum === 10) {
-            return { color: '#a855f7', title: `Priority ${priorityNum} - Lowest` }; // Violet
-        } else if (priorityNum > 10) {
-            return { color: 'var(--card-bg)', title: `Priority ${priorityNum} - Out of range` }; // Gray
+        console.log('getPriorityStatus: Priority is numeric:', priorityNum);
+        switch (priorityNum) {
+            case 1:
+                return { color: '#ff0000', title: 'Priority 1 - Urgent' }; // Red
+            case 2:
+                return { color: '#ff2400', title: 'Priority 2 - High' }; // Orange
+            case 3:
+                return { color: '#ff4900', title: 'Priority 3 - Medium-High' }; // Amber
+            case 4:
+                return { color: '#ff6d00', title: 'Priority 4 - Medium' }; // Yellow
+            case 5:
+                return { color: '#ff9200', title: 'Priority 5 - Medium-Low' }; // yellow
+            case 6:
+                return { color: '#ffb600', title: 'Priority 6 - Low-Medium' }; // dark yellow
+            case 7:
+                return { color: '#ffdb00', title: 'Priority 7 - Low' }; // Cyan
+            case 8:
+                return { color: '#ffff00', title: 'Priority 8 - Very Low' }; // Blue
+            case 9:
+                return { color: '#800080', title: 'Priority 9 - Minimal' }; // Purple
+            case 10:
+                return { color: '#bf00bf', title: 'Priority 10 - Lowest' }; // Violet
+            default:
+                console.log('getPriorityStatus: Numeric priority out of range:', priorityNum);
+                return { color: 'var(--card-bg)', title: `Priority ${priorityNum} - Out of range` }; // Gray
         }
     }
-    
+
     // Text-based priority fallback
-    const priorityLower = priority.toLowerCase();
-    if (priorityLower.includes('done') || priorityLower.includes('complete')) {
+    console.log('getPriorityStatus: Checking text-based priority:', priority);
+    if (priority.includes('done') || priority.includes('complete')) {
         return { color: '#10b981', title: `${priority} - Complete` }; // Green
-    } else if (priorityLower.includes('urgent') || priorityLower.includes('stat')) {
+    }
+    if (priority.includes('urgent') || priority.includes('stat')) {
         return { color: '#ef4444', title: `${priority} - Urgent` }; // Red
-    } else if (priorityLower.includes('high')) {
+    }
+    if (priority.includes('high')) {
         return { color: '#f97316', title: `${priority} - High` }; // Orange
-    } else if (priorityLower.includes('medium')) {
+    }
+    if (priority.includes('medium')) {
         return { color: '#f59e0b', title: `${priority} - Medium` }; // Amber
-    } else if (priorityLower.includes('low')) {
+    }
+    if (priority.includes('low')) {
         return { color: '#22c55e', title: `${priority} - Low` }; // Light Green
     }
-    
+
+    console.log('getPriorityStatus: Unrecognized priority, returning default:', priority);
     return { color: 'var(--card-bg)', title: `${priority}` }; // Default gray
 }
-
-
+		
 
 
 
@@ -2241,12 +2723,11 @@ function getChecklistStatus(patient, patientIndex) {
 
 
 function generateStatusIndicator(patient, index) {
-    // Check if this should be grey (not a consult and no priority)
+    // Check if this should be grey (no consult data and no priority)
     const consultFields = ['CC', 'HPI', 'ROS', 'PMH', 'Meds', 'All', 'Surg hx', 'FSH', 'PE'];
-    const hasConsultData = consultFields.some(field => patient[field] && patient[field].trim());
-    const hasPriority = patient.Priority && patient.Priority.trim();
-    
-    // If no consult data and no priority, show grey
+    const hasConsultData = consultFields.some(field => patient[field]?.trim());
+    const hasPriority = patient.Priority?.trim();
+
     if (!hasConsultData && !hasPriority) {
         return `
             <div class="status-dot" 
@@ -2254,84 +2735,92 @@ function generateStatusIndicator(patient, index) {
                  title="No consult data or priority assigned">
             </div>`;
     }
-    
-    // STATUS IS NOW BASED PURELY ON PRIORITY NUMBER
-    const priority = patient.Priority || '';
-    const priorityNum = parseInt(priority);
-    
+
+    const priority = (patient.Priority || '').trim().toLowerCase();
     let color = 'var(--card-bg)'; // Default grey
     let title = 'No priority set';
-    
-   if (!isNaN(priorityNum)) {
-    if (priorityNum === 0) {
-        color = '#00ff41'; // Bright neon green - Complete
-        title = `Priority ${priorityNum} - Complete`;
-    } else if (priorityNum === 1) {
-        color = '#ff0040'; // Bright neon red - Urgent  
-        title = `Priority ${priorityNum} - Urgent`;
-    } else if (priorityNum === 2) {
-        color = '#ff6600'; // Bright neon orange - High
-        title = `Priority ${priorityNum} - High`;
-    } else if (priorityNum === 3) {
-        color = '#ffaa00'; // Bright neon amber - Medium-High
-        title = `Priority ${priorityNum} - Medium-High`;
-    } else if (priorityNum === 4) {
-        color = '#ffff00'; // Bright neon yellow - Medium
-        title = `Priority ${priorityNum} - Medium`;
-    } else if (priorityNum === 5) {
-        color = '#ccff00'; // Bright neon lime - Medium-Low
-        title = `Priority ${priorityNum} - Medium-Low`;
-    } else if (priorityNum === 6) {
-        color = '#66ff00'; // Bright neon chartreuse - Low-Medium
-        title = `Priority ${priorityNum} - Low-Medium`;
-    } else if (priorityNum === 7) {
-        color = '#00ffff'; // Bright neon cyan - Low
-        title = `Priority ${priorityNum} - Low`;
-    } else if (priorityNum === 8) {
-        color = '#0080ff'; // Bright neon blue - Very Low
-        title = `Priority ${priorityNum} - Very Low`;
-    } else if (priorityNum === 9) {
-        color = '#8000ff'; // Bright neon purple - Minimal
-        title = `Priority ${priorityNum} - Minimal`;
-    } else if (priorityNum === 10) {
-        color = '#ff00ff'; // Bright neon magenta - Lowest
-        title = `Priority ${priorityNum} - Lowest`;
-    } else {
-        color = 'var(--card-bg)'; // Dark grey for out of range
-        title = `Priority ${priorityNum} - Out of range`;
-    }
-} else if (priority.trim()) {
-    // Text-based priority fallback with neon colors
-    const priorityLower = priority.toLowerCase();
-    if (priorityLower.includes('done') || priorityLower.includes('complete')) {
+
+    // Handle priority "C" explicitly for complete green
+    if (priority === 'C') {
         color = '#00ff41'; // Bright neon green
-        title = `${priority} - Complete`;
-    } else if (priorityLower.includes('urgent') || priorityLower.includes('stat')) {
-        color = '#ff0040'; // Bright neon red
-        title = `${priority} - Urgent`;
-    } else if (priorityLower.includes('high')) {
-        color = '#ff6600'; // Bright neon orange
-        title = `${priority} - High`;
-    } else if (priorityLower.includes('medium')) {
-        color = '#ffaa00'; // Bright neon amber
-        title = `${priority} - Medium`;
-    } else if (priorityLower.includes('low')) {
-        color = '#00ffff'; // Bright neon cyan
-        title = `${priority} - Low`;
-    } else {
-        color = 'var(--card-bg)'; // Medium grey for unrecognized text
-        title = `${priority}`;
+        title = 'Priority C - Complete';
+    } else if (!isNaN(parseInt(priority))) {
+        // Numeric priorities
+        const priorityNum = parseInt(priority);
+        switch (priorityNum) {
+            case 1:
+                color = '#ff0000'; // Bright neon red
+                title = 'Priority 1 - Urgent';
+                break;
+            case 2:
+                color = '#ff2400'; // Bright neon orange
+                title = 'Priority 2 - High';
+                break;
+            case 3:
+                color = '#ff4900'; // Bright neon amber
+                title = 'Priority 3 - Medium-High';
+                break;
+            case 4:
+                color = '#ff6d00'; // Bright neon yellow
+                title = 'Priority 4 - Medium';
+                break;
+            case 5:
+                color = '#ff9200'; // Bright neon lime
+                title = 'Priority 5 - Medium-Low';
+                break;
+            case 6:
+                color = '#ffb600'; // Bright neon chartreuse
+                title = 'Priority 6 - Low-Medium';
+                break;
+            case 7:
+                color = '#ffdb00'; // Bright neon cyan
+                title = 'Priority 7 - Low';
+                break;
+            case 8:
+                color = '#ffff00'; // Bright neon blue
+                title = 'Priority 8 - Very Low';
+                break;
+            case 9:
+                color = '#800080'; // Bright neon purple
+                title = 'Priority 9 - Minimal';
+                break;
+            case 10:
+                color = '#bf00bf'; // Bright neon magenta
+                title = 'Priority 10 - Lowest';
+                break;
+            default:
+                color = 'var(--card-bg)'; // Grey for out of range
+                title = `Priority ${priorityNum} - Out of range`;
+        }
+    } else if (priority) {
+        // Text-based priorities
+        if (priority.includes('done') || priority.includes('complete')) {
+            color = '#00ff41'; // Bright neon green
+            title = `${priority} - Complete`;
+        } else if (priority.includes('urgent') || priority.includes('stat')) {
+            color = '#ff0040'; // Bright neon red
+            title = `${priority} - Urgent`;
+        } else if (priority.includes('high')) {
+            color = '#ff6600'; // Bright neon orange
+            title = `${priority} - High`;
+        } else if (priority.includes('medium')) {
+            color = '#ffaa00'; // Bright neon amber
+            title = `${priority} - Medium`;
+        } else if (priority.includes('low')) {
+            color = '#00ffff'; // Bright neon cyan
+            title = `${priority} - Low`;
+        } else {
+            color = 'var(--card-bg)'; // Grey for unrecognized text
+            title = `${priority}`;
+        }
     }
-}
-    
+
     return `
         <div class="status-dot" 
              style="background: ${color};" 
              title="${title}">
         </div>`;
 }
-		
-		
 
 
 
@@ -2340,59 +2829,84 @@ function generateStatusIndicator(patient, index) {
 
 
 
-
-
-
-		
-
-
-
-
-
-
- function displayRows() {
+function displayRows(data = patientData) {
     const rowList = document.getElementById('rowList');
     rowList.innerHTML = '';
-    
+
     patientData.forEach((patient, index) => {
+        // Get priority status and color from getPriorityStatus
+        const { color, title } = getPriorityStatus(patient);
+
+        // Determine priority class for additional styling (optional)
+        const priority = patient.Priority || '';
+        const priorityNum = parseInt(priority);
+        let priorityClass = 'priority-default';
+        if (!isNaN(priorityNum) && priorityNum >= 1 && priorityNum <= 10) {
+            priorityClass = `priority-${priorityNum}`;
+        } else if (priority.toLowerCase() === 'c') {
+            priorityClass = 'priority-complete';
+        }
+
+        // Create main list item
         const listItem = document.createElement('li');
-        listItem.className = 'row-item';
-        
-        // Create content container
+        listItem.className = `row-item ${priorityClass}`;
+        listItem.style.cssText = `
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            background: var(--card-bg);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid ${color}; /* Use color from getPriorityStatus */
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            padding: 0;
+        `;
+
+        // Content container
         const contentContainer = document.createElement('div');
-        contentContainer.style.width = '100%';
-        contentContainer.style.display = 'flex';
-        contentContainer.style.flexDirection = 'column';
-        contentContainer.style.position = 'relative';
-        contentContainer.style.paddingRight = '2.5rem'; // Space for status dot
-        
-		  // Create button containing first 3 rows
-		const firstThreeButton = document.createElement('button');
-		firstThreeButton.className = 'first-three-btn';
-		firstThreeButton.style.width = 'fit-content';
-		firstThreeButton.style.textAlign = 'left';
-		firstThreeButton.style.background = 'transparent';
-		firstThreeButton.style.border = '1px solid transparent';
-		firstThreeButton.style.borderRadius = '0.25rem';
-		firstThreeButton.style.padding = '0.25rem 0.5rem';
-		firstThreeButton.style.cursor = 'pointer';
-		firstThreeButton.style.color = 'inherit';
-		firstThreeButton.style.alignSelf = 'flex-start';
-		firstThreeButton.style.display = 'flex';           // ← Add this
-		firstThreeButton.style.flexDirection = 'column';   // ← Add this
-		firstThreeButton.style.whiteSpace = 'normal';      // ← Add this
-        
-        // Store the column data on the button element for the reset function
+        contentContainer.style.cssText = `
+            flex: 1;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        `;
+
+        // First three columns button
+        const firstThreeButton = document.createElement('button');
+        firstThreeButton.className = 'first-three-btn';
+        firstThreeButton.style.cssText = `
+            width: fit-content;
+            text-align: left;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            padding: 0.2rem 0.4rem;
+            cursor: pointer;
+            color: inherit;
+            align-self: flex-start;
+            display: flex;
+            flex-direction: column;
+            white-space: normal;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            gap: 0.1rem;
+        `;
+
+        // Store data for copy functionality
         firstThreeButton.patientData = patient;
         firstThreeButton.columnIndexes = selectedColumns.slice(0, 3);
         firstThreeButton.colorClasses = colors;
-        
+
         firstThreeButton.onclick = (e) => {
             e.stopPropagation();
             copyPatientInfoImproved(firstThreeButton);
         };
-        
-        // Add first 3 selected columns to the button (displayed as rows)
+
+        // Add first three columns to button
         const firstThreeColumns = selectedColumns.slice(0, 3);
         firstThreeColumns.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
@@ -2401,14 +2915,20 @@ function generateStatusIndicator(patient, index) {
                 const span = document.createElement('span');
                 span.className = colors[idx % colors.length];
                 span.textContent = value;
-                span.style.display = 'block'; // Each on its own row
+                span.style.cssText = `
+                    display: block;
+                    font-family: inherit;
+                    font-size: 0.9rem;
+                    line-height: 1.2;
+                    margin-bottom: 0.05rem;
+                `;
                 firstThreeButton.appendChild(span);
             }
         });
-        
+
         contentContainer.appendChild(firstThreeButton);
-        
-        // Add remaining columns as regular text rows (not in button)
+
+        // Remaining columns
         if (selectedColumns.length > 3) {
             const remainingColumns = selectedColumns.slice(3);
             remainingColumns.forEach((colIndex, idx) => {
@@ -2418,42 +2938,148 @@ function generateStatusIndicator(patient, index) {
                     const span = document.createElement('span');
                     span.className = colors[(idx + 3) % colors.length];
                     span.textContent = value;
-                    span.style.display = 'block'; // Each on its own row
-                    span.style.marginLeft = '0.5rem'; // Slight indent to show they're separate
+                    span.style.cssText = `
+                        display: block;
+                        margin-left: 0.5rem;
+                        margin-bottom: 0.1rem;
+                        font-family: inherit;
+                        font-size: 0.9rem;
+                        line-height: 1.2;
+                    `;
                     contentContainer.appendChild(span);
                 }
             });
         }
-        
-        // Add status dot on the RIGHT side
-        const statusDot = document.createElement('div');
-        statusDot.innerHTML = generateStatusIndicator(patient, index);
-        statusDot.style.position = 'absolute';
-        statusDot.style.right = '0.50rem';
-        statusDot.style.top = '50%';
-		statusDot.style.transform = 'translateY(-50%)';
-        statusDot.style.cursor = 'pointer';
-        statusDot.style.zIndex = '10';
-        statusDot.title = 'Click to change status';
-        statusDot.onclick = (e) => {
+
+        // Priority sidebar
+        const prioritySidebar = document.createElement('div');
+        prioritySidebar.className = 'priority-sidebar';
+        prioritySidebar.style.cssText = `
+            width: 12px;
+            background: ${color}; /* Use color from getPriorityStatus */
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            align-self: stretch;
+        `;
+
+        // Priority sidebar click handler
+        prioritySidebar.onclick = (e) => {
             e.stopPropagation();
-            showStatusSelector(patient, index, statusDot);
+            showStatusSelector(patient, index, prioritySidebar);
         };
-        contentContainer.appendChild(statusDot);
-        
+
+        // Priority sidebar hover effects
+        prioritySidebar.onmouseenter = () => {
+            prioritySidebar.style.width = '14px';
+            prioritySidebar.style.boxShadow = '0 0 8px rgba(0,0,0,0.3)';
+        };
+        prioritySidebar.onmouseleave = () => {
+            prioritySidebar.style.width = '12px';
+            prioritySidebar.style.boxShadow = 'none';
+        };
+
+        // Add tooltip
+        const priorityName = getPriorityName(patient.Priority);
+        prioritySidebar.title = `Priority: ${priorityName} (Click to change)`;
+
+        // Row hover effects
+        listItem.onmouseenter = () => {
+            listItem.style.background = 'var(--card-hover)';
+            listItem.style.transform = 'translateX(5px)';
+            listItem.style.borderLeftWidth = '6px';
+            listItem.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+        };
+
+        listItem.onmouseleave = () => {
+            listItem.style.background = 'var(--card-bg)';
+            listItem.style.transform = 'translateX(0)';
+            listItem.style.borderLeftWidth = '4px';
+            listItem.style.boxShadow = 'none';
+        };
+
+        // Main row click handler (for details view)
+        listItem.onclick = (e) => {
+            if (!e.target.closest('.priority-sidebar') && !e.target.closest('.first-three-btn')) {
+                showDetails(index);
+            }
+        };
+
+        // Assemble the row
         listItem.appendChild(contentContainer);
-        
-        // Make the entire row clickable for details
-        listItem.onclick = () => showDetails(index);
-        
+        listItem.appendChild(prioritySidebar);
+
+        // Add to list
         rowList.appendChild(listItem);
     });
-    
+
     updateCensus();
+}
+		
+
+
+
+
+
+
+
+
+
+
+
+
+	function getPriorityName(priority) {
+    if (!priority || priority.trim() === '') {
+        return 'No priority set';
+    }
+
+    const normalizedPriority = priority.toString().trim().toLowerCase();
+
+    // Handle "C" explicitly
+    if (normalizedPriority === 'c') {
+        return 'Complete';
+    }
+
+    const priorityNum = parseInt(normalizedPriority);
+    if (!isNaN(priorityNum)) {
+        switch (priorityNum) {
+            case 1: return 'Urgent';
+            case 2: return 'High';
+            case 3: return 'Medium-High';
+            case 4: return 'Medium';
+            case 5: return 'Medium-Low';
+            case 6: return 'Low-Medium';
+            case 7: return 'Low';
+            case 8: return 'Very Low';
+            case 9: return 'Minimal';
+            case 10: return 'Lowest';
+            default: return `Priority ${priorityNum}`;
+        }
+    }
+
+    // Text-based priority fallback
+    if (normalizedPriority.includes('done') || normalizedPriority.includes('complete')) {
+        return 'Complete';
+    }
+    if (normalizedPriority.includes('urgent') || normalizedPriority.includes('stat')) {
+        return 'Urgent';
+    }
+    if (normalizedPriority.includes('high')) {
+        return 'High';
+    }
+    if (normalizedPriority.includes('medium')) {
+        return 'Medium';
+    }
+    if (normalizedPriority.includes('low')) {
+        return 'Low';
+    }
+
+    return normalizedPriority; // Return as-is if unrecognized
 }
 
 
-
+		
 
 
 
@@ -2633,282 +3259,458 @@ function generateStatusIndicator(patient, index) {
             }
         }
 
-        function searchRows() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                alert("Please enter a search term.");
-                return;
-            }
 
-            filteredIndexes = [];
-            const filteredData = [];
 
-            patientData.forEach((patient, index) => {
-                const matchFound = Object.values(patient).some(value => {
-                    return (value || '').toString().toLowerCase().includes(searchTerm);
-                });
-                
-                if (matchFound) {
-                    filteredIndexes.push(index);
-                    filteredData.push(patient);
-                }
-            });
 
-            displayFilteredRows(filteredData);
-        }
 
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            filteredIndexes = [];
-            displayRows();
-            const searchWrapper = document.querySelector('.search-wrapper');
-            searchWrapper.classList.remove('expanded');
-            document.getElementById('searchContainer').classList.remove('active');
-        }
+		function searchRows() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    if (!searchTerm) {
+        clearSearch();
+        return;
+    }
+
+    // Filter from patientData using the same fields you normally show
+    const filtered = patientData.filter(patient =>
+        Object.values(patient).some(value =>
+            (value || '').toString().toLowerCase().includes(searchTerm)
+        )
+    );
+
+    // Render using the same row logic but only with filtered data
+    displayRows(filtered);
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    displayRows(); // show all rows again
+    const searchWrapper = document.querySelector('.search-wrapper');
+    searchWrapper.classList.remove('expanded');
+    document.getElementById('searchContainer').classList.remove('active');
+}
+
+
+
+
+
+
+		
 
         // ============ DETAILS VIEW ============
-        function showDetails(index) {
-            currentPatientIndex = index;
-            const detailsView = document.getElementById('detailsView');
-            const patient = patientData[index];
-            
-            document.getElementById('stickyTextContainer').textContent = patient.Name || 'Unnamed Patient';
-            
-            // Show appropriate view based on current mode
-            switchView(currentViewMode);
-            
-            detailsView.style.display = 'block';
-            updateNavButtons();
-        }
-
-        function switchView(mode) {
-            currentViewMode = mode;
-            const patient = patientData[currentPatientIndex];
-            
-            // Update active button
-            document.querySelectorAll('.view-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`.view-button[onclick*="${mode}"]`).classList.add('active');
-            
-            // Hide all mode-specific controls
-            document.getElementById('consultControls').classList.add('hidden');
-            
-            // Generate form based on mode
-            const form = document.getElementById('editForm');
-            form.innerHTML = '';
-            
-            let fieldsToShow = [];
-            
-            switch(mode) {
-                case 'basic':
-                    // Show basic fields for both patient and consult types
-                    fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do', 'Priority'];
-                    break;
 
 
-
-
-
-
-
-
-                    
-case 'chartcheck':
-    // Show chart check fields in split layout
-    const chartCheckContainer = document.createElement('div');
-    chartCheckContainer.className = 'chart-check-layout';
+ function showDetails(index) {
+    // Validate index
+    if (index < 0 || index >= patientData.length) {
+        console.error('Invalid patient index:', index);
+        alert('Error: Patient not found');
+        return;
+    }
     
-    const leftPanel = document.createElement('div');
-    leftPanel.className = 'chart-check-left';
+    currentPatientIndex = index;
+    const detailsView = document.getElementById('detailsView');
     
-    const rightPanel = document.createElement('div');
-    rightPanel.className = 'chart-check-right';
-    rightPanel.innerHTML = `
-        <h3>Plan<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('Plan')">?</button></h3>
-        <textarea id="field_To_do" placeholder="Enter patient plan...">${patient['To do'] || ''}</textarea>
-    `;
+    // Ensure detailsView exists
+    if (!detailsView) {
+        console.error('Details view element not found');
+        return;
+    }
     
-    fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'Priority'];
+    const patient = patientData[index];
+    if (!patient) {
+        console.error('Patient data not found at index:', index);
+        return;
+    }
     
-    // Create fields for left panel
-    fieldsToShow.forEach(header => {
-        // Skip 'To do' as it's in the right panel
-        if (header === 'To do') return;
-        
-        const label = document.createElement('label');
-        
-        if (helpContent[header]) {
-            label.innerHTML = `${header}<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('${header}')">?</button>`;
-        } else {
-            label.textContent = header;
-        }
-        
-        // CRITICAL: Add warning messages and fishbone BEFORE VIOLIN field
-        if (header === 'VIOLIN') {
-            // Add warning messages container
-            const warningDiv = document.createElement('div');
-            warningDiv.id = 'warningMessages';
-            warningDiv.className = 'warning-messages hidden';
-            leftPanel.appendChild(warningDiv);
-            
-            // Add fishbone display container
-            const fishboneDiv = document.createElement('div');
-            fishboneDiv.id = 'fishboneDisplay';
-            fishboneDiv.className = 'fishbone-display hidden';
-            fishboneDiv.innerHTML = '<h4>VIOLIN Fishbone Diagram</h4><div id="fishboneContent"></div>';
-            leftPanel.appendChild(fishboneDiv);
-            
-            // Create button container
-            const btnContainer = document.createElement('div');
-            btnContainer.className = 'violin-button-container';
-            btnContainer.style.marginLeft = '10px';
-
-            const importBtn = document.createElement('button');
-            importBtn.textContent = '⬇️ Import';
-            importBtn.onclick = function(e) {
-                e.preventDefault();
-                showImportModal();
-            };
-            
-            const tableBtn = document.createElement('button');
-            tableBtn.textContent = '📊 Labs';
-            tableBtn.onclick = function(e) {
-                e.preventDefault();
-                showTableView();
-            };
-            
-            const graphBtn = document.createElement('button');
-            graphBtn.textContent = '📊 Vitals';
-            graphBtn.onclick = function(e) {
-                e.preventDefault();
-                showVitalsTable();
-            };
-
-            const fishboneBtn = document.createElement('button');
-            fishboneBtn.textContent = '🐟 Fishbone';
-            fishboneBtn.onclick = function(e) {
-                e.preventDefault();
-                toggleFishboneDisplay();
-            };
-            
-            btnContainer.appendChild(importBtn);
-            btnContainer.appendChild(tableBtn);
-            btnContainer.appendChild(graphBtn);
-            btnContainer.appendChild(fishboneBtn);
-            label.appendChild(btnContainer);
-        }
-        else if (header === 'ORDERS') {
-            const btnContainer = document.createElement('span');
-            btnContainer.style.marginLeft = '10px';
-            
-            const abbrevBtn = document.createElement('button');
-            abbrevBtn.textContent = 'Abbrev Orders';
-            abbrevBtn.style.margin = '0 2px';
-            abbrevBtn.style.padding = '0.3rem 0.6rem';
-            abbrevBtn.style.fontSize = '0.8rem';
-            abbrevBtn.onclick = function(e) {
-                e.preventDefault();
-                updateOrders();
-            };
-            
-            const fullBtn = document.createElement('button');
-            fullBtn.textContent = 'Full Orders';
-            fullBtn.style.margin = '0 2px';
-            fullBtn.style.padding = '0.3rem 0.6rem';
-            fullBtn.style.fontSize = '0.8rem';
-            fullBtn.onclick = function(e) {
-                e.preventDefault();
-                toggleOrdersView();
-            };
-            
-            btnContainer.appendChild(abbrevBtn);
-            btnContainer.appendChild(fullBtn);
-            label.appendChild(btnContainer);
-        }
-        
-        let input;
-        if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
-            input = document.createElement('input');
-            input.type = 'text';
-		}
-else if (header === 'VIOLIN') {
-    input = document.createElement('textarea');
-    // Remove contentEditable and inline styles - let CSS handle it
+    document.getElementById('stickyTextContainer').textContent = patient.Name || 'Unnamed Patient';
+    
+    // Reset view mode to basic if it's invalid
+    if (!currentViewMode) currentViewMode = 'basic';
+    
+    // Show appropriate view based on current mode
+    try {
+        switchView(currentViewMode);
+    } catch (e) {
+        console.error('Error switching view:', e);
+        switchView('basic');
+    }
+    
+    detailsView.style.display = 'block';
+    updateNavButtons();
 }
-        else {
-            input = document.createElement('textarea');
-        }
-            
-        input.id = `field_${header.replace(/\s+/g, '_')}`;
-        if (header === 'VIOLIN') {
-            input.className = 'violin-field';
-        }
-        
-        input.value = patient[header] || '';
+ 
 
-        input.addEventListener('input', function() {
-            if (header === 'VIOLIN') {
-                const plainText = this.textContent || this.innerText || '';
-                patient[header] = plainText;
-            } else {
-                patient[header] = this.value;
-            }
+
+
+
+
+
+
+
+function switchView(mode) {
+    currentViewMode = mode;
+    const patient = patientData[currentPatientIndex];
+    
+    // Update active button
+    document.querySelectorAll('.view-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`.view-button[onclick*="${mode}"]`).classList.add('active');
+    
+    // Hide all mode-specific controls
+    document.getElementById('consultControls').classList.add('hidden');
+    
+    // Generate form based on mode
+    const form = document.getElementById('editForm');
+    form.innerHTML = '';
+    
+    let fieldsToShow = []; // DECLARE HERE, OUTSIDE the switch
+    let isChartCheckMode = false;
+    
+    switch(mode) {
+        case 'basic':
+            fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do', 'Priority'];
+            break;
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+case 'chartcheck':
+            isChartCheckMode = true;
             
-            if (header === 'Name') {
-                const nameValue = header === 'VIOLIN' ? (this.textContent || this.innerText) : this.value;
-                document.getElementById('stickyTextContainer').textContent = nameValue || 'Unnamed Patient';
-            }
-            saveToLocalStorage();
+            const chartCheckContainer = document.createElement('div');
+            chartCheckContainer.className = 'chart-check-layout';
+            chartCheckContainer.id = 'chartCheckMainContainer';
+            chartCheckContainer.style.cssText = `
+                display: flex;
+                gap: 1rem;
+                height: calc(100vh - 250px);
+                border: 3px solid var(--border);
+                border-radius: 0.5rem;
+                transition: border-color 0.3s ease, box-shadow 0.3s ease;
+                padding: 1rem;
+                background: var(--dark-bg);
+            `;
             
-            if (input.tagName === 'TEXTAREA') {
+            const leftPanel = document.createElement('div');
+            leftPanel.className = 'chart-check-left-panel';
+            leftPanel.style.cssText = `
+                flex: 2;
+                overflow-y: auto;
+                padding-right: 1rem;
+                border-right: 1px solid var(--border);
+            `;
+            
+            const checkboxFields = ['Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do'];
+            const fieldsToShowChartCheck = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'Priority'];
+            
+            fieldsToShowChartCheck.forEach(header => {
+                const label = document.createElement('label');
+                label.style.cssText = `
+                    display: block;
+                    margin-top: 0.75rem;
+                    margin-bottom: 0.25rem;
+                    color: var(--text-secondary);
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                    text-transform: uppercase;
+                `;
+                
+                let labelHTML = header;
+                
+                if (checkboxFields.includes(header)) {
+                    labelHTML += `<input type="checkbox" class="chart-check-field-checkbox" data-field="${header}" 
+                         style="width: 18px; height: 18px; margin-left: 0.5rem; cursor: pointer; accent-color: var(--primary);" />`;
+                }
+                
+                if (helpContent[header]) {
+                    labelHTML += `<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('${header}')">?</button>`;
+                }
+                
+                label.innerHTML = labelHTML;
+                
+                // Handle checkbox state and listeners
+                if (checkboxFields.includes(header)) {
+                    const fieldKey = `chartcheck_${header}_${currentPatientIndex}`;
+                    try {
+                        const savedState = localStorage.getItem(fieldKey);
+                        const checkbox = label.querySelector('.chart-check-field-checkbox');
+                        if (checkbox && savedState === 'true') {
+                            checkbox.checked = true;
+                        }
+                        if (checkbox) {
+                            checkbox.addEventListener('change', function() {
+                                try {
+                                    localStorage.setItem(fieldKey, this.checked);
+                                    updateChartCheckProgress();
+                                } catch (e) {
+                                    console.error('Failed to save checkbox state:', e);
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error loading checkbox state:', e);
+                    }
+                }
+                
+                // ADD SPECIAL BUTTONS FOR SPECIFIC FIELDS
+                if (header === 'Problems') {
+                    const podBtn = document.createElement('button');
+                    podBtn.textContent = 'Update POD';
+                    podBtn.style.marginLeft = '10px';
+                    podBtn.style.padding = '0.3rem 0.6rem';
+                    podBtn.style.fontSize = '0.8rem';
+                    podBtn.onclick = function(e) {
+                        e.preventDefault();
+                        updatePOD();
+                    };
+                    label.appendChild(podBtn);
+                
+
+
+
+
+
+
+
+} else if (header === 'VIOLIN') {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'warningMessages';
+                    warningDiv.className = 'warning-messages hidden';
+                    leftPanel.appendChild(warningDiv);
+                    
+                    const btnContainer = document.createElement('div');
+                    btnContainer.className = 'violin-button-container';
+                    btnContainer.style.marginLeft = '10px';
+                    
+                    const importBtn = document.createElement('button');
+                    importBtn.textContent = '⬇️ Import';
+                    importBtn.onclick = function(e) {
+                        e.preventDefault();
+                        showImportModal();
+                    };
+                    
+                    const tableBtn = document.createElement('button');
+                    tableBtn.textContent = '📊 Labs';
+                    tableBtn.onclick = function(e) {
+                        e.preventDefault();
+                        showTableView();
+                    };
+                    
+                    const graphBtn = document.createElement('button');
+                    graphBtn.textContent = '📊 Vitals';
+                    graphBtn.onclick = function(e) {
+                        e.preventDefault();
+                        showVitalsTable();
+                    };
+                    
+                    const fishboneBtn = document.createElement('button');
+                    fishboneBtn.textContent = '🐟 Fishbone';
+                    fishboneBtn.id = 'violinToggleBtn';
+                    fishboneBtn.onclick = function(e) {
+                        e.preventDefault();
+                        toggleViolinMode();
+                    };
+                    
+                    btnContainer.appendChild(importBtn);
+                    btnContainer.appendChild(tableBtn);
+                    btnContainer.appendChild(graphBtn);
+                    btnContainer.appendChild(fishboneBtn);
+                    label.appendChild(btnContainer);
+
+
+
+                } else if (header === 'ORDERS') {
+                    const btnContainer = document.createElement('span');
+                    btnContainer.style.marginLeft = '10px';
+                    
+                    const abbrevBtn = document.createElement('button');
+                    abbrevBtn.textContent = 'Abbrev Orders';
+                    abbrevBtn.style.margin = '0 2px';
+                    abbrevBtn.style.padding = '0.3rem 0.6rem';
+                    abbrevBtn.style.fontSize = '0.8rem';
+                    abbrevBtn.onclick = function(e) {
+                        e.preventDefault();
+                        updateOrders();
+                    };
+                    
+                    const fullBtn = document.createElement('button');
+                    fullBtn.textContent = 'Full Orders';
+                    fullBtn.style.margin = '0 2px';
+                    fullBtn.style.padding = '0.3rem 0.6rem';
+                    fullBtn.style.fontSize = '0.8rem';
+                    fullBtn.onclick = function(e) {
+                        e.preventDefault();
+                        toggleOrdersView();
+                    };
+                    
+                    btnContainer.appendChild(abbrevBtn);
+                    btnContainer.appendChild(fullBtn);
+                    label.appendChild(btnContainer);
+                }
+                
+                leftPanel.appendChild(label);
+                
+                // Create input field
+                let input;
+                if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                } else {
+                    input = document.createElement('textarea');
+                }
+                
+                input.id = `field_${header.replace(/\s+/g, '_')}`;
+                input.value = patient[header] || '';
+                
+                input.addEventListener('input', function() {
+                    patient[header] = this.value;
+                    if (header === 'Name') {
+                        document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
+                    }
+                    saveToLocalStorage();
+                    if (input.tagName === 'TEXTAREA') {
+                        autoResizeTextarea(this);
+                    }
+                });
+                
+                leftPanel.appendChild(input);
+                
+                if (input.tagName === 'TEXTAREA') {
+                    setTimeout(() => autoResizeTextarea(input), 0);
+                }
+                
+                // Add full orders display below ORDERS field
+                if (header === 'ORDERS') {
+                    const fullOrdersDiv = document.createElement('div');
+                    fullOrdersDiv.id = 'fullOrdersDisplay';
+                    fullOrdersDiv.className = 'orders-section hidden';
+                    fullOrdersDiv.style.marginTop = '0.75rem';
+                    leftPanel.appendChild(fullOrdersDiv);
+                }
+            });
+            
+            // RIGHT PANEL - Shows "To do" field
+            const rightPanel = document.createElement('div');
+            rightPanel.className = 'chart-check-right-panel';
+            rightPanel.style.cssText = `
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                background: var(--dark-bg);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                border: 2px solid var(--primary);
+            `;
+            
+            const todoLabel = document.createElement('label');
+            todoLabel.style.cssText = `
+                display: block;
+                margin-bottom: 0.5rem;
+                color: var(--text-secondary);
+                font-weight: 500;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+            `;
+            
+            todoLabel.innerHTML = `To do<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('Plan')">?</button>`;
+            
+            const todoTextarea = document.createElement('textarea');
+            todoTextarea.id = 'field_To_do';
+            todoTextarea.value = patient['To do'] || '';
+            todoTextarea.style.cssText = `
+                flex: 1;
+                resize: none;
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 0.25rem;
+                padding: 0.75rem;
+                color: var(--text-primary);
+                font-family: inherit;
+                font-size: 0.9rem;
+            `;
+            
+            todoTextarea.addEventListener('input', function() {
+                patient['To do'] = this.value;
+                saveToLocalStorage();
                 autoResizeTextarea(this);
+            });
+            
+            rightPanel.appendChild(todoLabel);
+            rightPanel.appendChild(todoTextarea);
+            
+            chartCheckContainer.appendChild(leftPanel);
+            chartCheckContainer.appendChild(rightPanel);
+            form.appendChild(chartCheckContainer);
+            
+            if (patient.ImportedData) {
+                lastImportedData = patient.ImportedData;
             }
-        });
-        
-        leftPanel.appendChild(label);
-        
-        // Add full orders display above ORDERS field
-        if (header === 'ORDERS') {
-            const fullOrdersDiv = document.createElement('div');
-            fullOrdersDiv.id = 'fullOrdersDisplay';
-            fullOrdersDiv.className = 'orders-section hidden';
-            leftPanel.appendChild(fullOrdersDiv);
-        }
-        
-        leftPanel.appendChild(input);
-        
-        if (input.tagName === 'TEXTAREA') {
-            setTimeout(() => autoResizeTextarea(input), 0);
-        } else if (input.contentEditable === 'true' && header === 'VIOLIN') {
-            setTimeout(() => autoResizeContentEditable(input), 0);
-        }
-    });
-    
-    // Set up To Do textarea event listener
-    const todoTextarea = rightPanel.querySelector('#field_To_do');
-    todoTextarea.addEventListener('input', function() {
-        patient['To do'] = this.value;
-        saveToLocalStorage();
-    });
-    
-    chartCheckContainer.appendChild(leftPanel);
-    chartCheckContainer.appendChild(rightPanel);
-    form.appendChild(chartCheckContainer);
-    
-    // Load lab data if stored
-    if (patient.ImportedData) {
-        lastImportedData = patient.ImportedData;
-    }
-    if (patient.LabData) {
-        try {
-            labData = JSON.parse(patient.LabData);
-        } catch (e) {
-            labData = {};
-        }
-    }
-    return; // Exit early to prevent duplicate field creation
+            if (patient.LabData) {
+                try {
+                    labData = JSON.parse(patient.LabData);
+                } catch (e) {
+                    labData = {};
+                }
+            }
+            
+            setTimeout(() => {
+                updateChartCheckProgress();
+            }, 100);
+            
+            break;
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+					
 
 
 
@@ -3239,7 +4041,7 @@ input.addEventListener('input', function() {
     newEntryFields.appendChild(typeInput);
 
    // Define the fields you want to show - UPDATED ORDER
-	const fieldsToShow = ['Name', 'RM', 'MRN', 'A/G', 'CC', 'HPI', 'To do', 'Priority'];
+	const fieldsToShow = ['Name', 'RM', 'MRN', 'Problems', 'To do', 'Priority'];
     
     fieldsToShow.forEach(header => {
         const label = document.createElement('label');
@@ -3633,6 +4435,75 @@ const CONSULT_MODE_LABELS = {
 }
 		
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
         function exportToRTF(type) {
             if (currentPatientIndex === -1) return;
             
@@ -3695,7 +4566,7 @@ ${ageGender} ${pmhPhrase} s/p ${hpi}\\par
 \\b Surghx:\\b0  ${surghx}\\par
 \\b FamHx/Sochx/HCM:\\b0  ${fsh}\\par\\par
 \\b\\ul Objective:\\ul0\\b0\\par
-\\b Physical Exam:\\b0  ${pe}\\par.petrauma\\par\\par 
+\\b Physical Exam: \\b0  ${pe}\\par.petrauma\\par
 .frailty\\par\\par
 \\b\\ul Assessment:\\ul0\\b0\\par
 ${ageGender} ${pmhPhrase} s/p ${hpi}\\par
@@ -3728,8 +4599,15 @@ ${finalLine}`;
 
 
 function updatePOD() {
-    const problemsField = document.getElementById('field_Problems');
-    if (!problemsField) return;
+    // Try multiple possible field IDs for tab mode vs regular mode
+    let problemsField = document.getElementById('field_Problems') || 
+                       document.querySelector('[id*="Problems"]') ||
+                       document.querySelector('textarea[id*="field_Problems"]');
+    
+    if (!problemsField) {
+        alert('Problems field not found. Make sure you are in the Clinical tab or Details view.');
+        return;
+    }
     
     const problemsText = problemsField.value;
     if (!problemsText || !problemsText.trim()) {
@@ -3898,68 +4776,95 @@ function showImportModal() {
 
 
 
-// 1. REPLACE the existing processImportedData function (around line 3450) with this:
 
-function processImportedData() {
+
+
+
+
+
+		function processImportedData() {
     const importText = document.getElementById('importData').value;
     if (!importText) return;
     
+    console.log('Processing new import data...');
+    
+    // FORCE CLEAR ALL CACHED DATA
     const patient = patientData[currentPatientIndex];
+    patient.VIOLIN = '';
+    patient.ImportedData = '';
+    patient.LabData = '';
+    labData = {};
+    lastImportedData = '';
+    
+    // Clear the textarea immediately
+    const violinField = document.getElementById('field_VIOLIN') || 
+                       document.querySelector('textarea[id*="VIOLIN"]');
+    if (violinField) {
+        violinField.value = 'Processing...';
+    }
+    
+    // Process new data
     patient.ImportedData = importText;
     lastImportedData = importText;
     
     labData = extractLabValues(importText);
-    patient.LabData = JSON.stringify(labData);
-    
     const fishbone = generateFishbone(labData);
     const warnings = generateWarnings(labData);
     
-    // Update VIOLIN field with plain text (asterisks preserved)
-    const violinField = document.getElementById('field_VIOLIN');
+    // Update patient data
+    patient.VIOLIN = fishbone;
+    patient.LabData = JSON.stringify(labData);
+    
+    // Update textarea
     if (violinField) {
         violinField.value = fishbone;
         autoResizeTextarea(violinField);
-        
-        // Save the plain text with asterisks
-        patient.VIOLIN = fishbone;
     }
     
     // Update warnings
     const warningDiv = document.getElementById('warningMessages');
-    if (warnings.length > 0) {
-        warningDiv.innerHTML = warnings.map(w => `<div class="warning-message">${w}</div>`).join('');
-        warningDiv.classList.remove('hidden');
-    } else {
-        warningDiv.innerHTML = '<div class="warning-message" style="color: var(--accent-3);">All values within normal limits</div>';
-        warningDiv.classList.remove('hidden');
+    if (warningDiv) {
+        if (warnings.length > 0) {
+            warningDiv.innerHTML = warnings.map(w => `<div class="warning-message">${w}</div>`).join('');
+            warningDiv.classList.remove('hidden');
+        } else {
+            warningDiv.innerHTML = '<div class="warning-message" style="color: var(--accent-3);">All values within normal limits</div>';
+            warningDiv.classList.remove('hidden');
+        }
     }
     
     saveToLocalStorage();
     closeImportModal();
-    document.getElementById('importData').value = '';
     
-    // Show fishbone inline instead of popup
-    setTimeout(() => showFishboneInline(), 100);
+// Force refresh ALL displays regardless of mode
+setTimeout(() => {
+    // Update the textarea field directly
+    const violinField = document.getElementById('field_VIOLIN') || 
+                       document.querySelector('textarea[id*="VIOLIN"]');
+    if (violinField) {
+        violinField.value = fishbone;
+        autoResizeTextarea(violinField);
+    }
+    
+    // Refresh chart check display if in that mode
+    if (currentViewMode === 'chartcheck') {
+        refreshViolinDisplay();
+    }
+    
+    // Also try to refresh basic mode fishbone
+    const fishboneContainer = document.getElementById('fishboneDisplay');
+    if (fishboneContainer) {
+        showFishboneInline();
+    }
+}, 100);
+
+// Update the fishbone display
+    setTimeout(() => {
+        updateViolinDisplay();
+    }, 100);
+
+			
 }
-
-
-
-
-        function showTableView() {
-            document.getElementById('tableModal').style.display = 'block';
-            generateTableView();
-        }
-
-        function closeTableModal() {
-            document.getElementById('tableModal').style.display = 'none';
-        }
-
-
-// ADD THIS FUNCTION HERE
-function closeGraphModal() {
-    document.getElementById('graphModal').style.display = 'none';
-}
-
 
 
 
@@ -4056,7 +4961,19 @@ function generateWarnings(data) {
     if (data.labs.k && data.labs.k[0] !== undefined) {
         const k = data.labs.k[0];
         const kPrev = data.labs.k[1];
-        const kStr = kPrev !== undefined ? `*${k}* (*${kPrev}*)` : `*${k}*`;
+        
+        // Always mark abnormal K with asterisks for visualization
+        let kStr = '';
+        let isAbnormal = false;
+        
+        if (k < 4.0 || k > 5.0) {
+            isAbnormal = true;
+        }
+        
+        kStr = isAbnormal ? `*${k}*` : k.toString();
+        if (kPrev !== undefined) {
+            kStr += kPrev !== undefined ? `(*${kPrev}*)` : '';
+        }
         
         if (k >= 3.3 && k <= 3.9) {
             warnings.push(`Give 40 meq K PO or IV, K=${kStr}`);
@@ -4068,6 +4985,10 @@ function generateWarnings(data) {
             warnings.push(`Give 100 meq K and NHO, K=${kStr}`);
         } else if (k > 5) {
             warnings.push(`Hyperkalemic!!, K=${kStr}`);
+        } else if (k >= 3.9 && k <= 5.0) {
+            // Normal range - show without asterisks
+            kStr = kPrev !== undefined ? `${k}(${kPrev})` : k.toString();
+            warnings.push(`K=${kStr}`);
         }
     } else {
         warnings.push('No K');
@@ -4956,17 +5877,27 @@ countTypes.forEach(countType => {
 
 
 
-
 function toggleOrdersView() {
     showFullOrders = !showFullOrders;
     const fullOrdersDisplay = document.getElementById('fullOrdersDisplay');
     
+    if (!fullOrdersDisplay) {
+        console.error('fullOrdersDisplay element not found');
+        return;
+    }
+    
     if (showFullOrders && (fullOrdersText || lastImportedData)) {
         // Create categorized full orders display
         const medsText = fullOrdersText || extractFullMeds(lastImportedData);
+        
+        if (!medsText || medsText.trim().length === 0) {
+            fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
+            fullOrdersDisplay.classList.remove('hidden');
+            return;
+        }
+        
         const dietMatch = lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i);
         
-        // Track current section (Scheduled, PRN, Continuous)
         let currentSection = 'Scheduled';
         const medsLines = medsText.split('\n');
         const categorizedMeds = {
@@ -4977,11 +5908,9 @@ function toggleOrdersView() {
             'Misc': []
         };
         
-        // Process each line and track section
         medsLines.forEach(line => {
             const trimmedLine = line.trim();
             
-            // Check for section headers
             if (trimmedLine.toLowerCase().includes('scheduled:')) {
                 currentSection = 'Scheduled';
                 return;
@@ -4993,13 +5922,9 @@ function toggleOrdersView() {
                 return;
             }
             
-            // Skip empty lines
             if (!trimmedLine) return;
             
-            // Add PRN prefix if in PRN section
             const displayLine = currentSection === 'PRN' ? `PRN ${trimmedLine}` : trimmedLine;
-            
-            // Categorize the medication
             const lineLower = trimmedLine.toLowerCase();
             
             if (lineLower.match(/npo|lactated ringers|normal saline|parenteral|sodium chloride|dextrose|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin/i)) {
@@ -5015,64 +5940,65 @@ function toggleOrdersView() {
             }
         });
         
-        // Build HTML display
-        let categorizedHTML = '<strong style="color: var(--primary);">Full Orders List:</strong><br><br>';
+        let categorizedHTML = '<div style="background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--primary);"><strong style="color: var(--primary);">Full Orders List:</strong><br><br>';
         
         // N/F Category
-        categorizedHTML += '<strong style="color: var(--primary);">N/F (Nutrition/Fluids):</strong><br>';
+        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">N/F (Nutrition/Fluids):</strong><br>';
         if (dietMatch) {
-            categorizedHTML += `<span style="color: var(--primary);">Diet: ${dietMatch[1].trim()}</span><br>`;
+            categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">Diet: ${dietMatch[1].trim()}</div>`;
         }
-        categorizedMeds['N/F'].forEach(med => {
-            categorizedHTML += `<span style="color: var(--primary);">${med}</span><br>`;
-        });
-        if (categorizedMeds['N/F'].length === 0 && !dietMatch) {
-            categorizedHTML += '<span style="color: var(--text-secondary);">None</span><br>';
+        if (categorizedMeds['N/F'].length > 0) {
+            categorizedMeds['N/F'].forEach(med => {
+                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
+            });
+        } else {
+            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
         }
-        categorizedHTML += '<br>';
+        categorizedHTML += '</div>';
         
         // Pain Category
-        categorizedHTML += '<strong style="color: var(--primary);">Pain:</strong><br>';
+        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Pain:</strong><br>';
         if (categorizedMeds['Pain'].length > 0) {
             categorizedMeds['Pain'].forEach(med => {
-                categorizedHTML += `<span style="color: var(--primary);">${med}</span><br>`;
+                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
             });
         } else {
-            categorizedHTML += '<span style="color: var(--text-secondary);">None</span><br>';
+            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
         }
-        categorizedHTML += '<br>';
+        categorizedHTML += '</div>';
         
         // Antibiotics/Pressors Category
-        categorizedHTML += '<strong style="color: var(--primary);">Antibiotics/Pressors:</strong><br>';
+        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Antibiotics/Pressors:</strong><br>';
         if (categorizedMeds['Abx'].length > 0) {
             categorizedMeds['Abx'].forEach(med => {
-                categorizedHTML += `<span style="color: var(--primary);">${med}</span><br>`;
+                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
             });
         } else {
-            categorizedHTML += '<span style="color: var(--text-secondary);">None</span><br>';
+            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
         }
-        categorizedHTML += '<br>';
+        categorizedHTML += '</div>';
         
         // Anticoagulation Category
-        categorizedHTML += '<strong style="color: var(--primary);">Anticoagulation:</strong><br>';
+        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Anticoagulation:</strong><br>';
         if (categorizedMeds['AC'].length > 0) {
             categorizedMeds['AC'].forEach(med => {
-                categorizedHTML += `<span style="color: var(--primary);">${med}</span><br>`;
+                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
             });
         } else {
-            categorizedHTML += '<span style="color: var(--text-secondary);">None</span><br>';
+            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
         }
-        categorizedHTML += '<br>';
+        categorizedHTML += '</div>';
         
         // Misc Category
-        categorizedHTML += '<strong style="color: var(--primary);">Misc:</strong><br>';
+        categorizedHTML += '<div><strong style="color: var(--primary);">Misc:</strong><br>';
         if (categorizedMeds['Misc'].length > 0) {
             categorizedMeds['Misc'].forEach(med => {
-                categorizedHTML += `<span style="color: var(--primary);">${med}</span><br>`;
+                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
             });
         } else {
-            categorizedHTML += '<span style="color: var(--text-secondary);">None</span><br>';
+            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
         }
+        categorizedHTML += '</div></div>';
         
         fullOrdersDisplay.innerHTML = categorizedHTML;
         fullOrdersDisplay.classList.remove('hidden');
@@ -6361,7 +7287,7 @@ if (hgb !== undefined) {
           cr  = data.labs.cr?.[0],
           glu = data.labs.glu?.[0];
 
-    let naStr   = na  !== undefined ? na.toString()   : '--';
+   let naStr = na !== undefined ? (na < 135 || na > 145 ? markAbnormal(na) : na.toString()) : '--';
     let kStr    = k   !== undefined ? (k < 3.5 || k > 5.0 ? markAbnormal(k) : k.toString()) : '--';
     let clStr   = cl  !== undefined ? (cl < 96 || cl > 106 ? markAbnormal(cl) : cl.toString()) : '--';
     let co2Str  = co2 !== undefined ? co2.toString()  : '--';
@@ -7043,7 +7969,9 @@ function extractDoseInfo(line) {
             'soft': 'soft',
             'mechanical soft': 'mech soft',
             'pureed': 'puree',
-            'dysphagia': 'dysphagia'
+            'dysphagia': 'dysphagia',
+			'IDDSI': 'IDDSI',
+			'Pediatric': 'pediatric', 
         };
         
         for (const [key, value] of Object.entries(dietMap)) {
@@ -7150,45 +8078,86 @@ function extractDoseInfo(line) {
 
 
 
-	   function showStaffPresentation() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showStaffPresentation() {
     if (currentPatientIndex === -1) return;
-    
+
     const patient = patientData[currentPatientIndex];
-    
+
     // Check if it's a consult
     if (patient.Type !== 'Consult') {
         alert("This is a regular patient entry. Convert to consult first to generate staff presentation.");
         return;
     }
-    
-    // Extract data
-    const cc = patient.CC || 'No chief complaint';
-    const ageGender = patient['A/G'] || 'Unknown age/gender';
-    const pmh = patient.PMH || '';
-    const hpi = patient.HPI || '';
-    const ros = patient.ROS || '';
-    const violin = patient.VIOLIN || 'No labs/vitals documented';
-    const pe = patient.PE || 'No physical exam documented';
-    const todo = patient['To do'] || 'No plan documented';
-    
-    // Format PMH phrase
-    const pmhPhrase = pmh ? `with PMH ${pmh}` : 'with no PMH';
- 
- // Extract patient identifiers
-    const name = patient.Name || 'Unknown';
-    const rm = patient.RM || 'Unknown';
-    const mrn = patient.MRN || 'Unknown';
-    
 
-// Build the presentation with patient identifiers at the top
+    // Small helper
+    const isBlank = v => v == null || String(v).trim() === '';
+
+    // Extract common data
+    const cc     = isBlank(patient.CC) ? '' : patient.CC.trim();
+    const violin = isBlank(patient.VIOLIN) ? '' : patient.VIOLIN.trim();
+    const pe     = isBlank(patient.PE) ? '' : patient.PE.trim();
+    const todo   = isBlank(patient['To do']) ? '' : String(patient['To do']).trim();
+
+    // Identifiers
+    const name = isBlank(patient.Name) ? 'Unknown' : patient.Name.trim();
+    const rm   = isBlank(patient.RM) ? 'Unknown' : String(patient.RM).trim();
+    const mrn  = isBlank(patient.MRN) ? 'Unknown' : String(patient.MRN).trim();
+
+    // Decide which mode to use
+    const ageGender = isBlank(patient['A/G']) ? '' : String(patient['A/G']).trim();
+    const useProblemsMode = isBlank(ageGender);
+
+    // Build content for each mode
+    let middleBlock = '';
+    if (useProblemsMode) {
+        // Prefer 'Problems', but fall back to a few common variants just in case
+        const problems =
+            !isBlank(patient.Problems) ? String(patient.Problems).trim() :
+            !isBlank(patient.PROBLEMS) ? String(patient.PROBLEMS).trim() :
+            !isBlank(patient['Problem List']) ? String(patient['Problem List']).trim() :
+            'No problems listed';
+
+        middleBlock = `${problems}\n\n`;
+    } else {
+        const pmh = isBlank(patient.PMH) ? '' : String(patient.PMH).trim();
+        const hpi = isBlank(patient.HPI) ? '' : String(patient.HPI).trim();
+        const ros = isBlank(patient.ROS) ? '' : String(patient.ROS).trim();
+
+        // PMH phrase
+        const pmhPhrase = pmh ? `with PMH ${pmh}` : 'with no PMH';
+
+        // Assemble the narrative; trim empty parts gracefully
+        const parts = [
+            `${ageGender} ${pmhPhrase}`,
+            hpi,
+            ros
+        ].filter(s => !isBlank(s));
+
+        middleBlock = parts.join(', ').replace(/\s+,/g, ',') + '\n\n';
+    }
+
+    // Build final presentation
     let presentation = `${name}\n${rm}\nMRN: ${mrn}\n\n`;
     presentation += `Consult for ${cc}\n\n`;
-    presentation += `${ageGender} ${pmhPhrase}, ${hpi} ${ros}\n\n`;
-    presentation += `${violin} \n\n ${pe}\n\n`;
+    presentation += middleBlock;
+    presentation += `${violin}\n\n${pe}\n\n`;
     presentation += `Plan: ${todo}`;
-    
-    
-    // Create modal for presentation
+
+    // Modal
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -7204,10 +8173,30 @@ function extractDoseInfo(line) {
         </div>
     `;
     document.body.appendChild(modal);
-    
+
     // Store presentation for copy function
     window.currentStaffPresentation = presentation;
 }
+
+
+
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
 
 function copyStaffPresentation() {
     if (window.currentStaffPresentation) {
@@ -7385,155 +8374,291 @@ function copyPatientInfoImproved(button) {
 
 
 
-
-
 function generateFullChecklistHTML() {
-    const patient = patientData[currentPatientIndex];
-    const patientKey = `${currentPatientIndex}_${patient.Name || 'unnamed'}`;
-    const isTrauma = patient.Type !== 'Consult';
-    
-    // Initialize patient's checklist if not exists
-    if (!tempChecklistStates[patientKey]) {
-        tempChecklistStates[patientKey] = {};
+  const patient = patientData[currentPatientIndex];
+  const patientKey = `${currentPatientIndex}_${patient.Name || 'unnamed'}`;
+  const isTrauma = patient.Type !== 'Consult';
+
+  // Initialize patient's checklist state
+  if (!tempChecklistStates[patientKey]) {
+    tempChecklistStates[patientKey] = {};
+  }
+  const states = tempChecklistStates[patientKey];
+
+  // ========= DATA (with nested Patient care) =========
+  const traumaItems = [
+    // ADD TO LIST
+    { section: 'ADD TO LIST', color: '#dc2626', text: 'Add to list' },
+
+    // STAFF
+    { section: 'STAFF', color: '#d97706', text: 'Staff' },
+    { section: 'STAFF', color: '#d97706', text: 'Order Scans' },
+
+    // NOTE
+    { section: 'NOTE (include HCP)', color: '#16a34a', text: 'Advanced Directives/Goals of Care/HCP' },
+
+    // F/U SCANS AND LABS
+    { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Primary review of imaging' },
+    { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Plan by injury: CTH, CT C/T/L Spine, CT chest/abdomen/pelvis, + additional scans (attending reads). <a href="https://docs.google.com/document/d/12lbPO5K7jMPhruuoedT-piCaQSr9dja2OObAeMD2NWk/edit?tab=t.0" target="_blank" rel="noopener noreferrer">Reading CT scans</a>' },
+    { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Review labs' },
+    { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'If going to OR: NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments' },
+
+    // DISPO/ADDENDUM
+    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Sign out DISPO to ICU/Floor/ED' },
+    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'EVIDENCE BASED RECOMMENDATIONS FOR THEIR DIAGNOSIS' },
+    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Update family' },
+    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Tertiary Survey' },
+
+    // ORDERS/CONSULTS
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Extra Scans/Consults' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'PSO if admitting - call bed board' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Diet order vs. NPO/IVF' },
+
+    // PATIENT CARE (nested)
+    {
+      section: 'ORDERS/CONSULTS',
+      color: '#0284c7',
+      text: 'Patient care',
+      children: [
+        'Blood glucose monitoring',
+        'Lines/tubes/drains: Drain / NGT / Foley / OGT / chest tube / central line / arterial line / Peripheral IV orders',
+        'Vital signs',
+        'Intake and output',
+        'Intermittent Pneumatic Compression/SCDs',
+        'Cardiac telemetry',
+        'Daily weight',
+        'Neurological / neurovascular checks',
+        'Code / resuscitation status',
+        'Incentive spirometry',
+        'Continuous pulse oximetry', 
+		'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
+		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status', 
+      ]
+    },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Pain meds' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: '<a href="http://www.icucalorie.com/dvt/">DVT prophylaxis</a>' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Home medications' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Daily 2 AM labs (6am txp)' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Interval scans/studies/consults' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'EVIDENCE BASED MANAGEMENT of their diagnosis' },
+  ];
+
+  const consultItems = [
+    { section: 'ADD TO LIST', color: '#2563eb', text: 'Add to list' },
+    { section: 'STAFF', color: '#2563eb', text: 'Review HX/Vitals/IOs/Labs/Imaging with attending reads' },
+    { section: 'STAFF', color: '#16a34a', text: 'Staff' },
+    { section: 'NOTE', color: '#9333ea', text: 'Complete consultation note' },
+    { section: 'NOTE', color: '#c026d3', text: 'EVIDENCE BASED RECOMMENDATIONS FOR THEIR DIAGNOSIS' },
+
+    // ORDERS
+    { section: 'ORDERS', color: '#d97706', text: 'PSO if admitting - call bed board' },
+    { section: 'ORDERS', color: '#d97706', text: 'Diet order vs. NPO/IVF' },
+
+    // PATIENT CARE (nested)
+    {
+      section: 'ORDERS',
+      color: '#d97706',
+      text: 'Patient care',
+      children: [
+        'Blood glucose monitoring',
+        'Lines/tubes/drains: Drain / NGT / Foley / OGT / chest tube / central line / arterial line / Peripheral IV orders',
+        'Vital signs',
+        'Intake and output',
+        'Intermittent Pneumatic Compression/SCDs',
+        'Cardiac telemetry',
+        'Daily weight',
+        'Neurological / neurovascular checks',
+        'Code / resuscitation status',
+        'Incentive spirometry',
+        'Continuous pulse oximetry', 
+	    'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
+		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status', 
+      ]
+    },
+    { section: 'ORDERS', color: '#d97706', text: 'Pain meds' },
+    { section: 'ORDERS', color: '#d97706', text: '<a href="http://www.icucalorie.com/dvt/">DVT prophylaxis</a>' },
+    { section: 'ORDERS', color: '#d97706', text: 'Home meds' },
+    { section: 'ORDERS', color: '#d97706', text: 'Daily 2 AM labs (6am txp)' },
+    { section: 'ORDERS', color: '#d97706', text: 'Consultations/Imaging/Interventions' },
+    { section: 'ORDERS', color: '#d97706', text: 'EVIDENCE BASED MANAGEMENT of their diagnosis' },
+    { section: 'ORDERS', color: '#d97706', text: 'Booking for OR: NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments' },
+  ];
+
+  const items = isTrauma ? traumaItems : consultItems;
+
+  // ========= PROGRESS (count both parents & children) =========
+  const totalItems = items.reduce((acc, it, i) => {
+    const childrenCount = Array.isArray(it.children) ? it.children.length : 0;
+    return acc + 1 + childrenCount;
+  }, 0);
+
+  const completed = items.reduce((acc, it, i) => {
+    const parentChecked = !!states[`item_${i}`];
+    let childChecked = 0;
+    if (Array.isArray(it.children)) {
+      it.children.forEach((_, idx) => {
+        if (states[`item_${i}_child_${idx}`]) childChecked++;
+      });
     }
-    
-    const states = tempChecklistStates[patientKey];
-    
-    // Define all checklist items with colors and sections
-    const traumaItems = [
-        // ADD TO LIST
-        { section: 'ADD TO LIST', color: '#dc2626', text: 'Add to list' },
-        
-        // STAFF  
-        { section: 'STAFF', color: '#d97706', text: 'Staff' },
-        { section: 'STAFF', color: '#d97706', text: 'Order Scans' },
-        
-        // NOTE
-        { section: 'NOTE (include HCP)', color: '#16a34a', text: 'Advanced Directives/Goals of Care/HCP' },   
-        
-        // F/U SCANS AND LABS
-        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Primary review of imaging' },
-        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Plan by injury: CTH, CT C/T/L Spine, CT chest/abdomen/pelvis, + additional scans. https://docs.google.com/document/d/12lbPO5K7jMPhruuoedT-piCaQSr9dja2OObAeMD2NWk/edit?tab=t.0' },
-        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'TERTIARY survey' },
-        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'Review labs' },
-        { section: 'F/U SCANS AND LABS', color: '#9333ea', text: 'If going to OR: NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments' },
+    return acc + (parentChecked ? 1 : 0) + childChecked;
+  }, 0);
 
-        // ORDERS/CONSULTS
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Extra Scans/Consults' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'PSO if admitting - call bed board' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Diet order vs. NPO/IVF' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Home medications' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'DVT prophylaxis' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Pain meds' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Floor Orders: Vital signs, Continuous pulse oximetry, Telemetry monitoring' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Nursing Orders: Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
-        { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Order daily 2 AM labs' },
-        
-        // DISPO/ADDENDUM
-        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Sign out to ICU/Floor/ED' },
-        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Update family' },
-        { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Tertiary Survey' }
-    ];
-    
-    const consultItems = [
-        // ADD TO LIST
-        { section: 'ADD TO LIST', color: '#2563eb', text: 'Add to list' },
-        
-        // STAFF
- 		{ section: 'STAFF', color: '#2563eb', text: 'HX/Vitals/IOs/Labs/Imaging' },
-		{ section: 'STAFF', color: '#16a34a', text: 'Staff' },
-        
-        // ORDERS
-        { section: 'ORDERS', color: '#d97706', text: 'PSO if admitting - call bed board' },
-        { section: 'ORDERS', color: '#d97706', text: 'Diet order vs. NPO/IVF' },
-        { section: 'ORDERS', color: '#d97706', text: 'Home medications' },
-        { section: 'ORDERS', color: '#d97706', text: 'DVT prophylaxis' },
-        { section: 'ORDERS', color: '#d97706', text: 'Pain meds' },
-        { section: 'ORDERS', color: '#d97706', text: 'Floor Orders: Vital signs, Continuous pulse oximetry, Telemetry monitoring' },
-        { section: 'ORDERS', color: '#d97706', text: 'Nursing Orders: Peripheral IVs, Intake and output, Incentive spirometry, Ambulation/activity orders, weight bearing status, Notify provider of abnormal vital signs, Neuro vs. neurovascular checks, Foley, OGT, chest tube, central line, arterial line (AND procedure notes)' },
-        { section: 'ORDERS', color: '#d97706', text: 'Order daily 2 AM labs' },
-        { section: 'ORDERS', color: '#d97706', text: 'Consultations/Imaging/Interventions' },
-        
-        // NOTE
-        { section: 'NOTE', color: '#9333ea', text: 'Complete consultation note' }
-    ];
-    
-    const items = isTrauma ? traumaItems : consultItems;
-    const completed = items.filter((_, i) => states[`item_${i}`]).length;
-    const progress = Math.round((completed / items.length) * 100);
-    
-    // Generate HTML with toggle button
-    let html = `
-        <div style="margin-bottom: 1.5rem; text-align: center;">
-            <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                <strong style="color: ${isTrauma ? '#ef4444' : '#3b82f6'}; font-size: 1.3em;">
-                    ${isTrauma ? 'TRAUMA' : 'CONSULT PATIENT'} CHECKLIST
-                </strong>
-                <button onclick="toggleChecklistType()" 
-                        style="background: linear-gradient(135deg, ${isTrauma ? '#3b82f6' : '#ef4444'}, ${isTrauma ? '#2563eb' : '#dc2626'}); 
-                               color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 0.375rem; 
-                               font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;
-                               box-shadow: 0 2px 4px rgba(0,0,0,0.2);"
-                        onmouseover="this.style.transform='scale(1.05)'"
-                        onmouseout="this.style.transform='scale(1)'">
-                    Switch to ${isTrauma ? 'Consult' : 'Trauma'}
-                </button>
-            </div>
-        </div>
-        
-        <div style="margin-bottom: 0.5rem; padding: 0.2rem; background: var(--card-bg); border-radius: 0.5rem; border: 2px solid var(--primary);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <strong style="color: var(--primary);">Progress</strong>
-                <span id="progressText" style="color: var(--text-primary);">${completed}/${items.length} (${progress}%)</span>
-            </div>
-            <div style="background: var(--dark-bg); border-radius: 1rem; height: 10px; overflow: hidden;">
-                <div id="progressBar" style="background: linear-gradient(90deg, var(--primary), var(--secondary)); height: 100%; width: ${progress}%; transition: width 0.3s;"></div>
-            </div>
-        </div>`;
-    
-    // Group items by section
-    const sections = {};
-    items.forEach((item, index) => {
-        if (!sections[item.section]) {
-            sections[item.section] = [];
-        }
-        sections[item.section].push({...item, index});
-    });
-    
+  const progress = totalItems > 0 ? Math.round((completed / totalItems) * 100) : 0;
 
-// Generate HTML for each section
-Object.entries(sections).forEach(([sectionName, sectionItems]) => {
+  // ========= HEADER & TOP PROGRESS =========
+  let html = `
+    <div style="margin-bottom: 1.5rem; text-align: center;">
+      <div style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+        <strong style="color:${isTrauma ? '#ef4444' : '#3b82f6'}; font-size:1.3em;">
+          ${isTrauma ? 'TRAUMA' : 'CONSULT PATIENT'} CHECKLIST
+        </strong>
+        <button onclick="toggleChecklistType()"
+          style="background:linear-gradient(135deg, ${isTrauma ? '#3b82f6' : '#ef4444'}, ${isTrauma ? '#2563eb' : '#dc2626'}); color:white; border:none; padding:0.2rem 0.5rem; border-radius:0.375rem; font-size:0.85rem; cursor:pointer; transition:all .3s; box-shadow:0 2px 4px rgba(0,0,0,.2);"
+          onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          Switch to ${isTrauma ? 'Consult' : 'Trauma'}
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:0.5rem; padding:0.2rem; background:var(--card-bg); border-radius:0.5rem; border:2px solid var(--primary);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <strong style="color:var(--primary);">Progress</strong>
+        <span id="progressTextTop" style="color:var(--text-primary);">${completed}/${totalItems} (${progress}%)</span>
+      </div>
+      <div style="background:var(--dark-bg); border-radius:1rem; height:10px; overflow:hidden;">
+        <div id="progressBarTop" style="background:linear-gradient(90deg, var(--primary), var(--secondary)); height:100%; width:${progress}%; transition:width .3s;"></div>
+      </div>
+    </div>
+  `;
+
+  // ========= GROUP BY SECTION =========
+  const sections = {};
+  items.forEach((item, index) => {
+    if (!sections[item.section]) sections[item.section] = [];
+    sections[item.section].push({ ...item, index });
+  });
+
+  // ========= RENDER EACH SECTION (supports children) =========
+  Object.entries(sections).forEach(([sectionName, sectionItems]) => {
     const sectionColor = sectionItems[0].color;
-    
+    const isOrders = sectionName.toUpperCase().includes('ORDERS');
+    const sectionId = sectionName.replace(/[^a-zA-Z0-9]/g, '_');
+
     html += `
-        <div style="margin-bottom: 0.75rem;">
-            <h4 style="color: ${sectionColor}; margin-bottom: 0.25rem; font-size: 1.1em; font-weight: bold;">
-                ${sectionName}
-            </h4>
-            <div style="margin-left: 1rem; display: grid; gap: 0.15rem;">`;
-        
-        sectionItems.forEach(item => {
-            const isChecked = states[`item_${item.index}`] || false;
-            html += `
-    <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 0.25rem; transition: background 0.2s; border: 1px solid transparent;"
-                       onmouseover="this.style.background='var(--card-hover)'; this.style.borderColor='${sectionColor}30';" 
-                       onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} 
-                           onchange="updateFullChecklist('${patientKey}', ${item.index}, this.checked, ${items.length})"
-                           style="width: 18px; height: 18px; min-width: 18px; margin-top: 2px; accent-color: ${sectionColor}; cursor: pointer;">
-                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.4;">
-                        ${item.text}
-                    </span>
-                </label>`;
+      <div style="margin-bottom:0.75rem;">
+        <h4 style="color:${sectionColor}; margin-bottom:0.25rem; font-size:1.1em; font-weight:bold; cursor:${isOrders ? 'pointer' : 'default'};"
+            ${isOrders ? `onclick="toggleSection('${sectionId}')"` : ''}>
+          ${sectionName} ${isOrders ? '▸' : ''}
+        </h4>
+        <div id="${isOrders ? sectionId : ''}"
+             style="margin-left:1rem; display:grid; gap:0.15rem; ${isOrders ? 'display:none;' : ''}">
+    `;
+
+    sectionItems.forEach(item => {
+      const parentChecked = !!states[`item_${item.index}`];
+
+      // Parent row
+      html += `
+        <label style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer; padding:0.2rem 0.5rem; border-radius:0.25rem; transition:background .2s; border:1px solid transparent;"
+               onmouseover="this.style.background='var(--card-hover)'; this.style.borderColor='${sectionColor}30';"
+               onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
+          <input type="checkbox" ${parentChecked ? 'checked' : ''}
+                 onchange="updateFullChecklist('${patientKey}', '${item.index}', this.checked, ${/* total items */ totalItems})"
+                 style="width:18px; height:18px; min-width:18px; margin-top:2px; accent-color:${sectionColor}; cursor:pointer;">
+          <span style="color:var(--text-primary); font-size:0.95rem; line-height:1.4;">
+            ${item.text}
+          </span>
+        </label>
+      `;
+
+      // Children (if any)
+      if (Array.isArray(item.children) && item.children.length) {
+        html += `<ul style="margin:0.25rem 0 0.5rem 1.5rem; padding-left:0.5rem; list-style:none; border-left:2px solid ${sectionColor}30;">`;
+        item.children.forEach((childText, idx) => {
+          const childKey = `${item.index}_child_${idx}`;
+          const childChecked = !!states[`item_${childKey}`];
+          html += `
+            <li>
+              <label style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer; padding:0.15rem 0.5rem; border-radius:0.25rem;">
+                <input type="checkbox" ${childChecked ? 'checked' : ''}
+                       onchange="updateFullChecklist('${patientKey}', '${childKey}', this.checked, ${totalItems})"
+                       style="width:18px; height:18px; min-width:18px; margin-top:2px; accent-color:${sectionColor}; cursor:pointer;">
+                <span style="color:var(--text-primary); font-size:0.93rem; line-height:1.35;">
+                  ${childText}
+                </span>
+              </label>
+            </li>
+          `;
         });
-        
-        html += `</div></div>`;
+        html += `</ul>`;
+      }
     });
-    
-    return html;
+
+    html += `</div></div>`;
+  });
+
+  // ========= BOTTOM PROGRESS =========
+  html += `
+    <div style="margin-top:0.5rem; padding:0.2rem; background:var(--card-bg); border-radius:0.5rem; border:2px solid var(--primary);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+        <strong style="color:var(--primary);">Progress</strong>
+        <span id="progressTextBottom" style="color:var(--text-primary);">${completed}/${totalItems} (${progress}%)</span>
+      </div>
+      <div style="background:var(--dark-bg); border-radius:1rem; height:10px; overflow:hidden;">
+        <div id="progressBarBottom" style="background:linear-gradient(90deg, var(--primary), var(--secondary)); height:100%; width:${progress}%; transition:width .3s;"></div>
+      </div>
+    </div>
+  `;
+
+  return html;
 }
+
+// Collapsible helper (unchanged)
+function toggleSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const nowHidden = section.style.display === 'none';
+  section.style.display = nowHidden ? 'grid' : 'none';
+  const header = section.previousElementSibling;
+  if (!header) return;
+  if (header.innerHTML.includes('▸')) {
+    header.innerHTML = header.innerHTML.replace('▸', '▾');
+  } else {
+    header.innerHTML = header.innerHTML.replace('▾', '▸');
+  }
+}
+
+// Update state & progress (supports child keys like "3_child_2")
+function updateFullChecklist(patientKey, key, checked, totalItems) {
+  if (!tempChecklistStates[patientKey]) tempChecklistStates[patientKey] = {};
+  tempChecklistStates[patientKey][`item_${key}`] = !!checked;
+
+  // Persist
+  try {
+    localStorage.setItem('checklistStates', JSON.stringify(tempChecklistStates));
+  } catch (e) {
+    console.error('Failed to save checklist states:', e);
+  }
+
+  // Recompute progress across all keys for this patient
+  const states = tempChecklistStates[patientKey];
+  const completed = Object.keys(states).filter(k => k.startsWith('item_') && states[k]).length;
+  const progress = totalItems > 0 ? Math.round((completed / totalItems) * 100) : 0;
+
+  // Update BOTH progress bars/texts
+  const topBar = document.getElementById('progressBarTop');
+  const botBar = document.getElementById('progressBarBottom');
+  const topText = document.getElementById('progressTextTop');
+  const botText = document.getElementById('progressTextBottom');
+
+  if (topBar) topBar.style.width = `${progress}%`;
+  if (botBar) botBar.style.width = `${progress}%`;
+  if (topText) topText.textContent = `${completed}/${totalItems} (${progress}%)`;
+  if (botText) botText.textContent = `${completed}/${totalItems} (${progress}%)`;
+}
+
+
+
 
 
 
@@ -7551,25 +8676,30 @@ function updateFullChecklist(patientKey, index, checked, totalItems) {
     if (!tempChecklistStates[patientKey]) {
         tempChecklistStates[patientKey] = {};
     }
-    tempChecklistStates[patientKey][`item_${index}`] = checked;
-    
-    // SAVE TO LOCALSTORAGE FOR PERSISTENCE
+    tempChecklistStates[patientKey][`item_${index}`] = !!checked;
+
+    // Persist
     try {
         localStorage.setItem('checklistStates', JSON.stringify(tempChecklistStates));
     } catch (e) {
         console.error('Failed to save checklist states:', e);
     }
-    
-    // Update progress display
+
+    // Recompute progress (count only checklist items)
     const states = tempChecklistStates[patientKey];
-    const completed = Object.values(states).filter(Boolean).length;
+    const completed = Object.keys(states).filter(k => k.startsWith('item_') && states[k]).length;
     const progress = Math.round((completed / totalItems) * 100);
-    
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    
-    if (progressBar) progressBar.style.width = `${progress}%`;
-    if (progressText) progressText.textContent = `${completed}/${totalItems} (${progress}%)`;
+
+    // Update BOTH progress bars/texts
+    const topBar = document.getElementById('progressBarTop');
+    const botBar = document.getElementById('progressBarBottom');
+    const topText = document.getElementById('progressTextTop');
+    const botText = document.getElementById('progressTextBottom');
+
+    if (topBar) topBar.style.width = `${progress}%`;
+    if (botBar) botBar.style.width = `${progress}%`;
+    if (topText) topText.textContent = `${completed}/${totalItems} (${progress}%)`;
+    if (botText) botText.textContent = `${completed}/${totalItems} (${progress}%)`;
 }
 
 
@@ -7968,64 +9098,17 @@ function pasteFromClipboard() {
                 textarea.value = text;
                 button.textContent = 'Processing data...';
                 
-                // Add a small delay to show the pasted content
+                // Add a small delay to show the pasted content, then call the existing process function
                 setTimeout(() => {
                     try {
-                        // Process the data immediately
-                        const importText = textarea.value;
-                        if (!importText) {
-                            throw new Error('No text found in textarea after paste');
-                        }
-                        
-                        const patient = patientData[currentPatientIndex];
-                        if (!patient) {
-                            throw new Error('No current patient selected');
-                        }
-                        
-                        patient.ImportedData = importText;
-                        lastImportedData = importText;
-                        
-                        labData = extractLabValues(importText);
-                        patient.LabData = JSON.stringify(labData);
-                        
-                        const fishbone = generateFishbone(labData);
-                        const warnings = generateWarnings(labData);
-                        
-                        // Update VIOLIN field with plain text (asterisks preserved)
-                        const violinField = document.getElementById('field_VIOLIN');
-                        if (violinField) {
-                            violinField.value = fishbone;
-                            autoResizeTextarea(violinField);
-                            
-                            // Save the plain text with asterisks
-                            patient.VIOLIN = fishbone;
-                        }
-                        
-                        // Update warnings
-                        const warningDiv = document.getElementById('warningMessages');
-                        if (warningDiv) {
-                            if (warnings.length > 0) {
-                                warningDiv.innerHTML = warnings.map(w => `<div class="warning-message">${w}</div>`).join('');
-                                warningDiv.classList.remove('hidden');
-                            } else {
-                                warningDiv.innerHTML = '<div class="warning-message" style="color: var(--accent-3);">All values within normal limits</div>';
-                                warningDiv.classList.remove('hidden');
-                            }
-                        }
-                        
-                        saveToLocalStorage();
-                        closeImportModal();
+                        // Use the existing processImportedData function instead of duplicating logic
+                        processImportedData();
                         
                         // Success feedback
                         button.textContent = 'Completed!';
                         button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
                         button.style.color = 'white';
                         button.disabled = false;
-                        
-                        // Show fishbone inline
-                        setTimeout(() => {
-                            showFishboneInline();
-                        }, 200);
                         
                         // Auto-reset button after 3 seconds
                         setTimeout(() => {
@@ -8085,6 +9168,9 @@ function pasteFromClipboard() {
             }, 500);
         });
 }
+
+
+		
 
 
 
@@ -8177,7 +9263,6 @@ function showFishbonePopup() {
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
-            <h2 style="color: var(--primary); margin-bottom: 1rem;">VIOLIN Fishbone Diagram</h2>
             <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); border: 1px solid var(--border); max-height: 60vh; overflow-y: auto;">${formattedContent}</div>
             ${missingValues ? `<div style="background: var(--card-bg); margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border);"><div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;"><strong>Missing Values:</strong></div><div style="font-style: italic; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">${missingValues}</div></div>` : ''}
             <div style="margin-top: 1rem; text-align: center;">
@@ -8429,25 +9514,55 @@ preElement.innerHTML = patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="colo
 
 
 		
-
 function showFishboneInline() {
-    // Add a delay to ensure DOM elements are ready
-    setTimeout(() => {
-        const fishboneDisplay = document.getElementById('fishboneDisplay');
-        if (fishboneDisplay && currentViewMode === 'chartcheck') {
-            // Auto-show the fishbone after processing
-            if (fishboneDisplay.classList.contains('hidden')) {
-                toggleFishboneDisplay(); // This will populate and show it
-            }
-        }
-    }, 200);
+    if (currentPatientIndex === -1 || !patientData[currentPatientIndex]) {
+        alert('No patient selected');
+        return;
+    }
+    
+    const patient = patientData[currentPatientIndex];
+    
+    if (!patient.VIOLIN || patient.VIOLIN.trim().length === 0) {
+        alert('No VIOLIN data available. Please import data first.');
+        return;
+    }
+    
+    // Show the fishbone in a modal with proper formatting
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px; max-height: 80vh;">
+            <span class="close" onclick="this.closest('.modal').remove()" style="float: right; font-size: 30px; cursor: pointer; color: var(--danger);">&times;</span>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">VIOLIN (Vitals, Labs, I/O)</h2>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); max-height: 60vh; overflow-y: auto;">
+                ${patient.VIOLIN.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>')}
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="copyFishboneData()">📋 Copy</button>
+                <button onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Store for copy function
+    window.currentFishboneContent = patient.VIOLIN;
 }
 
-
-
-
-
-
+function copyFishboneData() {
+    if (window.currentFishboneContent) {
+        navigator.clipboard.writeText(window.currentFishboneContent).then(() => {
+            const btn = event.target;
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => {
+                btn.textContent = '📋 Copy';
+            }, 2000);
+        }).catch(() => {
+            alert('Failed to copy');
+        });
+    }
+}
 
 
 
@@ -8633,34 +9748,34 @@ function showPriorityStatus(index) {
 
 
 
-		function showStatusSelector(patient, index, statusDotElement) {
-// In the showStatusSelector function (around line 2990), 
-// replace the priorityOptions array with these neon colors:
+	// REPLACE the showStatusSelector function (around line 2990) with this updated version:
 
-const priorityOptions = [
-    { num: '0', name: 'Priority 0 - Complete/Done', color: '#00ff41' },          // Bright neon green
-    { num: '1', name: 'Priority 1 - Urgent', color: '#ff0040' },                // Bright neon red
-    { num: '2', name: 'Priority 2 - High', color: '#ff6600' },                  // Bright neon orange
-    { num: '3', name: 'Priority 3 - Medium-High', color: '#ffaa00' },           // Bright neon amber
-    { num: '4', name: 'Priority 4 - Medium', color: '#ffff00' },                // Bright neon yellow
-    { num: '5', name: 'Priority 5 - Medium-Low', color: '#ccff00' },            // Bright neon lime
-    { num: '6', name: 'Priority 6 - Low-Medium', color: '#66ff00' },            // Bright neon chartreuse
-    { num: '7', name: 'Priority 7 - Low', color: '#00ffff' },                   // Bright neon cyan
-    { num: '8', name: 'Priority 8 - Very Low', color: '#0080ff' },              // Bright neon blue
-    { num: '9', name: 'Priority 9 - Minimal', color: '#8000ff' },               // Bright neon purple
-    { num: '10', name: 'Priority 10 - Lowest', color: '#ff00ff' },              // Bright neon magenta
-    { num: '', name: 'No Priority', color: 'var(--card-bg)' }                   // Background color
-];
-			
+function showStatusSelector(patient, index, statusElement) {
+    // Updated priority options with new red-to-blue gradient
+    const priorityOptions = [
+        { num: '', name: 'No Priority', color: '#444444' },                   // Dark gray
+       { num: 'C', name: 'Priority C - Complete/Done', color: '#00ff41' },
+        { num: '1', name: 'Priority 1 - Urgent', color: '#ff0000' },          // Bright red
+        { num: '2', name: 'Priority 2 - High', color: '#ff2400' },            // Red-orange
+        { num: '3', name: 'Priority 3 - Medium-High', color: '#ff4900' },     // Orange
+        { num: '4', name: 'Priority 4 - Medium', color: '#ff6d00' },          // Orange-yellow
+        { num: '5', name: 'Priority 5 - Medium-Low', color: '#ff9200' },      // Yellow
+        { num: '6', name: 'Priority 6 - Low-Medium', color: '#ffb600' },      // Dark yellow
+        { num: '7', name: 'Priority 7 - Low', color: '#ffdb00' },             // yellow
+        { num: '8', name: 'Priority 8 - Very Low', color: '#ffff00' },        // yellow
+        { num: '9', name: 'Priority 9 - Minimal', color: '#800080' },         // light purple
+        { num: '10', name: 'Priority 10 - Lowest', color: '#bf00bf' },        // Deep blue
+    ];
+    
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 450px;">
             <h3 style="color: var(--primary); margin-bottom: 1rem;">
                 Set Priority for ${patient.Name || 'Unnamed'}
             </h3>
-            <div style="display: grid; gap: 0.5rem; margin-bottom: 1rem; max-height: 400px; overflow-y: auto;">
+            <div style="display: grid; gap: 0.5rem; margin-bottom: 1rem; max-height: 500px; overflow-y: auto;">
                 ${priorityOptions.map(option => `
                     <button onclick="setPatientPriority('${option.num}', ${index}, this.closest('.modal'))" 
                             style="padding: 0.75rem; text-align: left; background: var(--card-bg); 
@@ -8669,9 +9784,11 @@ const priorityOptions = [
                                    align-items: center; gap: 0.75rem;"
                             onmouseover="this.style.background='var(--card-hover)'"
                             onmouseout="this.style.background='var(--card-bg)'">
-                        <div style="width: 12px; height: 12px; border-radius: 50%; 
-                                    background: ${option.color};"></div>
-                        ${option.name}
+                        <div style="width: 20px; height: 20px; border-radius: 0.25rem; 
+                                    background: ${option.color}; border: 2px solid rgba(255,255,255,0.2);"></div>
+                        <span style="flex: 1;">${option.name}</span>
+                        <div style="width: 8px; height: 30px; background: ${option.color}; 
+                                    border-radius: 0.25rem; opacity: 0.8;"></div>
                     </button>
                 `).join('')}
             </div>
@@ -8682,6 +9799,9 @@ const priorityOptions = [
     `;
     document.body.appendChild(modal);
 }
+
+
+		
 
 
 
@@ -9286,9 +10406,327 @@ async function testOCRSystem() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+		function showTableView() {
+    if (!labData || Object.keys(labData).length === 0) {
+        alert('No lab data available. Please import data first using the Import button.');
+        return;
+    }
+    
+    document.getElementById('tableModal').style.display = 'block';
+    generateTableView();
+}
+
+		
+
+
 		
 		
 		
+		
+		
+		
+		
+		
+		
+		
+		
+
+function refreshViolinDisplay() {
+    const violinInput = document.getElementById('field_VIOLIN');
+    if (!violinInput) return;
+    
+    const patient = patientData[currentPatientIndex];
+    
+    if (patient && patient.VIOLIN && patient.VIOLIN.trim()) {
+        violinInput.value = patient.VIOLIN;
+        autoResizeTextarea(violinInput);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+
+		function closeGraphModal() {
+    const modal = document.getElementById('graphModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function closeTableModal() {
+    const modal = document.getElementById('tableModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+
+
+
+		function ensureChartCheckSync() {
+    if (currentViewMode === 'chartcheck' && currentPatientIndex !== -1) {
+        const patient = patientData[currentPatientIndex];
+        
+        // Update all visible fields with current patient data
+        const allFields = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'Priority'];
+        
+        allFields.forEach(field => {
+            const element = document.getElementById(`field_${field.replace(/\s+/g, '_')}`);
+            if (element && patient[field] !== undefined) {
+                element.value = patient[field] || '';
+                if (element.tagName === 'TEXTAREA') {
+                    autoResizeTextarea(element);
+                }
+            }
+        });
+        
+        // Refresh violin display if on violin tab
+        if (window.chartCheckCurrentTab === 2) {
+            setTimeout(refreshViolinDisplay, 100);
+        }
+    }
+}
+
+		
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function updateChartCheckProgress() {
+    // Only these 4 fields need checkboxes for chart check
+    const checkFields = ['Problems', 'ICS', 'VIOLIN', 'ORDERS'];
+    const totalFields = checkFields.length;
+    
+    let checkedCount = 0;
+    
+    checkFields.forEach(field => {
+        const fieldKey = `chartcheck_${field}_${currentPatientIndex}`;
+        try {
+            if (localStorage.getItem(fieldKey) === 'true') {
+                checkedCount++;
+            }
+        } catch (e) {
+            // Silently fail
+        }
+    });
+    
+    // Calculate percentage - divide by 4 to reach 100% with 4 fields
+    const percentage = Math.round((checkedCount / totalFields) * 100);
+    
+    // Update the main container with gradient border color based on progress
+    const mainContainer = document.getElementById('chartCheckMainContainer');
+    if (mainContainer) {
+        // Create gradient from current border color to green based on percentage
+        let borderColor;
+        
+        if (percentage === 0) {
+            borderColor = 'var(--border)';
+        } else if (percentage < 100) {
+            // Gradient from current color to green
+            const hue = Math.round((percentage / 100) * 120); // 0 (red) to 120 (green)
+            borderColor = `hsl(${hue}, 100%, 50%)`;
+        } else {
+            // Fully green when 100%
+            borderColor = 'var(--success)';
+        }
+        
+        mainContainer.style.borderColor = borderColor;
+        
+        // Update box shadow based on progress
+        if (percentage === 100) {
+            mainContainer.style.boxShadow = `0 0 20px rgba(16, 185, 129, 0.6)`;
+            mainContainer.style.borderWidth = '4px';
+        } else if (percentage > 0) {
+            const alpha = 0.2 + (percentage / 100) * 0.4;
+            mainContainer.style.boxShadow = `0 0 ${10 + (percentage / 100) * 10}px rgba(16, 185, 129, ${alpha})`;
+            mainContainer.style.borderWidth = '3px';
+        } else {
+            mainContainer.style.boxShadow = 'none';
+            mainContainer.style.borderWidth = '3px';
+        }
+        
+        // Add percentage text at bottom center of container
+        let percentageDisplay = mainContainer.querySelector('.chart-check-percentage');
+        if (!percentageDisplay) {
+            percentageDisplay = document.createElement('div');
+            percentageDisplay.className = 'chart-check-percentage';
+            percentageDisplay.style.cssText = `
+                position: absolute;
+                bottom: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--card-bg);
+                color: ${borderColor};
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                font-weight: bold;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                border: 2px solid ${borderColor};
+                transition: color 0.3s ease, border-color 0.3s ease;
+            `;
+            mainContainer.style.position = 'relative';
+            mainContainer.appendChild(percentageDisplay);
+        } else {
+            percentageDisplay.style.color = borderColor;
+            percentageDisplay.style.borderColor = borderColor;
+        }
+        
+        percentageDisplay.textContent = `${percentage}% Complete`;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+let violinEditMode = false;
+
+function toggleViolinMode() {
+    violinEditMode = !violinEditMode;
+    const violinTextarea = document.getElementById('field_VIOLIN');
+    const violinDisplay = document.getElementById('violinDisplay');
+    const btn = document.getElementById('violinToggleBtn');
+    
+    if (violinEditMode) {
+        // Switch to edit mode
+        if (violinDisplay) violinDisplay.style.display = 'none';
+        if (violinTextarea) violinTextarea.style.display = 'block';
+        btn.textContent = '📝 Back to View';
+    } else {
+        // Switch to view mode
+        if (violinDisplay) violinDisplay.style.display = 'block';
+        if (violinTextarea) violinTextarea.style.display = 'none';
+        btn.textContent = '🐟 Fishbone';
+    }
+}
+
+
+
+
+function updateViolinDisplay() {
+    const patient = patientData[currentPatientIndex];
+    if (!patient || !patient.VIOLIN) return;
+    
+    let violinDisplay = document.getElementById('violinDisplay');
+    if (!violinDisplay) {
+        violinDisplay = document.createElement('div');
+        violinDisplay.id = 'violinDisplay';
+        violinDisplay.style.cssText = `
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre;
+            word-wrap: break-word;
+            margin-top: 0.5rem;
+            overflow-x: auto;
+        `;
+        const violinTextarea = document.getElementById('field_VIOLIN');
+        violinTextarea.parentNode.insertBefore(violinDisplay, violinTextarea.nextSibling);
+    }
+    
+    // Process the fishbone line by line to preserve formatting
+    const lines = patient.VIOLIN.split('\n');
+    let html = '';
+    
+    lines.forEach(line => {
+        // Format abnormal values in red while keeping asterisks
+        const formattedLine = line.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
+        html += formattedLine + '\n';
+    });
+    
+    // Convert to HTML while preserving all spacing
+    violinDisplay.innerHTML = html
+        .split('\n')
+        .map(line => line ? line : '')
+        .join('\n')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    
+    // Reapply the red formatting after escaping
+    const displayText = violinDisplay.textContent;
+    violinDisplay.innerHTML = '';
+    
+    lines.forEach(line => {
+        const span = document.createElement('span');
+        const formattedLine = line.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
+        span.innerHTML = formattedLine + '\n';
+        violinDisplay.appendChild(span);
+    });
+    
+    // Hide textarea by default, show display
+    const violinTextarea = document.getElementById('field_VIOLIN');
+    violinTextarea.style.display = 'none';
+    violinDisplay.style.display = 'block';
+    violinEditMode = false;
+}
+
 		
     </script>
 </body>
