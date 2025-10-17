@@ -119,6 +119,114 @@
 
 
 
+const VIOLIN_DASHBOARD_CSS = `
+.violin-dashboard-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--dark-bg);
+    margin: 1rem 0;
+}
+
+.violin-dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.violin-dashboard-table thead {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.violin-dashboard-table th {
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    color: white;
+    border-bottom: 2px solid var(--primary);
+}
+
+.violin-dashboard-table th:first-child {
+    text-align: left;
+}
+
+.violin-dashboard-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.violin-dashboard-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.violin-dashboard-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.violin-section-header {
+    background: rgba(59, 130, 246, 0.05);
+    padding: 0.75rem 1rem;
+    color: var(--primary);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+}
+
+.lab-value {
+    text-align: center;
+    font-weight: 600;
+    color: #60a5fa;
+}
+
+.lab-value.abnormal {
+    background: rgba(220, 38, 38, 0.15);
+    color: #ff6b6b;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: inset 0 0 8px rgba(220, 38, 38, 0.1);
+}
+
+.lab-value.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.1);
+}
+
+.lab-value.normal {
+    color: #6ee7b7;
+}
+
+.lab-reference {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.lab-trend {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.trend-up {
+    color: #dc2626;
+}
+
+.trend-down {
+    color: #10b981;
+}
+
+.trend-stable {
+    color: #64748b;
+}
+`;
 
 
 
@@ -6077,37 +6185,50 @@ if (data.ventModeRaw && !data.o2therapyCode) {
 
 
 
+// Extract lab values with dates
+const extractLabValue = (pattern, name) => {
+    const matches = text.match(new RegExp(pattern + '.*?([\\d.]+).*?\\((\\d{2}/\\d{2}/\\d{2})\\s+(\\d{2}:\\d{2}:\\d{2})\\)', 'gi'));
+    if (matches && matches.length > 0) {
+        const values = [];
+        const dates = [];
+        const times = [];
+        
+        matches.forEach(match => {
+            const valueMatch = match.match(/:\s*[<>]?\s*([\d.]+)/);
+            const dateTimeMatch = match.match(/\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/);
+            if (valueMatch) {
+                values.push(parseFloat(valueMatch[1]));
+                if (dateTimeMatch) {
+                    dates.push(dateTimeMatch[1]);
+                    times.push(dateTimeMatch[2]);
+                }
+            }
+        });
 
+        data.labs[name] = values;
+        
+        // Store BOTH formats for backward compatibility
+        if (dates.length > 0) {
+            data.dates[name] = dates[0];  // ← Keep this for existing code
+            data.times[name] = times[0];  // ← Keep this for existing code
+            
+            // ADD these new arrays for the table hover feature
+            if (!data.datesArray) data.datesArray = {};
+            if (!data.timesArray) data.timesArray = {};
+            data.datesArray[name] = dates;  // ← New: full array
+            data.timesArray[name] = times;  // ← New: full array
+        }
+    }
+};
 
 			
 
-            // Extract lab values with dates
-            const extractLabValue = (pattern, name) => {
-                const matches = text.match(new RegExp(pattern + '.*?([\\d.]+).*?\\((\\d{2}/\\d{2}/\\d{2})\\s+(\\d{2}:\\d{2}:\\d{2})\\)', 'gi'));
-                if (matches && matches.length > 0) {
-                    const values = [];
-                    const dates = [];
-                    const times = [];
-                    
-                    matches.forEach(match => {
-                         const valueMatch = match.match(/:\s*[<>]?\s*([\d.]+)/);
-            const dateTimeMatch = match.match(/\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/);
-                        if (valueMatch) {
-                            values.push(parseFloat(valueMatch[1]));
-                            if (dateTimeMatch) {
-                                dates.push(dateTimeMatch[1]);
-                                times.push(dateTimeMatch[2]);
-                            }
-                        }
-                    });
+   
 
-                    data.labs[name] = values;
-                    if (dates.length > 0) {
-                        data.dates[name] = dates[0];
-                        data.times[name] = times[0];
-                    }
-                }
-            };
+
+
+
+
 
             // Extract all lab values
             extractLabValue('WBC:', 'wbc');
@@ -6175,6 +6296,8 @@ extractLabValue('Troponin I, High Sensitivity:', 'trop');
 // Extract pancreatic enzymes
 extractLabValue('Amylase:', 'amylase');
 extractLabValue('Lipase:', 'lipase');
+extractLabValue('Albumin:', 'albumin');
+extractLabValue('Prealbumin:', 'prealbumin');
 
 
 
@@ -10568,14 +10691,7 @@ function toggleViolinMode() {
 
 
 
-
-
-
-
-
-// ========= DATE + KEY HELPERS (ADD THIS ABOVE updateViolinDisplay) =========
-
-// Accepts "MM/DD/YY", "MM/DD/YYYY", "MM/DD/YY HH:MM[:SS]"
+// ========= DATE + KEY HELPERS =========
 function parseMDYWithOptionalTime(dstr) {
   if (!dstr || typeof dstr !== 'string') return null;
   const m = dstr.trim().match(
@@ -10590,7 +10706,7 @@ function parseMDYWithOptionalTime(dstr) {
 }
 
 function mostRecentByKeys(keys, datesObj) {
-  let best = null; // { key, dt, raw }
+  let best = null;
   for (const k of keys) {
     const raw = datesObj?.[k];
     const d = parseMDYWithOptionalTime(raw);
@@ -10606,21 +10722,15 @@ function isSameCalendarDay(a, b) {
     a.getDate() === b.getDate();
 }
 
-// --- Canonical lab keys -> tolerate aliases present in your real data
 const KEY_ALIASES = {
-  // ABG (note pC02 with zero)
   ph:     ['ph','pH'],
   pco2:   ['pco2','pCO2','pc02','pC02'],
   po2:    ['po2','pO2','PO2'],
   bicarb: ['bicarb','Bicarb','bicarbonate','Bicarbonate'],
-
-  // CBC
   wbc: ['wbc','WBC'],
   hgb: ['hgb','Hgb','HGB'],
   hct: ['hct','Hct','HCT'],
   plt: ['plt','Plt','PLT','Platelet Count','Platelets'],
-
-  // BMP (include “Resp” and “Perf” variants)
   na:  ['na','Na','sodium','Sodium','Sodium (Resp)'],
   k:   ['k','K','potassium','Potassium','Potassium (Resp)'],
   cl:  ['cl','Cl','chloride','Chloride'],
@@ -10628,16 +10738,12 @@ const KEY_ALIASES = {
   bun: ['bun','BUN'],
   cr:  ['cr','Cr','creatinine','Creatinine'],
   glu: ['glu','Glu','glucose','Glucose','Glucose (Perf)'],
-
-  // LFTs
   ast: ['ast','AST'],
   alt: ['alt','ALT'],
   tbil:['tbil','Tbil','Total Bilirubin'],
   dbil:['dbil','Dbil','Direct Bilirubin'],
   alk: ['alk','Alk','Alkaline Phosphatase','Alk Phos'],
   ggt: ['ggt','GGT'],
-
-  // Coags
   pt:  ['pt','PT','Prothrombin Time'],
   ptt: ['ptt','PTT','APTT'],
   inr: ['inr','INR'],
@@ -10649,113 +10755,72 @@ function resolveKeys(preferredKeys, obj) {
   for (const base of preferredKeys) {
     const aliases = KEY_ALIASES[base] || [base];
     const hit = aliases.find(a => Object.prototype.hasOwnProperty.call(obj || {}, a));
-    out.push(hit || base); // keep base as fallback (safe no-op if missing)
+    out.push(hit || base);
   }
   return out;
 }
 
-
-
-
-
-
-
+// ========= MAIN UPDATE FUNCTION =========
 function updateViolinDisplay(ctx = {}) {
-  const _patientData = ctx.patientData || (typeof patientData !== 'undefined' ? patientData : null);
-  const _currentIdx  = Number.isInteger(ctx.currentPatientIndex) ? ctx.currentPatientIndex :
-                       (typeof currentPatientIndex !== 'undefined' ? currentPatientIndex : -1);
-  const _labData     = ctx.labData || (typeof labData !== 'undefined' ? labData : null);
-  const _ioData      = ctx.ioData  || (typeof ioData  !== 'undefined' ? ioData  : null);
+  const _patientData = ctx.patientData || patientData;
+  const _currentIdx = Number.isInteger(ctx.currentPatientIndex) ? ctx.currentPatientIndex : currentPatientIndex;
+  const _labData = ctx.labData || labData;
+  const _lastImportedData = ctx.lastImportedData || lastImportedData;
 
   if (!_patientData || _currentIdx < 0 || !_patientData[_currentIdx]) return;
   const patient = _patientData[_currentIdx];
   if (!patient || !patient.VIOLIN) return;
 
-  const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
-  const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
-  const second = (arr) => (Array.isArray(arr) ? arr[1] : undefined);
+  // Extract I/O data
+  const _ioData = _lastImportedData ? extractIntakeOutputData(_lastImportedData) : null;
 
-  // -------- Parse original fishbone --------
-  let fishboneLines = String(patient.VIOLIN).split('\n');
-  let output = [];
-  let i = 0;
-
-  // -------- COLLECT ALL WARNINGS AT THE TOP --------
-  let warningsToAdd = [];
+  // Parse fishbone to extract vitals/I/O section
+  const fishboneLines = String(patient.VIOLIN).split('\n');
+  const output = [];
   
-  // Add electrolyte warnings
+  // Collect warnings at the top
+  const warningsToAdd = [];
+  
   if (_labData?.labs) {
     const eWarns = electrolyteWarnings(_labData);
     warningsToAdd.push(...eWarns);
   }
   
-  // Add I/O warnings
   if (_ioData?.outputs) {
     const ioWarns = buildIOWarnings(_ioData, patient);
     warningsToAdd.push(...ioWarns);
   }
   
-  // Add date warnings
   const preDateWarnings = [];
-  const _cbcWarn  = getCBCDateWarning(_labData);  if (_cbcWarn)  preDateWarnings.push(_cbcWarn);
-  const _bmpWarn  = getBMPDateWarning(_labData);  if (_bmpWarn)  preDateWarnings.push(_bmpWarn);
-  const _lftWarn  = getLFTsDateWarning(_labData); if (_lftWarn)  preDateWarnings.push(_lftWarn);
-  const _coagWarn = getCoagsDateWarning(_labData);if (_coagWarn) preDateWarnings.push(_coagWarn);
-  const _abgWarn  = getABGDateWarning(_labData);  if (_abgWarn)  preDateWarnings.push(_abgWarn);
-  
+  const _cbcWarn = getCBCDateWarning(_labData); if (_cbcWarn) preDateWarnings.push(_cbcWarn);
+  const _bmpWarn = getBMPDateWarning(_labData); if (_bmpWarn) preDateWarnings.push(_bmpWarn);
+  const _lftWarn = getLFTsDateWarning(_labData); if (_lftWarn) preDateWarnings.push(_lftWarn);
+  const _coagWarn = getCoagsDateWarning(_labData); if (_coagWarn) preDateWarnings.push(_coagWarn);
+  const _abgWarn = getABGDateWarning(_labData); if (_abgWarn) preDateWarnings.push(_abgWarn);
   warningsToAdd.push(...preDateWarnings);
   
-  // Add warnings section at top if any warnings exist
   if (warningsToAdd.length) {
     output.push('=== ⚠️ WARNINGS ===');
     output.push('');
     warningsToAdd.forEach(w => output.push(w));
     output.push('');
-    output.push('');
   }
 
-  // -------- Parse fishbone lines --------
-  while (i < fishboneLines.length) {
+  // Extract vitals/I/O section (up to and including Fluid Balance line)
+  let i = 0;
+  let foundFluidBalance = false;
+  
+  while (i < fishboneLines.length && !foundFluidBalance) {
     const line = fishboneLines[i];
-    const trimmedLine = line.trim();
-
-    // Check for VITALS section (reformat to list)
-    if (/^(T|Temp|VITALS)/i.test(trimmedLine)) {
-      output.push('');
-      
-      // Collect all vitals lines until blank line
-      let vitalLines = [line];
-      i++;
-      while (i < fishboneLines.length && fishboneLines[i].trim() !== '') {
-        vitalLines.push(fishboneLines[i]);
-        i++;
-      }
-      
-      // Parse and reformat vitals as list from first line only
-      const vitalsOnlyText = vitalLines[0];
-      const vitals = parseVitals(vitalsOnlyText);
-      vitals.forEach(v => {
-        if (v === '') {
-          output.push(''); // blank line
-        } else {
-          output.push(v);
-        }
-      });
-      
-      // Add remaining lines (I/O data) as they are, preserving original structure
-      for (let j = 1; j < vitalLines.length; j++) {
-        output.push(vitalLines[j]);
-      }
-      
-      output.push(''); // Add line break after vitals section
-      continue;
-    }
-
     output.push(line);
+    
+    if (line.trim().startsWith('Fluid Balance:')) {
+      foundFluidBalance = true;
+    }
     i++;
   }
 
-  // -------- Create display container --------
+  // Create display container
   let violinDisplay = document.getElementById('violinDisplay');
   if (!violinDisplay) {
     violinDisplay = document.createElement('div');
@@ -10773,27 +10838,37 @@ function updateViolinDisplay(ctx = {}) {
 
   violinDisplay.innerHTML = '';
 
-  // -------- Render output --------
+  // Render fishbone section
   output.forEach(line => {
     const div = document.createElement('div');
     div.style.cssText = 'margin-bottom: 0; white-space: pre-wrap; word-wrap: break-word;';
     
-    // Check if warning line (starts with "Last", "ANURIA", "LOW", "Give", "Hypo", "Hyper", "Has\s", "===")
     const isWarning = /^(Last|ANURIA|LOW|Give|Hypo|Hyper|Has\s|===|No )/.test(line.trim());
     
     if (isWarning) {
-      // Entire warning line red and bold, with *text* underlined
       let html = line.replace(/\*([^*]+)\*/g, '<span style="text-decoration: underline; color: #ff4444; font-weight: bold;">*$1*</span>');
       html = `<span style="color: #ff4444; font-weight: bold;">${html}</span>`;
       div.innerHTML = html;
     } else {
-      // Normal fishbone line: only replace *text* with red bold
       let html = line.replace(/\*([^*]+)\*/g, '<span style="color: #ff4444; font-weight: bold;">*$1*</span>');
       div.innerHTML = html;
     }
     
     violinDisplay.appendChild(div);
   });
+
+  // Add spacer
+  const spacer = document.createElement('div');
+  spacer.style.cssText = 'height: 0rem;';
+  violinDisplay.appendChild(spacer);
+
+  // Generate and append lab values table
+  if (_labData && Object.keys(_labData.labs || {}).length > 0) {
+    const tableHTML = generateModernLabTable(_labData);
+    const tableDiv = document.createElement('div');
+    tableDiv.innerHTML = tableHTML;
+    violinDisplay.appendChild(tableDiv);
+  }
 
   violinDisplay.style.display = 'block';
 
@@ -10802,40 +10877,294 @@ function updateViolinDisplay(ctx = {}) {
   window.violinEditMode = false;
 }
 
-function parseVitals(vitalText) {
-  const vitals = [];
+// ========= MODERN LAB TABLE GENERATOR =========
+
+function generateModernLabTable(data) {
+  const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
+  const fmt = (v) => v !== undefined ? v.toFixed(1) : '--';
   
-  // Only extract up to where I/O starts
-  const ioStart = vitalText.indexOf('I:');
-  const vitalsOnly = ioStart !== -1 ? vitalText.substring(0, ioStart) : vitalText;
-  
-  // Split by specific vital markers: T, HR, SBP, DBP, O2
-  const vitalPatterns = [
-    /T\s+[^,H]*/,      // Temperature
-    /HR\s+[^,S]*/,     // Heart Rate
-    /SBP\s+[^,D]*/,    // Systolic BP
-    /DBP\s+[^,O]*/,    // Diastolic BP
-    /O2\s+[^,I\n]*/    // O2 Sat
-  ];
-  
-  vitalPatterns.forEach(pattern => {
-    const match = vitalsOnly.match(pattern);
-    if (match) {
-      vitals.push(match[0].trim());
+  // Determine max columns available across all labs (up to 5)
+  let maxColumns = 1;
+  Object.values(data.labs || {}).forEach(arr => {
+    if (Array.isArray(arr)) {
+      maxColumns = Math.max(maxColumns, Math.min(arr.length, 5));
     }
   });
   
-  // Add blank line after DBP
-  vitals.push('');
-  
-  // Add blank line after O2
-  vitals.push('');
-  
-  return vitals;
+  // Helper to get up to 5 values from array WITH DATES
+  const getValuesWithDates = (arr, labKey) => {
+    const results = [];
+    
+    if (!Array.isArray(arr)) {
+      for (let i = 0; i < maxColumns; i++) {
+        results.push({ value: '--', date: null, time: null });
+      }
+      return results;
+    }
+
+
+
+
+// Get dates and times - use the new arrays first, fallback to old format
+let dates = [];
+let times = [];
+
+// Try new array format first (for table hover)
+if (data.datesArray?.[labKey]) {
+  dates = data.datesArray[labKey];
+}
+// Fallback to old single value format
+else if (data.dates?.[labKey]) {
+  dates = [data.dates[labKey]];
 }
 
-// ========= DATE WARNINGS =========
+// Try new array format first (for table hover)
+if (data.timesArray?.[labKey]) {
+  times = data.timesArray[labKey];
+}
+// Fallback to old single value format
+else if (data.times?.[labKey]) {
+  times = [data.times[labKey]];
+}
 
+
+    
+    for (let i = 0; i < maxColumns; i++) {
+      if (i < arr.length) {
+        results.push({
+          value: fmt(num(arr[i])),
+          date: dates[i] || null,
+          time: times[i] || null
+        });
+      } else {
+        results.push({ value: '--', date: null, time: null });
+      }
+    }
+    
+    return results;
+  };
+
+  const getCellClass = (value, min, max) => {
+    const v = num(value);
+    if (v === undefined) return 'lab-value';
+    return (v < min || v > max) ? 'lab-value abnormal' : 'lab-value normal';
+  };
+
+  const formatDateTime = (date, time) => {
+    if (!date) return 'No date available';
+    return time ? `${date} ${time}` : date;
+  };
+
+  // Generate column headers dynamically
+  const columnHeaders = ['Latest'];
+  for (let i = 1; i < maxColumns; i++) {
+    columnHeaders.push(`-${i}`);
+  }
+
+  let html = `
+    <style>
+      .modern-lab-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        background: #000000;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 1px solid #2a2a2a;
+      }
+      .modern-lab-table thead {
+        background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+      }
+      .modern-lab-table th {
+        padding: 0.4rem 0.3rem;
+        text-align: center;
+        font-weight: 700;
+        color: #b0b0b0;
+        border-bottom: 2px solid #404040;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .modern-lab-table th:first-child {
+        text-align: left;
+        width: 60px;
+        padding-left: 0.5rem;
+      }
+      .modern-lab-table td {
+        padding: 0.35rem 0.3rem;
+        border-bottom: 1px solid #1a1a1a;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        background: #000000;
+      }
+      .modern-lab-table td:first-child {
+        width: 60px;
+        padding-left: 0.5rem;
+        padding-right: 0.3rem;
+      }
+      .modern-lab-table tbody tr {
+        transition: background-color 0.2s ease;
+        background: #000000;
+      }
+      .modern-lab-table tbody tr:hover {
+        background: rgba(59, 130, 246, 0.08);
+      }
+      .lab-value {
+        text-align: center;
+        font-weight: 600;
+        cursor: help;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+      .lab-value.abnormal {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ff6b6b;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-weight: 700;
+      }
+      .lab-value.normal {
+        color: #6ee7b7;
+      }
+      .lab-value[title]:not([title=""]):not([title="No date available"]):hover {
+        background: rgba(59, 130, 246, 0.15);
+        border-radius: 0.25rem;
+        transform: scale(1.05);
+      }
+      .lab-value.abnormal[title]:not([title=""]):not([title="No date available"]):hover {
+        background: rgba(239, 68, 68, 0.35);
+        transform: scale(1.05);
+      }
+    </style>
+    <table class="modern-lab-table">
+      <thead>
+        <tr>
+          <th style="text-align: left;">Lab</th>
+          ${columnHeaders.map(h => `<th>${h}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  // Helper function to generate row HTML
+  const generateLabRow = (lab) => {
+    if (!data.labs[lab.key]) return '';
+    
+    const values = getValuesWithDates(data.labs[lab.key], lab.key);
+    const cells = values.map(v => {
+      const titleText = formatDateTime(v.date, v.time);
+      return `<td class="${getCellClass(v.value, lab.min, lab.max)}" title="${titleText}">${v.value}</td>`;
+    }).join('');
+    
+    return `
+      <tr>
+        <td><strong>${lab.label}</strong></td>
+        ${cells}
+      </tr>
+    `;
+  };
+
+  // CBC Labs
+  const cbcLabs = [
+    { label: 'WBC', key: 'wbc', min: 4.5, max: 11 },
+    { label: 'Hgb', key: 'hgb', min: 8, max: 11 },
+    { label: 'Hct', key: 'hct', min: 24, max: 36 },
+    { label: 'Plt', key: 'plt', min: 150, max: 400 }
+  ];
+
+  cbcLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // BMP Labs
+  const bmpLabs = [
+    { label: 'Na', key: 'na', min: 135, max: 145 },
+    { label: 'K', key: 'k', min: 4.0, max: 5.0 },
+    { label: 'Cl', key: 'cl', min: 96, max: 106 },
+    { label: 'CO2', key: 'co2', min: 23, max: 29 },
+    { label: 'BUN', key: 'bun', min: 7, max: 20 },
+    { label: 'Cr', key: 'cr', min: 0.7, max: 1.3 },
+    { label: 'Glu', key: 'glu', min: 70, max: 100 }
+  ];
+
+  bmpLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // Electrolytes
+  const electrolyteLabs = [
+    { label: 'Ca', key: 'ca', min: 8.5, max: 10.2 },
+    { label: 'Mg', key: 'mg', min: 1.7, max: 2.2 },
+    { label: 'Phos', key: 'phos', min: 2.5, max: 4.5 }
+  ];
+
+  electrolyteLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // LFTs
+  const lftLabs = [
+    { label: 'AST', key: 'ast', min: 10, max: 40 },
+    { label: 'ALT', key: 'alt', min: 10, max: 40 },
+    { label: 'TBil', key: 'tbil', min: 0.1, max: 1.2 },
+    { label: 'DBil', key: 'dbil', min: 0, max: 0.3 },
+    { label: 'Alk', key: 'alk', min: 30, max: 120 },
+    { label: 'GGT', key: 'ggt', min: 9, max: 48 }
+  ];
+
+  lftLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // Coagulation
+  const coagLabs = [
+    { label: 'PT', key: 'pt', min: 11, max: 13.5 },
+    { label: 'PTT', key: 'ptt', min: 25, max: 35 },
+    { label: 'INR', key: 'inr', min: 0.8, max: 1.1 },
+    { label: 'Fib', key: 'fib', min: 200, max: 400 }
+  ];
+
+  coagLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // ABG
+  const abgLabs = [
+    { label: 'pH', key: 'ph', min: 7.35, max: 7.45 },
+    { label: 'pCO2', key: 'pco2', min: 35, max: 45 },
+    { label: 'pO2', key: 'po2', min: 80, max: 100 },
+    { label: 'HCO3', key: 'bicarb', min: 22, max: 28 },
+    { label: 'Lactate', key: 'lactate', min: 0.5, max: 2.0 }
+  ];
+
+  abgLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  // Misc Labs
+  const miscLabs = [
+    { label: 'Trop', key: 'trop', min: 0, max: 0.04 },
+    { label: 'Amylase', key: 'amylase', min: 30, max: 110 },
+    { label: 'Lipase', key: 'lipase', min: 30, max: 140 },
+    { label: 'Albumin', key: 'albumin', min: 3.5, max: 5.5 },
+    { label: 'Prealbumin', key: 'prealbumin', min: 15, max: 36 }
+  ];
+
+  miscLabs.forEach(lab => {
+    html += generateLabRow(lab);
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  return html;
+}
+
+
+
+// ========= WARNING FUNCTIONS =========
 function getCBCDateWarning(labData) {
   if (!labData?.dates) return null;
   const keys = resolveKeys(['wbc','hgb','hct','plt'], labData.dates);
@@ -10902,174 +11231,127 @@ function getABGDateWarning(labData) {
 }
 
 function electrolyteWarnings(data) {
-  console.log('=== electrolyteWarnings called ===');
-  console.log('data:', data);
-  console.log('data.labs:', data?.labs);
-  
   const out = [];
-  if (!data?.labs) {
-    console.log('NO data.labs, returning empty');
-    return out;
-  }
+  if (!data?.labs) return out;
   
   const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
   const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
   const second = (arr) => (Array.isArray(arr) ? arr[1] : undefined);
 
-  // Na
-  console.log('data.labs.na:', data.labs.na);
+  // Sodium
   if (data.labs.na && first(data.labs.na) !== undefined) {
     const na = num(first(data.labs.na)), naPrev = num(second(data.labs.na));
-    console.log('Na value:', na, 'prev:', naPrev);
     const naStr = naPrev !== undefined ? `*${na}* (*${naPrev}*)` : `*${na}*`;
     if (na < 135) {
-      console.log('Na < 135, adding warning');
       out.push(`Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}`);
     }
     else if (na > 145) {
-      console.log('Na > 145, adding warning');
       out.push(`Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS`);
     }
   }
 
-  // K
-  console.log('data.labs.k:', data.labs.k);
+  // Potassium
   if (data.labs.k && first(data.labs.k) !== undefined) {
     const k = num(first(data.labs.k)), kPrev = num(second(data.labs.k));
-    console.log('K value:', k, 'prev:', kPrev);
     const kStr = (k < 4.0 || k > 5.0) ? `*${k}*` : String(k);
     const kPrevStr = kPrev !== undefined ? `(${kPrev})` : '(--) ';
     if (k >= 3.3 && k <= 3.9) {
-      console.log('K in range 3.3-3.9, adding warning');
       out.push(`Give 40 meq K PO or IV, K=${kStr}${kPrevStr}`);
     }
     else if (k >= 3.0 && k <= 3.2) {
-      console.log('K in range 3.0-3.2, adding warning');
       out.push(`Give 60 meq K IV, K=${kStr}${kPrevStr}`);
     }
     else if (k > 0 && k <= 2.6) {
-      console.log('K <= 2.6, adding warning');
       out.push(`Give 100 meq K and NHO, K=${kStr}${kPrevStr}`);
     }
     else if (k > 5) {
-      console.log('K > 5, adding warning');
       out.push(`Hyperkalemic!!, K=${kStr}${kPrevStr}`);
     }
   }
 
-  // iCa
-  console.log('data.labs.ca:', data.labs.ca);
+  // Calcium
   if (data.labs.ca && first(data.labs.ca) !== undefined) {
     const ca = num(first(data.labs.ca)), caPrev = num(second(data.labs.ca));
-    console.log('Ca value:', ca, 'prev:', caPrev);
     const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
     if (ca >= 3.5 && ca < 4) {
-      console.log('Ca in range 3.5-4, adding warning');
       out.push(`Give 4g calcium gluconate, 2g/hr, iCa=${caStr}`);
     }
     else if (ca >= 3 && ca <= 3.4) {
-      console.log('Ca in range 3-3.4, adding warning');
       out.push(`Give 6g calcium gluconate 2g/hr, iCa=${caStr}`);
     }
     else if (ca >= 2.5 && ca <= 2.9) {
-      console.log('Ca in range 2.5-2.9, adding warning');
       out.push(`Give 8g calcium gluconate 2g/hr, iCa=${caStr}`);
     }
     else if (ca > 0 && ca < 2.5) {
-      console.log('Ca < 2.5, adding warning');
       out.push(`Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}`);
     }
   }
 
-  // Mg
-  console.log('data.labs.mg:', data.labs.mg);
+  // Magnesium
   if (data.labs.mg && first(data.labs.mg) !== undefined) {
     const mg = num(first(data.labs.mg)), mgPrev = num(second(data.labs.mg));
-    console.log('Mg value:', mg, 'prev:', mgPrev);
     const mgStr = mgPrev !== undefined ? `*${mg}* (*${mgPrev}*)` : `*${mg}*`;
     if (mg >= 1.6 && mg <= 1.9) {
-      console.log('Mg in range 1.6-1.9, adding warning');
       out.push(`Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}`);
     }
     else if (mg >= 1 && mg <= 1.5) {
-      console.log('Mg in range 1-1.5, adding warning');
       out.push(`Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}`);
     }
     else if (mg > 0 && mg <= 1) {
-      console.log('Mg <= 1, adding warning');
       out.push(`Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}`);
     }
   }
 
-  // Phos
-  console.log('data.labs.phos:', data.labs.phos);
+  // Phosphorus
   if (data.labs.phos && first(data.labs.phos) !== undefined) {
     const p = num(first(data.labs.phos)), pPrev = num(second(data.labs.phos));
-    console.log('Phos value:', p, 'prev:', pPrev);
     const pStr = pPrev !== undefined ? `*${p}* (*${pPrev}*)` : `*${p}*`;
     if (p >= 2 && p < 2.5) {
-      console.log('P in range 2-2.5, adding warning');
       out.push(`Give 15 mmol phos (22.5 Meq K IV), P=${pStr}`);
     }
     else if (p >= 1.6 && p <= 1.9) {
-      console.log('P in range 1.6-1.9, adding warning');
       out.push(`Give 30 mmol phos (45 Meq K IV), P=${pStr}`);
     }
     else if (p > 0 && p <= 1.6) {
-      console.log('P <= 1.6, adding warning');
       out.push(`Give 40 mmol phos (60 Meq K IV), P=${pStr}`);
     }
   }
 
-  console.log('electrolyteWarnings returning:', out);
   return out;
 }
 
 function buildIOWarnings(ioData, patient) {
-  console.log('=== buildIOWarnings called ===');
-  console.log('ioData:', ioData);
-  console.log('patient:', patient);
-  
   const out = [];
   const elapsedHours = Math.max(1, Number(ioData.elapsedHours || 24));
   const elapsedHoursDisplay = Math.round(elapsedHours);
-
   const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
 
   // Urine output check
   const urine = Array.isArray(ioData.outputs?.urine) ? ioData.outputs.urine : [];
-  console.log('urine array:', urine);
   
   if (urine.length > 0) {
     const totalUrine = urine.reduce((s, e) => s + (num(e.volume) || 0), 0);
     const hourly = totalUrine / elapsedHours;
-    console.log('totalUrine:', totalUrine, 'hourly:', hourly);
     
     if (patient?.weight) {
       const upkh = (hourly / patient.weight).toFixed(2);
-      console.log('upkh:', upkh);
       if (+upkh < 0.1) {
-        console.log('ANURIA detected');
         out.push(`ANURIA! *${upkh} mL/kg/hr* - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
       } else if (+upkh < 0.5) {
-        console.log('LOW UOP detected');
         out.push(`LOW URINE OUTPUT! *${upkh} mL/kg/hr* (goal ≥0.5) - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
       }
     }
   } else {
-    console.log('NO urine output recorded');
     out.push(`No urine output recorded!`);
   }
 
   // Drain output check
   const drains = ioData.outputs?.drains || {};
-  console.log('drains:', drains);
   Object.entries(drains).forEach(([type, entries]) => {
     const arr = Array.isArray(entries) ? entries : [];
     if (arr.length > 0) {
       const total = arr.reduce((s, e) => s + (num(e.volume) || 0), 0);
       if (total > (30 * elapsedHours)) {
-        console.log(`${type} high output detected: ${total}`);
         out.push(`${type}: *${Math.round(total)} mL* (HIGH OUTPUT) in ${elapsedHoursDisplay}hr`);
       }
     }
@@ -11077,11 +11359,9 @@ function buildIOWarnings(ioData, patient) {
 
   // Estimated blood loss check
   const eblArr = ioData.outputs?.other?.['Estimated Blood Loss'] || [];
-  console.log('eblArr:', eblArr);
   if (Array.isArray(eblArr) && eblArr.length > 0) {
     const total = eblArr.reduce((s, e) => s + (num(e.volume) || 0), 0);
     if (total > 500) {
-      console.log('High EBL detected: ' + total);
       out.push(`Estimated Blood Loss: *${Math.round(total)} mL* - monitor hemoglobin`);
     }
   }
@@ -11091,17 +11371,12 @@ function buildIOWarnings(ioData, patient) {
   const blood = Array.isArray(ioData.intakes?.bloodProducts) ? ioData.intakes.bloodProducts : [];
   const otherIntake = Array.isArray(ioData.intakes?.other) ? ioData.intakes.other : [];
 
-  console.log('enteral:', enteral.length, 'blood:', blood.length, 'otherIntake:', otherIntake.length);
-  
   if (enteral.length === 0 && blood.length === 0 && otherIntake.length === 0) {
-    console.log('No intake recorded');
     out.push(`No intake recorded in last ${elapsedHoursDisplay}hr!`);
   }
 
-  console.log('buildIOWarnings returning:', out);
   return out;
 }
-
 
 
 
