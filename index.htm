@@ -10573,10 +10573,86 @@ function toggleViolinMode() {
 
 
 
+// ========= DATE + KEY HELPERS (ADD THIS ABOVE updateViolinDisplay) =========
 
+// Accepts "MM/DD/YY", "MM/DD/YYYY", "MM/DD/YY HH:MM[:SS]"
+function parseMDYWithOptionalTime(dstr) {
+  if (!dstr || typeof dstr !== 'string') return null;
+  const m = dstr.trim().match(
+    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2}|\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/
+  );
+  if (!m) return null;
+  let [, mm, dd, yy, HH='00', MM='00', SS='00'] = m;
+  mm = +mm; dd = +dd;
+  let yyyy = (yy.length === 2) ? (+yy + (+yy >= 70 ? 1900 : 2000)) : +yy;
+  const dt = new Date(yyyy, mm - 1, dd, +HH, +MM, +SS);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
 
+function mostRecentByKeys(keys, datesObj) {
+  let best = null; // { key, dt, raw }
+  for (const k of keys) {
+    const raw = datesObj?.[k];
+    const d = parseMDYWithOptionalTime(raw);
+    if (d && (!best || d > best.dt)) best = { key: k, dt: d, raw };
+  }
+  return best;
+}
 
+function isSameCalendarDay(a, b) {
+  return a && b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
 
+// --- Canonical lab keys -> tolerate aliases present in your real data
+const KEY_ALIASES = {
+  // ABG (note pC02 with zero)
+  ph:     ['ph','pH'],
+  pco2:   ['pco2','pCO2','pc02','pC02'],
+  po2:    ['po2','pO2','PO2'],
+  bicarb: ['bicarb','Bicarb','bicarbonate','Bicarbonate'],
+
+  // CBC
+  wbc: ['wbc','WBC'],
+  hgb: ['hgb','Hgb','HGB'],
+  hct: ['hct','Hct','HCT'],
+  plt: ['plt','Plt','PLT','Platelet Count','Platelets'],
+
+  // BMP (include “Resp” and “Perf” variants)
+  na:  ['na','Na','sodium','Sodium','Sodium (Resp)'],
+  k:   ['k','K','potassium','Potassium','Potassium (Resp)'],
+  cl:  ['cl','Cl','chloride','Chloride'],
+  co2: ['co2','CO2'],
+  bun: ['bun','BUN'],
+  cr:  ['cr','Cr','creatinine','Creatinine'],
+  glu: ['glu','Glu','glucose','Glucose','Glucose (Perf)'],
+
+  // LFTs
+  ast: ['ast','AST'],
+  alt: ['alt','ALT'],
+  tbil:['tbil','Tbil','Total Bilirubin'],
+  dbil:['dbil','Dbil','Direct Bilirubin'],
+  alk: ['alk','Alk','Alkaline Phosphatase','Alk Phos'],
+  ggt: ['ggt','GGT'],
+
+  // Coags
+  pt:  ['pt','PT','Prothrombin Time'],
+  ptt: ['ptt','PTT','APTT'],
+  inr: ['inr','INR'],
+  fib: ['fib','FIB','Fibrinogen'],
+};
+
+function resolveKeys(preferredKeys, obj) {
+  const out = [];
+  for (const base of preferredKeys) {
+    const aliases = KEY_ALIASES[base] || [base];
+    const hit = aliases.find(a => Object.prototype.hasOwnProperty.call(obj || {}, a));
+    out.push(hit || base); // keep base as fallback (safe no-op if missing)
+  }
+  return out;
+}
 
 
 
@@ -10604,18 +10680,47 @@ function updateViolinDisplay(ctx = {}) {
   let output = [];
   let i = 0;
 
+  // -------- COLLECT ALL WARNINGS AT THE TOP --------
+  let warningsToAdd = [];
+  
+  // Add electrolyte warnings
+  if (_labData?.labs) {
+    const eWarns = electrolyteWarnings(_labData);
+    warningsToAdd.push(...eWarns);
+  }
+  
+  // Add I/O warnings
+  if (_ioData?.outputs) {
+    const ioWarns = buildIOWarnings(_ioData, patient);
+    warningsToAdd.push(...ioWarns);
+  }
+  
+  // Add date warnings
+  const preDateWarnings = [];
+  const _cbcWarn  = getCBCDateWarning(_labData);  if (_cbcWarn)  preDateWarnings.push(_cbcWarn);
+  const _bmpWarn  = getBMPDateWarning(_labData);  if (_bmpWarn)  preDateWarnings.push(_bmpWarn);
+  const _lftWarn  = getLFTsDateWarning(_labData); if (_lftWarn)  preDateWarnings.push(_lftWarn);
+  const _coagWarn = getCoagsDateWarning(_labData);if (_coagWarn) preDateWarnings.push(_coagWarn);
+  const _abgWarn  = getABGDateWarning(_labData);  if (_abgWarn)  preDateWarnings.push(_abgWarn);
+  
+  warningsToAdd.push(...preDateWarnings);
+  
+  // Add warnings section at top if any warnings exist
+  if (warningsToAdd.length) {
+    output.push('=== ⚠️ WARNINGS ===');
+    output.push('');
+    warningsToAdd.forEach(w => output.push(w));
+    output.push('');
+    output.push('');
+  }
+
+  // -------- Parse fishbone lines --------
   while (i < fishboneLines.length) {
     const line = fishboneLines[i];
+    const trimmedLine = line.trim();
 
-
-
-
-
-
-
-
-// Check for VITALS section (reformat to list)
-    if (/^(T|Temp|VITALS)/i.test(line.trim())) {
+    // Check for VITALS section (reformat to list)
+    if (/^(T|Temp|VITALS)/i.test(trimmedLine)) {
       output.push('');
       
       // Collect all vitals lines until blank line
@@ -10626,9 +10731,9 @@ function updateViolinDisplay(ctx = {}) {
         i++;
       }
       
-      // Parse and reformat vitals as list
-      const vitalText = vitalLines.join(' ');
-      const vitals = parseVitals(vitalText);
+      // Parse and reformat vitals as list from first line only
+      const vitalsOnlyText = vitalLines[0];
+      const vitals = parseVitals(vitalsOnlyText);
       vitals.forEach(v => {
         if (v === '') {
           output.push(''); // blank line
@@ -10636,53 +10741,13 @@ function updateViolinDisplay(ctx = {}) {
           output.push(v);
         }
       });
+      
+      // Add remaining lines (I/O data) as they are, preserving original structure
+      for (let j = 1; j < vitalLines.length; j++) {
+        output.push(vitalLines[j]);
+      }
+      
       output.push(''); // Add line break after vitals section
-      continue;
-    }
-
-
-
-
-
-
-    // Check for CBC section - insert CBC date warning BEFORE
-    if (/^WBC\s*\\/.test(line)) {
-      const cbcWarn = getCBCDateWarning(_labData);
-      if (cbcWarn) output.push(cbcWarn);
-      output.push(line);
-      i++;
-      // Add next line (CBC values)
-      if (i < fishboneLines.length) output.push(fishboneLines[i++]);
-      continue;
-    }
-
-    // Check for BMP section - insert BMP date warning BEFORE
-    if (/^Na\s*\|/.test(line)) {
-      const bmpWarn = getBMPDateWarning(_labData);
-      if (bmpWarn) output.push(bmpWarn);
-      output.push(line);
-      i++;
-      // Add next line (BMP values)
-      if (i < fishboneLines.length) output.push(fishboneLines[i++]);
-      continue;
-    }
-
-    // Check for Ca/Mg/P line - this comes after BMP, add warnings here
-    if (/^Ca:/.test(line)) {
-      output.push(line);
-      i++;
-      
-      // Add electrolyte warnings after BMP
-      if (_labData?.labs) {
-        const eWarns = electrolyteWarnings(_labData);
-        eWarns.forEach(w => output.push(w));
-      }
-      
-      // Add I/O warnings after BMP
-      if (_ioData?.outputs) {
-        const ioWarns = buildIOWarnings(_ioData, patient);
-        ioWarns.forEach(w => output.push(w));
-      }
       continue;
     }
 
@@ -10713,8 +10778,8 @@ function updateViolinDisplay(ctx = {}) {
     const div = document.createElement('div');
     div.style.cssText = 'margin-bottom: 0; white-space: pre-wrap; word-wrap: break-word;';
     
-    // Check if warning line (starts with "Last", "ANURIA", "LOW", "Give", "Hypo", "Hyper", etc.)
-    const isWarning = /^(Last|ANURIA|LOW|Give|Hypo|Hyper|Has\s)/.test(line.trim());
+    // Check if warning line (starts with "Last", "ANURIA", "LOW", "Give", "Hypo", "Hyper", "Has\s", "===")
+    const isWarning = /^(Last|ANURIA|LOW|Give|Hypo|Hyper|Has\s|===|No )/.test(line.trim());
     
     if (isWarning) {
       // Entire warning line red and bold, with *text* underlined
@@ -10737,24 +10802,12 @@ function updateViolinDisplay(ctx = {}) {
   window.violinEditMode = false;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function parseVitals(vitalText) {
   const vitals = [];
+  
+  // Only extract up to where I/O starts
+  const ioStart = vitalText.indexOf('I:');
+  const vitalsOnly = ioStart !== -1 ? vitalText.substring(0, ioStart) : vitalText;
   
   // Split by specific vital markers: T, HR, SBP, DBP, O2
   const vitalPatterns = [
@@ -10766,7 +10819,7 @@ function parseVitals(vitalText) {
   ];
   
   vitalPatterns.forEach(pattern => {
-    const match = vitalText.match(pattern);
+    const match = vitalsOnly.match(pattern);
     if (match) {
       vitals.push(match[0].trim());
     }
@@ -10781,104 +10834,202 @@ function parseVitals(vitalText) {
   return vitals;
 }
 
-
-
-
-
+// ========= DATE WARNINGS =========
 
 function getCBCDateWarning(labData) {
   if (!labData?.dates) return null;
-  
-  const todayStr = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'2-digit' });
-  const cbcLabKeys = ['wbc','hgb','hct','plt'];
-  const cbcHasToday = cbcLabKeys.some(k => labData.dates?.[k]?.includes(todayStr));
-  
-  if (!cbcHasToday && cbcLabKeys.some(k => labData.dates?.[k])) {
-    const firstDateKey = cbcLabKeys.find(k => labData.dates?.[k]);
-    const d = labData.dates[firstDateKey];
-    const t = labData.times?.[firstDateKey] || '';
-    return `Last CBC from ${d}${t ? ' ' + t : ''}!!`;
+  const keys = resolveKeys(['wbc','hgb','hct','plt'], labData.dates);
+  const latest = mostRecentByKeys(keys, labData.dates);
+  if (!latest) return null;
+  const today = new Date();
+  if (!isSameCalendarDay(latest.dt, today)) {
+    const t = labData.times?.[latest.key] || '';
+    return `Last CBC from ${latest.raw}${t ? ' ' + t : ''}!!`;
   }
-  
   return null;
 }
 
 function getBMPDateWarning(labData) {
   if (!labData?.dates) return null;
-  
-  const todayStr = new Date().toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'2-digit' });
-  const bmpLabKeys = ['na','k','cl','co2','bun','cr','glu'];
-  const bmpHasToday = bmpLabKeys.some(k => labData.dates?.[k]?.includes(todayStr));
-  
-  if (!bmpHasToday && bmpLabKeys.some(k => labData.dates?.[k])) {
-    const firstDateKey = bmpLabKeys.find(k => labData.dates?.[k]);
-    const d = labData.dates[firstDateKey];
-    const t = labData.times?.[firstDateKey] || '';
-    return `Last BMP from ${d}${t ? ' ' + t : ''}!!`;
+  const keys = resolveKeys(['na','k','cl','co2','bun','cr','glu'], labData.dates);
+  const latest = mostRecentByKeys(keys, labData.dates);
+  if (!latest) return null;
+  const today = new Date();
+  if (!isSameCalendarDay(latest.dt, today)) {
+    const t = labData.times?.[latest.key] || '';
+    return `Last BMP from ${latest.raw}${t ? ' ' + t : ''}!!`;
   }
-  
+  return null;
+}
+
+function getLFTsDateWarning(labData) {
+  if (!labData?.dates) return null;
+  const keys = resolveKeys(['ast','alt','tbil','dbil','alk','ggt'], labData.dates);
+  const latest = mostRecentByKeys(keys, labData.dates);
+  if (!latest) return null;
+  const today = new Date();
+  if (!isSameCalendarDay(latest.dt, today)) {
+    const t = labData.times?.[latest.key] || '';
+    return `Last LFTs from ${latest.raw}${t ? ' ' + t : ''}!!`;
+  }
+  return null;
+}
+
+function getCoagsDateWarning(labData) {
+  if (!labData?.dates) return null;
+  const keys = resolveKeys(['pt','ptt','inr','fib'], labData.dates);
+  const latest = mostRecentByKeys(keys, labData.dates);
+  if (!latest) return null;
+  const today = new Date();
+  if (!isSameCalendarDay(latest.dt, today)) {
+    const t = labData.times?.[latest.key] || '';
+    return `Last Coags from ${latest.raw}${t ? ' ' + t : ''}!!`;
+  }
+  return null;
+}
+
+function getABGDateWarning(labData) {
+  if (!labData?.dates) return null;
+  const keys = resolveKeys(['ph','pco2','po2','bicarb'], labData.dates);
+  const latest = mostRecentByKeys(keys, labData.dates);
+  if (!latest) return null;
+  const today = new Date();
+  if (!isSameCalendarDay(latest.dt, today)) {
+    const t = labData.times?.[latest.key] || '';
+    return `Last ABG from ${latest.raw}${t ? ' ' + t : ''}!!`;
+  }
   return null;
 }
 
 function electrolyteWarnings(data) {
+  console.log('=== electrolyteWarnings called ===');
+  console.log('data:', data);
+  console.log('data.labs:', data?.labs);
+  
   const out = [];
-  if (!data?.labs) return out;
+  if (!data?.labs) {
+    console.log('NO data.labs, returning empty');
+    return out;
+  }
   
   const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
   const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
   const second = (arr) => (Array.isArray(arr) ? arr[1] : undefined);
 
   // Na
+  console.log('data.labs.na:', data.labs.na);
   if (data.labs.na && first(data.labs.na) !== undefined) {
     const na = num(first(data.labs.na)), naPrev = num(second(data.labs.na));
+    console.log('Na value:', na, 'prev:', naPrev);
     const naStr = naPrev !== undefined ? `*${na}* (*${naPrev}*)` : `*${na}*`;
-    if (na < 135) out.push(`Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}`);
-    else if (na > 145) out.push(`Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS`);
+    if (na < 135) {
+      console.log('Na < 135, adding warning');
+      out.push(`Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}`);
+    }
+    else if (na > 145) {
+      console.log('Na > 145, adding warning');
+      out.push(`Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS`);
+    }
   }
 
   // K
+  console.log('data.labs.k:', data.labs.k);
   if (data.labs.k && first(data.labs.k) !== undefined) {
     const k = num(first(data.labs.k)), kPrev = num(second(data.labs.k));
+    console.log('K value:', k, 'prev:', kPrev);
     const kStr = (k < 4.0 || k > 5.0) ? `*${k}*` : String(k);
     const kPrevStr = kPrev !== undefined ? `(${kPrev})` : '(--) ';
-    if (k >= 3.3 && k <= 3.9) out.push(`Give 40 meq K PO or IV, K=${kStr}${kPrevStr}`);
-    else if (k >= 3.0 && k <= 3.2) out.push(`Give 60 meq K IV, K=${kStr}${kPrevStr}`);
-    else if (k > 0 && k <= 2.6) out.push(`Give 100 meq K and NHO, K=${kStr}${kPrevStr}`);
-    else if (k > 5) out.push(`Hyperkalemic!!, K=${kStr}${kPrevStr}`);
+    if (k >= 3.3 && k <= 3.9) {
+      console.log('K in range 3.3-3.9, adding warning');
+      out.push(`Give 40 meq K PO or IV, K=${kStr}${kPrevStr}`);
+    }
+    else if (k >= 3.0 && k <= 3.2) {
+      console.log('K in range 3.0-3.2, adding warning');
+      out.push(`Give 60 meq K IV, K=${kStr}${kPrevStr}`);
+    }
+    else if (k > 0 && k <= 2.6) {
+      console.log('K <= 2.6, adding warning');
+      out.push(`Give 100 meq K and NHO, K=${kStr}${kPrevStr}`);
+    }
+    else if (k > 5) {
+      console.log('K > 5, adding warning');
+      out.push(`Hyperkalemic!!, K=${kStr}${kPrevStr}`);
+    }
   }
 
   // iCa
+  console.log('data.labs.ca:', data.labs.ca);
   if (data.labs.ca && first(data.labs.ca) !== undefined) {
     const ca = num(first(data.labs.ca)), caPrev = num(second(data.labs.ca));
+    console.log('Ca value:', ca, 'prev:', caPrev);
     const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
-    if (ca >= 3.5 && ca < 4) out.push(`Give 4g calcium gluconate, 2g/hr, iCa=${caStr}`);
-    else if (ca >= 3 && ca <= 3.4) out.push(`Give 6g calcium gluconate 2g/hr, iCa=${caStr}`);
-    else if (ca >= 2.5 && ca <= 2.9) out.push(`Give 8g calcium gluconate 2g/hr, iCa=${caStr}`);
-    else if (ca > 0 && ca < 2.5) out.push(`Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}`);
+    if (ca >= 3.5 && ca < 4) {
+      console.log('Ca in range 3.5-4, adding warning');
+      out.push(`Give 4g calcium gluconate, 2g/hr, iCa=${caStr}`);
+    }
+    else if (ca >= 3 && ca <= 3.4) {
+      console.log('Ca in range 3-3.4, adding warning');
+      out.push(`Give 6g calcium gluconate 2g/hr, iCa=${caStr}`);
+    }
+    else if (ca >= 2.5 && ca <= 2.9) {
+      console.log('Ca in range 2.5-2.9, adding warning');
+      out.push(`Give 8g calcium gluconate 2g/hr, iCa=${caStr}`);
+    }
+    else if (ca > 0 && ca < 2.5) {
+      console.log('Ca < 2.5, adding warning');
+      out.push(`Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}`);
+    }
   }
 
   // Mg
+  console.log('data.labs.mg:', data.labs.mg);
   if (data.labs.mg && first(data.labs.mg) !== undefined) {
     const mg = num(first(data.labs.mg)), mgPrev = num(second(data.labs.mg));
+    console.log('Mg value:', mg, 'prev:', mgPrev);
     const mgStr = mgPrev !== undefined ? `*${mg}* (*${mgPrev}*)` : `*${mg}*`;
-    if (mg >= 1.6 && mg <= 1.9) out.push(`Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}`);
-    else if (mg >= 1 && mg <= 1.5) out.push(`Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}`);
-    else if (mg > 0 && mg <= 1) out.push(`Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}`);
+    if (mg >= 1.6 && mg <= 1.9) {
+      console.log('Mg in range 1.6-1.9, adding warning');
+      out.push(`Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}`);
+    }
+    else if (mg >= 1 && mg <= 1.5) {
+      console.log('Mg in range 1-1.5, adding warning');
+      out.push(`Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}`);
+    }
+    else if (mg > 0 && mg <= 1) {
+      console.log('Mg <= 1, adding warning');
+      out.push(`Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}`);
+    }
   }
 
   // Phos
+  console.log('data.labs.phos:', data.labs.phos);
   if (data.labs.phos && first(data.labs.phos) !== undefined) {
     const p = num(first(data.labs.phos)), pPrev = num(second(data.labs.phos));
+    console.log('Phos value:', p, 'prev:', pPrev);
     const pStr = pPrev !== undefined ? `*${p}* (*${pPrev}*)` : `*${p}*`;
-    if (p >= 2 && p < 2.5) out.push(`Give 15 mmol phos (22.5 Meq K IV), P=${pStr}`);
-    else if (p >= 1.6 && p <= 1.9) out.push(`Give 30 mmol phos (45 Meq K IV), P=${pStr}`);
-    else if (p > 0 && p <= 1.6) out.push(`Give 40 mmol phos (60 Meq K IV), P=${pStr}`);
+    if (p >= 2 && p < 2.5) {
+      console.log('P in range 2-2.5, adding warning');
+      out.push(`Give 15 mmol phos (22.5 Meq K IV), P=${pStr}`);
+    }
+    else if (p >= 1.6 && p <= 1.9) {
+      console.log('P in range 1.6-1.9, adding warning');
+      out.push(`Give 30 mmol phos (45 Meq K IV), P=${pStr}`);
+    }
+    else if (p > 0 && p <= 1.6) {
+      console.log('P <= 1.6, adding warning');
+      out.push(`Give 40 mmol phos (60 Meq K IV), P=${pStr}`);
+    }
   }
 
+  console.log('electrolyteWarnings returning:', out);
   return out;
 }
 
 function buildIOWarnings(ioData, patient) {
+  console.log('=== buildIOWarnings called ===');
+  console.log('ioData:', ioData);
+  console.log('patient:', patient);
+  
   const out = [];
   const elapsedHours = Math.max(1, Number(ioData.elapsedHours || 24));
   const elapsedHoursDisplay = Math.round(elapsedHours);
@@ -10887,37 +11038,38 @@ function buildIOWarnings(ioData, patient) {
 
   // Urine output check
   const urine = Array.isArray(ioData.outputs?.urine) ? ioData.outputs.urine : [];
+  console.log('urine array:', urine);
+  
   if (urine.length > 0) {
     const totalUrine = urine.reduce((s, e) => s + (num(e.volume) || 0), 0);
     const hourly = totalUrine / elapsedHours;
+    console.log('totalUrine:', totalUrine, 'hourly:', hourly);
     
     if (patient?.weight) {
       const upkh = (hourly / patient.weight).toFixed(2);
+      console.log('upkh:', upkh);
       if (+upkh < 0.1) {
+        console.log('ANURIA detected');
         out.push(`ANURIA! *${upkh} mL/kg/hr* - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
       } else if (+upkh < 0.5) {
+        console.log('LOW UOP detected');
         out.push(`LOW URINE OUTPUT! *${upkh} mL/kg/hr* (goal ≥0.5) - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
       }
-    } else {
-      if (totalUrine < 200) {
-        out.push(`LOW URINE OUTPUT! *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr (no weight for kg/hr calc)`);
-      }
-    }
-    
-    if (ioData.outputs.urinaryCatheter) {
-      out.push(`Has urinary catheter - monitor for obstruction`);
     }
   } else {
+    console.log('NO urine output recorded');
     out.push(`No urine output recorded!`);
   }
 
   // Drain output check
   const drains = ioData.outputs?.drains || {};
+  console.log('drains:', drains);
   Object.entries(drains).forEach(([type, entries]) => {
     const arr = Array.isArray(entries) ? entries : [];
     if (arr.length > 0) {
       const total = arr.reduce((s, e) => s + (num(e.volume) || 0), 0);
       if (total > (30 * elapsedHours)) {
+        console.log(`${type} high output detected: ${total}`);
         out.push(`${type}: *${Math.round(total)} mL* (HIGH OUTPUT) in ${elapsedHoursDisplay}hr`);
       }
     }
@@ -10925,9 +11077,11 @@ function buildIOWarnings(ioData, patient) {
 
   // Estimated blood loss check
   const eblArr = ioData.outputs?.other?.['Estimated Blood Loss'] || [];
+  console.log('eblArr:', eblArr);
   if (Array.isArray(eblArr) && eblArr.length > 0) {
     const total = eblArr.reduce((s, e) => s + (num(e.volume) || 0), 0);
     if (total > 500) {
+      console.log('High EBL detected: ' + total);
       out.push(`Estimated Blood Loss: *${Math.round(total)} mL* - monitor hemoglobin`);
     }
   }
@@ -10937,15 +11091,20 @@ function buildIOWarnings(ioData, patient) {
   const blood = Array.isArray(ioData.intakes?.bloodProducts) ? ioData.intakes.bloodProducts : [];
   const otherIntake = Array.isArray(ioData.intakes?.other) ? ioData.intakes.other : [];
 
+  console.log('enteral:', enteral.length, 'blood:', blood.length, 'otherIntake:', otherIntake.length);
+  
   if (enteral.length === 0 && blood.length === 0 && otherIntake.length === 0) {
+    console.log('No intake recorded');
     out.push(`No intake recorded in last ${elapsedHoursDisplay}hr!`);
   }
 
+  console.log('buildIOWarnings returning:', out);
   return out;
 }
 
 
-		
+
+
     </script>
 </body>
 </html>
