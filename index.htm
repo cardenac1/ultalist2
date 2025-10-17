@@ -10877,6 +10877,47 @@ function updateViolinDisplay(ctx = {}) {
   window.violinEditMode = false;
 }
 
+
+
+
+
+// ========= HELPER FUNCTIONS FOR LAB TABLE =========
+
+function formatDateTime(date, time) {
+  if (!date) return 'No date available';
+  
+  // Format the date and time nicely
+  let timeStr = '';
+  if (time) {
+    // Extract just HH:MM from time string (remove seconds if present)
+    const timeMatch = time.match(/(\d{2}:\d{2})/);
+    timeStr = timeMatch ? ` at ${timeMatch[1]}` : '';
+  }
+  
+  return `${date}${timeStr}`;
+}
+
+function getCellClass(value, min, max) {
+  if (value === '--' || value === undefined || value === null) {
+    return 'lab-value';
+  }
+  
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) {
+    return 'lab-value';
+  }
+  
+  // Check if value is outside normal range
+  if (numValue < min || numValue > max) {
+    return 'lab-value abnormal';
+  }
+  
+  return 'lab-value normal';
+}
+
+
+
+
 // ========= MODERN LAB TABLE GENERATOR =========
 
 function generateModernLabTable(data) {
@@ -10891,6 +10932,9 @@ function generateModernLabTable(data) {
     }
   });
   
+
+
+
   // Helper to get up to 5 values from array WITH DATES
   const getValuesWithDates = (arr, labKey) => {
     const results = [];
@@ -11009,32 +11053,48 @@ else if (data.times?.[labKey]) {
       .modern-lab-table tbody tr:hover {
         background: rgba(59, 130, 246, 0.08);
       }
-      .lab-value {
-        text-align: center;
-        font-weight: 600;
-        cursor: help;
-        position: relative;
-        transition: all 0.2s ease;
-      }
-      .lab-value.abnormal {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ff6b6b;
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
-        font-weight: 700;
-      }
-      .lab-value.normal {
-        color: #6ee7b7;
-      }
-      .lab-value[title]:not([title=""]):not([title="No date available"]):hover {
-        background: rgba(59, 130, 246, 0.15);
-        border-radius: 0.25rem;
-        transform: scale(1.05);
-      }
-      .lab-value.abnormal[title]:not([title=""]):not([title="No date available"]):hover {
-        background: rgba(239, 68, 68, 0.35);
-        transform: scale(1.05);
-      }
+
+
+
+
+
+
+
+.lab-value {
+  text-align: center;
+  font-weight: 600;
+  cursor: help;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.lab-value.abnormal {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ff6b6b;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-weight: 700;
+}
+.lab-value.normal {
+  color: #6ee7b7;
+}
+/* Enhanced hover feedback with date */
+.lab-value[title]:not([title=""]):not([title="No date available"]):hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 0.25rem;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.lab-value.abnormal[title]:not([title=""]):not([title="No date available"]):hover {
+  background: rgba(239, 68, 68, 0.35);
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+
+
+
+
+
     </style>
     <table class="modern-lab-table">
       <thead>
