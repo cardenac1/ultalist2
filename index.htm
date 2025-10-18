@@ -10807,18 +10807,20 @@ function updateViolinDisplay(ctx = {}) {
   }
 
   // Extract vitals/I/O section (up to and including Fluid Balance line)
-  let i = 0;
-  let foundFluidBalance = false;
+// SKIP the first line (vitals line) since we show it in the graph
+let i = 1; // START AT 1 instead of 0 to skip vitals line
+let foundFluidBalance = false;
+
+while (i < fishboneLines.length && !foundFluidBalance) {
+  const line = fishboneLines[i];
+  output.push(line);
   
-  while (i < fishboneLines.length && !foundFluidBalance) {
-    const line = fishboneLines[i];
-    output.push(line);
-    
-    if (line.trim().startsWith('Fluid Balance:')) {
-      foundFluidBalance = true;
-    }
-    i++;
+  if (line.trim().startsWith('Fluid Balance:')) {
+    foundFluidBalance = true;
   }
+  i++;
+}
+
 
   // Create display container
   let violinDisplay = document.getElementById('violinDisplay');
@@ -10837,6 +10839,12 @@ function updateViolinDisplay(ctx = {}) {
   }
 
   violinDisplay.innerHTML = '';
+
+  // ADD VITALS VISUALIZATION FIRST (before fishbone text)
+  if (_labData?.vitals && Object.keys(_labData.vitals).length > 0) {
+    const vitalsViz = createVitalsVisualization(_labData.vitals);
+    violinDisplay.appendChild(vitalsViz);
+  }
 
   // Render fishbone section
   output.forEach(line => {
@@ -10857,17 +10865,24 @@ function updateViolinDisplay(ctx = {}) {
     violinDisplay.appendChild(div);
   });
 
-  // Add spacer
-  const spacer = document.createElement('div');
-  spacer.style.cssText = 'height: 0rem;';
-  violinDisplay.appendChild(spacer);
+  // REMOVED THE SPACER - no extra space!
 
   // Generate and append lab values table
   if (_labData && Object.keys(_labData.labs || {}).length > 0) {
     const tableHTML = generateModernLabTable(_labData);
     const tableDiv = document.createElement('div');
+    tableDiv.style.marginTop = '0.5rem'; // Small margin only
     tableDiv.innerHTML = tableHTML;
     violinDisplay.appendChild(tableDiv);
+    
+    // Ensure tooltips work
+    const labTable = tableDiv.querySelector('.modern-lab-table');
+    if (labTable) {
+      labTable.style.pointerEvents = 'auto';
+      labTable.querySelectorAll('td').forEach(td => {
+        td.style.pointerEvents = 'auto';
+      });
+    }
   }
 
   violinDisplay.style.display = 'block';
@@ -10877,6 +10892,280 @@ function updateViolinDisplay(ctx = {}) {
   window.violinEditMode = false;
 }
 
+
+
+
+// Create interactive vitals visualization
+function createVitalsVisualization(vitalsData) {
+  const container = document.createElement('div');
+  container.style.cssText = `
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1rem;
+    background: rgba(30, 30, 30, 0.5);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    max-width: 650px;
+  `;
+  
+  const vitalsList = document.createElement('div');
+  vitalsList.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  `;
+  
+  const graphContainer = document.createElement('div');
+  graphContainer.style.cssText = `
+    position: relative;
+    height: 200px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  `;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 200;
+  canvas.style.cssText = 'width: 100%; height: 100%;';
+  graphContainer.appendChild(canvas);
+  
+  const vitals = [
+    { key: 'temp', label: 'T', unit: '°C', color: '#ef4444', min: 35, max: 38 },
+    { key: 'hr', label: 'HR', unit: 'bpm', color: '#f59e0b', min: 60, max: 100 },
+    { key: 'sbp', label: 'SBP', unit: 'mmHg', color: '#10b981', min: 90, max: 180 },
+    { key: 'dbp', label: 'DBP', unit: 'mmHg', color: '#3b82f6', min: 60, max: 120 },
+    { key: 'o2', label: 'O2', unit: '%', color: '#8b5cf6', min: 94, max: 100 }
+  ];
+  
+  let selectedVital = 'temp';
+  const buttons = [];
+  
+  vitals.forEach(vital => {
+    const data = vitalsData[vital.key];
+    if (!data || data.length === 0) return;
+    
+    const minVal = Math.min(...data);
+    const maxVal = Math.max(...data);
+    const avgVal = data.reduce((a, b) => a + b, 0) / data.length;
+    
+    // Check if any values are abnormal
+    const hasAbnormal = data.some(v => v < vital.min || v > vital.max);
+    
+    // Format with asterisks if abnormal
+    const formatValue = (val) => {
+      const formatted = val.toFixed(1);
+      return (val < vital.min || val > vital.max) ? `*${formatted}*` : formatted;
+    };
+    
+    const minStr = formatValue(minVal);
+    const maxStr = formatValue(maxVal);
+    const avgStr = formatValue(avgVal);
+    
+    const button = document.createElement('button');
+    button.setAttribute('data-vital', vital.key);
+    button.style.cssText = `
+      padding: 0.5rem 0.65rem;
+      background: ${selectedVital === vital.key ? vital.color : 'rgba(60, 60, 60, 0.5)'};
+      border: 1px solid ${vital.color}50;
+      border-radius: 0.25rem;
+      color: ${selectedVital === vital.key ? 'white' : 'var(--text-primary)'};
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.85rem;
+      font-family: monospace;
+      transition: all 0.2s ease;
+      line-height: 1.4;
+      white-space: nowrap;
+    `;
+    
+    button.innerHTML = `<strong style="color: ${vital.color}; font-size: 0.9rem;">${vital.label}</strong> ${minStr}-${maxStr} ${vital.unit}<br><span style="font-size: 0.75rem; opacity: 0.8;">avg: ${avgStr} ${vital.unit}</span>`;
+    
+    button.onmouseenter = () => {
+      if (button.getAttribute('data-vital') !== selectedVital) {
+        button.style.background = 'rgba(80, 80, 80, 0.6)';
+      }
+    };
+    
+    button.onmouseleave = () => {
+      if (button.getAttribute('data-vital') !== selectedVital) {
+        button.style.background = 'rgba(60, 60, 60, 0.5)';
+      }
+    };
+    
+    button.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      try {
+        selectedVital = vital.key;
+        
+        // Update all button styles
+        buttons.forEach(btn => {
+          const btnVital = vitals.find(v => v.key === btn.getAttribute('data-vital'));
+          if (btnVital) {
+            btn.style.background = 'rgba(60, 60, 60, 0.5)';
+            btn.style.color = 'var(--text-primary)';
+          }
+        });
+        
+        // Highlight selected button
+        button.style.background = vital.color;
+        button.style.color = 'white';
+        
+        // Draw graph
+        drawVitalGraph(canvas, vitalsData[vital.key], vital);
+      } catch (err) {
+        console.error('Error updating vital graph:', err);
+      }
+    };
+    
+    buttons.push(button);
+    vitalsList.appendChild(button);
+  });
+  
+  container.appendChild(vitalsList);
+  container.appendChild(graphContainer);
+  
+  // Draw initial graph (temperature)
+  const tempVital = vitals.find(v => v.key === 'temp');
+  if (vitalsData.temp && vitalsData.temp.length > 0 && tempVital) {
+    try {
+      drawVitalGraph(canvas, vitalsData.temp, tempVital);
+    } catch (err) {
+      console.error('Error drawing initial graph:', err);
+    }
+  }
+  
+  return container;
+}
+
+
+
+function drawVitalGraph(canvas, data, vital) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  ctx.clearRect(0, 0, width, height);
+  
+  if (!data || data.length === 0) {
+    ctx.fillStyle = '#666';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data', width/2, height/2);
+    return;
+  }
+  
+  const min = Math.min(...data, vital.min);
+  const max = Math.max(...data, vital.max);
+  const range = max - min || 1;
+  const padding = 35;
+  
+  const xStep = (width - padding * 2) / (data.length - 1 || 1);
+  const yScale = (height - padding * 2) / range;
+  
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (height - padding * 2) * i / 4;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+  
+  // Draw normal range zone
+  if (vital.min && vital.max) {
+    const normalMinY = height - padding - (vital.min - min) * yScale;
+    const normalMaxY = height - padding - (vital.max - min) * yScale;
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+    ctx.fillRect(padding, normalMaxY, width - padding * 2, normalMinY - normalMaxY);
+    
+    // Draw normal range lines
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padding, normalMinY);
+    ctx.lineTo(width - padding, normalMinY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding, normalMaxY);
+    ctx.lineTo(width - padding, normalMaxY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  // Draw line with gradient
+  ctx.strokeStyle = vital.color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  
+  data.forEach((value, i) => {
+    const x = padding + i * xStep;
+    const y = height - padding - (value - min) * yScale;
+    
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  
+  ctx.stroke();
+  
+  // Fill area under curve
+  if (data.length > 1) {
+    ctx.lineTo(padding + (data.length - 1) * xStep, height - padding);
+    ctx.lineTo(padding, height - padding);
+    ctx.closePath();
+    ctx.fillStyle = vital.color + '25';
+    ctx.fill();
+  }
+  
+  // Draw points
+  data.forEach((value, i) => {
+    const x = padding + i * xStep;
+    const y = height - padding - (value - min) * yScale;
+    
+    // Check if abnormal
+    const isAbnormal = value < vital.min || value > vital.max;
+    
+    // Draw point
+    ctx.fillStyle = isAbnormal ? '#ff4444' : vital.color;
+    ctx.beginPath();
+    ctx.arc(x, y, isAbnormal ? 4 : 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add white border for abnormal values
+    if (isAbnormal) {
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+  
+  // Draw Y-axis labels
+  ctx.fillStyle = '#aaa';
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText(max.toFixed(1), padding - 5, padding + 4);
+  ctx.fillText(min.toFixed(1), padding - 5, height - padding + 4);
+  ctx.fillText(((max + min) / 2).toFixed(1), padding - 5, height / 2 + 4);
+  
+  // Draw title with count
+  ctx.fillStyle = vital.color;
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = 'left';
+  const abnormalCount = data.filter(v => v < vital.min || v > vital.max).length;
+  const titleText = abnormalCount > 0 
+    ? `${vital.label} - ${data.length} readings (*${abnormalCount} abnormal*)`
+    : `${vital.label} - ${data.length} readings`;
+  ctx.fillText(titleText, padding, 15);
+}
 
 
 
@@ -10917,10 +11206,11 @@ function getCellClass(value, min, max) {
 
 
 
-
 // ========= MODERN LAB TABLE GENERATOR =========
 
 function generateModernLabTable(data) {
+  console.log('🔍 Generating lab table, data:', data); // Debug
+  
   const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
   const fmt = (v) => v !== undefined ? v.toFixed(1) : '--';
   
@@ -10931,9 +11221,6 @@ function generateModernLabTable(data) {
       maxColumns = Math.max(maxColumns, Math.min(arr.length, 5));
     }
   });
-  
-
-
 
   // Helper to get up to 5 values from array WITH DATES
   const getValuesWithDates = (arr, labKey) => {
@@ -10946,39 +11233,54 @@ function generateModernLabTable(data) {
       return results;
     }
 
-
-
-
-// Get dates and times - use the new arrays first, fallback to old format
-let dates = [];
-let times = [];
-
-// Try new array format first (for table hover)
-if (data.datesArray?.[labKey]) {
-  dates = data.datesArray[labKey];
-}
-// Fallback to old single value format
-else if (data.dates?.[labKey]) {
-  dates = [data.dates[labKey]];
-}
-
-// Try new array format first (for table hover)
-if (data.timesArray?.[labKey]) {
-  times = data.timesArray[labKey];
-}
-// Fallback to old single value format
-else if (data.times?.[labKey]) {
-  times = [data.times[labKey]];
-}
-
-
+    let dates = [];
+    let times = [];
+    
+    const keysToTry = [labKey];
+    if (KEY_ALIASES[labKey]) {
+      keysToTry.push(...KEY_ALIASES[labKey]);
+    }
+    
+    // Find dates
+    for (const key of keysToTry) {
+      if (data.datesArray?.[key]) {
+        dates = data.datesArray[key];
+        break;
+      }
+    }
+    if (dates.length === 0) {
+      for (const key of keysToTry) {
+        if (data.dates?.[key]) {
+          dates = [data.dates[key]];
+          break;
+        }
+      }
+    }
+    
+    // Find times
+    for (const key of keysToTry) {
+      if (data.timesArray?.[key]) {
+        times = data.timesArray[key];
+        break;
+      }
+    }
+    if (times.length === 0) {
+      for (const key of keysToTry) {
+        if (data.times?.[key]) {
+          times = [data.times[key]];
+          break;
+        }
+      }
+    }
+    
+    console.log(`📊 ${labKey}: dates=${JSON.stringify(dates)}, times=${JSON.stringify(times)}`); // Debug
     
     for (let i = 0; i < maxColumns; i++) {
       if (i < arr.length) {
         results.push({
           value: fmt(num(arr[i])),
-          date: dates[i] || null,
-          time: times[i] || null
+          date: dates[i] || dates[0] || null,
+          time: times[i] || times[0] || null
         });
       } else {
         results.push({ value: '--', date: null, time: null });
@@ -10988,18 +11290,6 @@ else if (data.times?.[labKey]) {
     return results;
   };
 
-  const getCellClass = (value, min, max) => {
-    const v = num(value);
-    if (v === undefined) return 'lab-value';
-    return (v < min || v > max) ? 'lab-value abnormal' : 'lab-value normal';
-  };
-
-  const formatDateTime = (date, time) => {
-    if (!date) return 'No date available';
-    return time ? `${date} ${time}` : date;
-  };
-
-  // Generate column headers dynamically
   const columnHeaders = ['Latest'];
   for (let i = 1; i < maxColumns; i++) {
     columnHeaders.push(`-${i}`);
@@ -11007,15 +11297,17 @@ else if (data.times?.[labKey]) {
 
   let html = `
     <style>
-      .modern-lab-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-        background: #000000;
-        border-radius: 0.5rem;
-        overflow: hidden;
-        border: 1px solid #2a2a2a;
-      }
+.modern-lab-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    background: #000000;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid #2a2a2a;
+    pointer-events: auto; /* ADD THIS */
+    position: relative; /* ADD THIS */
+}
       .modern-lab-table thead {
         background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
       }
@@ -11034,68 +11326,42 @@ else if (data.times?.[labKey]) {
         width: 60px;
         padding-left: 0.5rem;
       }
-      .modern-lab-table td {
-        padding: 0.35rem 0.3rem;
-        border-bottom: 1px solid #1a1a1a;
-        color: var(--text-primary);
-        font-size: 0.85rem;
-        background: #000000;
-      }
+.modern-lab-table td {
+    padding: 0.35rem 0.3rem;
+    border-bottom: 1px solid #1a1a1a;
+    background: #000000;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: help;
+    position: relative;
+    pointer-events: auto; /* ADD THIS */
+    z-index: 1; /* ADD THIS */
+}
       .modern-lab-table td:first-child {
         width: 60px;
         padding-left: 0.5rem;
-        padding-right: 0.3rem;
+        text-align: left;
+        font-weight: bold;
       }
       .modern-lab-table tbody tr {
-        transition: background-color 0.2s ease;
         background: #000000;
       }
       .modern-lab-table tbody tr:hover {
         background: rgba(59, 130, 246, 0.08);
       }
 
-
-
-
-
-
-
-.lab-value {
-  text-align: center;
-  font-weight: 600;
-  cursor: help;
-  position: relative;
-  transition: all 0.2s ease;
-}
-.lab-value.abnormal {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ff6b6b;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-weight: 700;
-}
-.lab-value.normal {
-  color: #6ee7b7;
-}
-/* Enhanced hover feedback with date */
-.lab-value[title]:not([title=""]):not([title="No date available"]):hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-radius: 0.25rem;
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.lab-value.abnormal[title]:not([title=""]):not([title="No date available"]):hover {
-  background: rgba(239, 68, 68, 0.35);
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-}
-
-
-
-
-
-
+      .modern-lab-table td.abnormal {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ff6b6b;
+        font-weight: 700;
+      }
+      
+      .modern-lab-table td.normal {
+        color: #6ee7b7;
+      }
     </style>
+    
     <table class="modern-lab-table">
       <thead>
         <tr>
@@ -11106,25 +11372,64 @@ else if (data.times?.[labKey]) {
       <tbody>
   `;
 
-  // Helper function to generate row HTML
-  const generateLabRow = (lab) => {
-    if (!data.labs[lab.key]) return '';
-    
-    const values = getValuesWithDates(data.labs[lab.key], lab.key);
-    const cells = values.map(v => {
-      const titleText = formatDateTime(v.date, v.time);
-      return `<td class="${getCellClass(v.value, lab.min, lab.max)}" title="${titleText}">${v.value}</td>`;
-    }).join('');
-    
-    return `
-      <tr>
-        <td><strong>${lab.label}</strong></td>
-        ${cells}
-      </tr>
-    `;
-  };
+  
 
-  // CBC Labs
+
+// Helper function to generate row HTML
+const generateLabRow = (lab) => {
+  if (!data.labs[lab.key]) return '';
+  
+  const values = getValuesWithDates(data.labs[lab.key], lab.key);
+  
+  console.log(`🎯 Generating row for ${lab.label}, got values:`, values);
+  
+  const cells = values.map((v, idx) => {
+    const numValue = parseFloat(v.value);
+    const abnormal = !isNaN(numValue) && (numValue < lab.min || numValue > lab.max);
+    const normalClass = !abnormal && v.value !== '--' ? 'normal' : '';
+    
+    // DEBUG: Log what we're working with for this cell
+    console.log(`  Cell ${idx} for ${lab.label}:`, {
+      value: v.value,
+      date: v.date,
+      time: v.time,
+      dateType: typeof v.date,
+      timeType: typeof v.time
+    });
+    
+    // Create tooltip text
+    let tooltipText = 'No date available';
+    
+    if (v.date) {
+      tooltipText = v.date;
+      if (v.time) {
+        const timeMatch = v.time.match(/(\d{2}:\d{2})/);
+        if (timeMatch) {
+          tooltipText += ` at ${timeMatch[1]}`;
+        }
+      }
+    }
+    
+    console.log(`    → Tooltip: "${tooltipText}"`);
+    
+    // Escape quotes
+    const escapedTooltip = String(tooltipText).replace(/"/g, '&quot;');
+    
+    return `<td class="${abnormal ? 'abnormal' : normalClass}" title="${escapedTooltip}">${v.value}</td>`;
+  }).join('');
+  
+  return `
+    <tr>
+      <td><strong>${lab.label}</strong></td>
+      ${cells}
+    </tr>
+  `;
+};
+
+
+
+
+  // All lab definitions
   const cbcLabs = [
     { label: 'WBC', key: 'wbc', min: 4.5, max: 11 },
     { label: 'Hgb', key: 'hgb', min: 8, max: 11 },
@@ -11132,11 +11437,6 @@ else if (data.times?.[labKey]) {
     { label: 'Plt', key: 'plt', min: 150, max: 400 }
   ];
 
-  cbcLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // BMP Labs
   const bmpLabs = [
     { label: 'Na', key: 'na', min: 135, max: 145 },
     { label: 'K', key: 'k', min: 4.0, max: 5.0 },
@@ -11147,22 +11447,12 @@ else if (data.times?.[labKey]) {
     { label: 'Glu', key: 'glu', min: 70, max: 100 }
   ];
 
-  bmpLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // Electrolytes
   const electrolyteLabs = [
     { label: 'Ca', key: 'ca', min: 8.5, max: 10.2 },
     { label: 'Mg', key: 'mg', min: 1.7, max: 2.2 },
     { label: 'Phos', key: 'phos', min: 2.5, max: 4.5 }
   ];
 
-  electrolyteLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // LFTs
   const lftLabs = [
     { label: 'AST', key: 'ast', min: 10, max: 40 },
     { label: 'ALT', key: 'alt', min: 10, max: 40 },
@@ -11172,11 +11462,6 @@ else if (data.times?.[labKey]) {
     { label: 'GGT', key: 'ggt', min: 9, max: 48 }
   ];
 
-  lftLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // Coagulation
   const coagLabs = [
     { label: 'PT', key: 'pt', min: 11, max: 13.5 },
     { label: 'PTT', key: 'ptt', min: 25, max: 35 },
@@ -11184,11 +11469,6 @@ else if (data.times?.[labKey]) {
     { label: 'Fib', key: 'fib', min: 200, max: 400 }
   ];
 
-  coagLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // ABG
   const abgLabs = [
     { label: 'pH', key: 'ph', min: 7.35, max: 7.45 },
     { label: 'pCO2', key: 'pco2', min: 35, max: 45 },
@@ -11197,11 +11477,6 @@ else if (data.times?.[labKey]) {
     { label: 'Lactate', key: 'lactate', min: 0.5, max: 2.0 }
   ];
 
-  abgLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
-
-  // Misc Labs
   const miscLabs = [
     { label: 'Trop', key: 'trop', min: 0, max: 0.04 },
     { label: 'Amylase', key: 'amylase', min: 30, max: 110 },
@@ -11210,9 +11485,14 @@ else if (data.times?.[labKey]) {
     { label: 'Prealbumin', key: 'prealbumin', min: 15, max: 36 }
   ];
 
-  miscLabs.forEach(lab => {
-    html += generateLabRow(lab);
-  });
+  // Generate all rows
+  cbcLabs.forEach(lab => { html += generateLabRow(lab); });
+  bmpLabs.forEach(lab => { html += generateLabRow(lab); });
+  electrolyteLabs.forEach(lab => { html += generateLabRow(lab); });
+  lftLabs.forEach(lab => { html += generateLabRow(lab); });
+  coagLabs.forEach(lab => { html += generateLabRow(lab); });
+  abgLabs.forEach(lab => { html += generateLabRow(lab); });
+  miscLabs.forEach(lab => { html += generateLabRow(lab); });
 
   html += `
       </tbody>
@@ -11221,7 +11501,6 @@ else if (data.times?.[labKey]) {
 
   return html;
 }
-
 
 
 // ========= WARNING FUNCTIONS =========
