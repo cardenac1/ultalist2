@@ -2397,6 +2397,7 @@ async function testOCRAvailability() {
         let lastImportedData = '';
         let fullOrdersText = '';
         let showFullOrders = false;
+        let showAbbreviatedTable = true; // Track abbreviated vs full table view
 	let ioData = {};
         let currentChart = null;
 		let currentSortColumn = ''; // Track current sort column
@@ -5785,38 +5786,61 @@ countTypes.forEach(countType => {
 
 function toggleOrdersView() {
     showFullOrders = !showFullOrders;
+    renderOrdersTable();
+}
+
+function toggleTableView() {
+    showAbbreviatedTable = !showAbbreviatedTable;
+    renderOrdersTable();
+}
+
+function renderOrdersTable() {
     const fullOrdersDisplay = document.getElementById('fullOrdersDisplay');
-    
+
     if (!fullOrdersDisplay) {
         console.error('fullOrdersDisplay element not found');
         return;
     }
-    
+
     if (showFullOrders && (fullOrdersText || lastImportedData)) {
-        // Create categorized full orders display
+        // Create table-based full orders display
         const medsText = fullOrdersText || extractFullMeds(lastImportedData);
-        
+
         if (!medsText || medsText.trim().length === 0) {
             fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
             fullOrdersDisplay.classList.remove('hidden');
             return;
         }
-        
-        const dietMatch = lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i);
-        
+
+        const dietMatch = lastImportedData ? lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i) : null;
+
         let currentSection = 'Scheduled';
         const medsLines = medsText.split('\n');
         const categorizedMeds = {
-            'N/F': [],
-            'Pain': [],
-            'Abx': [],
-            'AC': [],
-            'Misc': []
+            'nutrition': [],
+            'pain': [],
+            'antibiotics': [],
+            'pressors': [],
+            'anticoag': [],
+            'neuro': [],
+            'gi': [],
+            'cardio': [],
+            'endocrine': [],
+            'misc': []
         };
-        
+
+        // Add diet order if found
+        if (dietMatch) {
+            categorizedMeds['nutrition'].push({
+                text: `Diet: ${dietMatch[1].trim()}`,
+                route: 'PO',
+                isPRN: false
+            });
+        }
+
         medsLines.forEach(line => {
             const trimmedLine = line.trim();
-            
+
             if (trimmedLine.toLowerCase().includes('scheduled:')) {
                 currentSection = 'Scheduled';
                 return;
@@ -5827,86 +5851,236 @@ function toggleOrdersView() {
                 currentSection = 'Continuous';
                 return;
             }
-            
+
             if (!trimmedLine) return;
-            
-            const displayLine = currentSection === 'PRN' ? `PRN ${trimmedLine}` : trimmedLine;
+
+            const isPRN = currentSection === 'PRN';
             const lineLower = trimmedLine.toLowerCase();
-            
-            if (lineLower.match(/npo|lactated ringers|normal saline|parenteral|sodium chloride|dextrose|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin/i)) {
-                categorizedMeds['N/F'].push(displayLine);
-            } else if (lineLower.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|gabapentin|pregabalin|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|dexmedetomidine|propofol|midazolam|naproxen/i)) {
-                categorizedMeds['Pain'].push(displayLine);
-            } else if (lineLower.match(/piperacillin|tazobactam|ceftriaxone|vancomycin|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|cefepime|norepinephrine|epinephrine|vasopressin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|phenylephrine|dopamine/i)) {
-                categorizedMeds['Abx'].push(displayLine);
-            } else if (lineLower.match(/heparin|enoxaparin|aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
-                categorizedMeds['AC'].push(displayLine);
-            } else {
-                categorizedMeds['Misc'].push(displayLine);
+
+            // For combination medications (e.g., "drug + carrier"), extract the first drug for categorization
+            let drugForCategorization = lineLower;
+            if (lineLower.includes(' + ')) {
+                const firstPart = lineLower.split(' + ')[0].trim();
+                drugForCategorization = firstPart;
+            }
+
+            // Determine route (IV, PO, SC, etc.)
+            let route = 'PO'; // default
+            if (lineLower.includes('intravenous') || lineLower.includes(' iv ') || lineLower.includes(',iv,') ||
+                lineLower.includes('iv continuous') || lineLower.includes('iv push') || lineLower.match(/\biv\b/)) {
+                route = 'IV';
+            } else if (lineLower.includes('subcutaneous') || lineLower.includes(' sc ')) {
+                route = 'SC';
+            } else if (lineLower.includes('intramuscular') || lineLower.includes(' im ')) {
+                route = 'IM';
+            } else if (lineLower.includes('per rectum') || lineLower.includes(' pr ')) {
+                route = 'PR';
+            } else if (lineLower.includes('inhalation') || lineLower.includes('neb')) {
+                route = 'INH';
+            }
+
+            const medObj = {
+                text: trimmedLine,
+                route: route,
+                isPRN: isPRN
+            };
+
+            // Categorize medications - CHECK ACTIVE DRUGS FIRST before carrier fluids!
+            // Pain medications
+            if (drugForCategorization.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine/i)) {
+                categorizedMeds['pain'].push(medObj);
+            }
+            // Pressors and sedation - check BEFORE fluids
+            else if (drugForCategorization.match(/norepinephrine|norEPINEPHrine|epinephrine|EPINEPHrine|vasopressin|phenylephrine|dopamine|dobutamine|propofol|midazolam|dexmedetomidine|dexmedeTOMIDine|lorazepam|diazepam|ketamine|angiotensin/i)) {
+                categorizedMeds['pressors'].push(medObj);
+            }
+            // Heparin infusions - check BEFORE fluids
+            else if (drugForCategorization.match(/heparin|enoxaparin/i)) {
+                categorizedMeds['anticoag'].push(medObj);
+            }
+            // Insulin infusions - check BEFORE fluids (but Parenteral Nutrition goes to nutrition)
+            else if (drugForCategorization.match(/insulin regular|insulin\s+\d+\s+unit/i) && !lineLower.includes('parenteral')) {
+                categorizedMeds['endocrine'].push(medObj);
+            }
+            // Antibiotics
+            else if (drugForCategorization.match(/cefepime|vancomycin|piperacillin|tazobactam|ceftriaxone|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|tobramycin|erythromycin/i)) {
+                categorizedMeds['antibiotics'].push(medObj);
+            }
+            // Anticoagulation (oral anticoagulants)
+            else if (drugForCategorization.match(/aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
+                categorizedMeds['anticoag'].push(medObj);
+            }
+            // Neuro/Psych
+            else if (drugForCategorization.match(/levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam/i)) {
+                categorizedMeds['neuro'].push(medObj);
+            }
+            // GI
+            else if (drugForCategorization.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|metoclopramide|promethazine|prochlorperazine/i)) {
+                categorizedMeds['gi'].push(medObj);
+            }
+            // Cardio/Pulm
+            else if (drugForCategorization.match(/metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|furosemide|lasix|bumetanide|torsemide|spironolactone|albuterol|ipratropium|duoneb|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
+                categorizedMeds['cardio'].push(medObj);
+            }
+            // Endocrine (other insulins and endocrine meds)
+            else if (drugForCategorization.match(/insulin|lispro|aspart|glargine|lantus|detemir|levemir|degludec|tresiba|levothyroxine|synthroid|liothyronine|hydrocortisone|dexamethasone|decadron|hypoglycemia|glucagon/i)) {
+                categorizedMeds['endocrine'].push(medObj);
+            }
+            // Nutrition/Fluids - checked LAST so active drugs aren't miscategorized
+            else if (lineLower.match(/npo|lactated\s+ringer|lactated ringers|normal saline|parenteral nutrition|sodium chloride|dextrose\s+5%|dextrose\s+50%|plasmalyte|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin|tube feed|enteral/i)) {
+                categorizedMeds['nutrition'].push(medObj);
+            }
+            else {
+                categorizedMeds['misc'].push(medObj);
             }
         });
-        
-        let categorizedHTML = '<div style="background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--primary);"><strong style="color: var(--primary);">Full Orders List:</strong><br><br>';
-        
-        // N/F Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">N/F (Nutrition/Fluids):</strong><br>';
-        if (dietMatch) {
-            categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">Diet: ${dietMatch[1].trim()}</div>`;
+
+        // Medication abbreviation database
+        const MED_ABBREVIATIONS = {
+            'hydromorphone': 'D', 'oxycodone': 'O', 'morphine': 'M', 'fentanyl': 'F',
+            'acetaminophen': 'T', 'ibuprofen': 'Ibu', 'ketorolac': 'Toradol',
+            'cefepime': 'Cefepime', 'vancomycin': 'Vanc', 'piperacillin-tazobactam': 'Pip-Tazo',
+            'piperacillin': 'Pip', 'meropenem': 'Mero', 'ceftriaxone': 'CTX',
+            'azithromycin': 'Azithro', 'levofloxacin': 'Levo', 'ciprofloxacin': 'Cipro',
+            'metronidazole': 'Flagyl', 'sulfamethoxazole-trimethoprim': 'TMP-SMX',
+            'norepinephrine': 'Levo', 'epinephrine': 'Epi', 'vasopressin': 'Vaso',
+            'propofol': 'Prop', 'midazolam': 'Versed', 'dexmedetomidine': 'Prec',
+            'heparin': 'Hep', 'enoxaparin': 'Lovenox', 'warfarin': 'Coumadin',
+            'aspirin': 'ASA', 'clopidogrel': 'Plavix',
+            'levetiracetam': 'Keppra', 'phenytoin': 'Dilantin', 'gabapentin': 'Neurontin',
+            'haloperidol': 'Haldol', 'quetiapine': 'Seroquel', 'olanzapine': 'Zyprexa',
+            'ondansetron': 'Z', 'pantoprazole': 'Protonix', 'famotidine': 'Pepcid',
+            'metoprolol': 'Metop', 'furosemide': 'Lasix', 'albuterol': 'Alb',
+            'insulin lispro': 'Lispro', 'insulin regular': 'Reg', 'insulin glargine': 'Lantus',
+            'sodium chloride 0.9%': 'NS', 'lactated ringer': 'LR', 'dextrose 5%': 'D5W'
+        };
+
+        // Helper function to abbreviate medication text
+        function abbreviateMedText(medText) {
+            let abbreviated = medText;
+            const textLower = medText.toLowerCase();
+
+            // Check for medication abbreviations
+            for (let [fullName, abbrev] of Object.entries(MED_ABBREVIATIONS)) {
+                if (textLower.includes(fullName.toLowerCase())) {
+                    abbreviated = abbreviated.replace(new RegExp(fullName, 'gi'), abbrev);
+                    break;
+                }
+            }
+
+            // Extract dose and frequency
+            const doseMatch = abbreviated.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|g|unit\(s\)|units?|mL|mEq)/i);
+            const freqMatch = abbreviated.match(/every\s+(\d+)\s+hours?|(\d+)\s+times?\s+(?:a\s+)?day|daily|BID|TID|QID/i);
+            const routeMatch = abbreviated.match(/\b(Oral|Intravenous|Subcutaneous|IV|PO|SC)\b/i);
+
+            let shortForm = abbreviated.split(' ')[0]; // Start with first word (likely the abbreviation)
+
+            if (doseMatch) {
+                shortForm += doseMatch[1] + doseMatch[2].replace('unit(s)', 'u').replace('units', 'u');
+            }
+
+            if (freqMatch) {
+                if (freqMatch[1]) shortForm += ` Q${freqMatch[1]}`;
+                else if (freqMatch[2]) {
+                    const times = freqMatch[2];
+                    if (times === '2') shortForm += ' BID';
+                    else if (times === '3') shortForm += ' TID';
+                    else if (times === '4') shortForm += ' QID';
+                }
+            }
+
+            if (routeMatch) {
+                const route = routeMatch[1].toUpperCase();
+                if (route === 'ORAL') shortForm += ' PO';
+                else if (route === 'INTRAVENOUS') shortForm += ' IV';
+                else if (route === 'SUBCUTANEOUS') shortForm += ' SC';
+                else shortForm += ` ${route}`;
+            }
+
+            return shortForm;
         }
-        if (categorizedMeds['N/F'].length > 0) {
-            categorizedMeds['N/F'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
+
+        // Helper function to create category row with single medications column
+        function createCategoryRow(categoryName, medList) {
+            const poMeds = medList.filter(m => m.route === 'PO' || m.route === 'SC' || m.route === 'PR' ||
+                                                m.route === 'INH' || m.route === 'IM');
+            const ivMeds = medList.filter(m => m.route === 'IV');
+
+            let html = '<tr>';
+            html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
+
+            // Single medications column with PO and IV/other subsections
+            html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+
+            // PO section
+            if (poMeds.length > 0) {
+                html += '<div style="margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">PO:</strong></div>';
+                poMeds.forEach(med => {
+                    const color = med.isPRN ? '#ff6b6b' : 'var(--primary)';
+                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    html += `<div style="color: ${color}; margin-left: 0.5rem;">${displayText}</div>`;
+                });
+            }
+
+            // IV/other section
+            if (ivMeds.length > 0) {
+                // Add spacing if there were PO meds
+                if (poMeds.length > 0) {
+                    html += '<div style="margin-top: 0.75rem; margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
+                } else {
+                    html += '<div style="margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
+                }
+                ivMeds.forEach(med => {
+                    const color = med.isPRN ? '#ff6b6b' : '#ffa726';
+                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    html += `<div style="color: ${color}; margin-left: 0.5rem;">${displayText}</div>`;
+                });
+            }
+
+            // If no meds at all
+            if (poMeds.length === 0 && ivMeds.length === 0) {
+                html += '<span style="color: #555; font-style: italic;">—</span>';
+            }
+
+            html += '</td>';
+            html += '</tr>';
+            return html;
         }
-        categorizedHTML += '</div>';
-        
-        // Pain Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Pain:</strong><br>';
-        if (categorizedMeds['Pain'].length > 0) {
-            categorizedMeds['Pain'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Antibiotics/Pressors Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Antibiotics/Pressors:</strong><br>';
-        if (categorizedMeds['Abx'].length > 0) {
-            categorizedMeds['Abx'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Anticoagulation Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Anticoagulation:</strong><br>';
-        if (categorizedMeds['AC'].length > 0) {
-            categorizedMeds['AC'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Misc Category
-        categorizedHTML += '<div><strong style="color: var(--primary);">Misc:</strong><br>';
-        if (categorizedMeds['Misc'].length > 0) {
-            categorizedMeds['Misc'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div></div>';
-        
-        fullOrdersDisplay.innerHTML = categorizedHTML;
+
+        // Build table HTML with toggle buttons
+        let tableHTML = '<div style="background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--primary);">';
+        tableHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">';
+        tableHTML += '<strong style="color: var(--primary); font-size: 16px;">📋 Full Orders List</strong>';
+
+        // Toggle buttons
+        tableHTML += '<div style="display: flex; gap: 5px;">';
+        tableHTML += `<button onclick="showAbbreviatedTable = true; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${showAbbreviatedTable ? '600' : '400'};">Abbreviated</button>`;
+        tableHTML += `<button onclick="showAbbreviatedTable = false; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${!showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${!showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${!showAbbreviatedTable ? '600' : '400'};">Full</button>`;
+        tableHTML += '</div>';
+        tableHTML += '</div>';
+
+        tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 11px; background: #252525; border-radius: 8px; overflow: hidden;">';
+        tableHTML += '<thead><tr>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); width: 140px;">Category</th>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Medications</th>';
+        tableHTML += '</tr></thead>';
+        tableHTML += '<tbody>';
+
+        tableHTML += createCategoryRow('Nutrition/Fluids', categorizedMeds['nutrition']);
+        tableHTML += createCategoryRow('Pain', categorizedMeds['pain']);
+        tableHTML += createCategoryRow('Antibiotics', categorizedMeds['antibiotics']);
+        tableHTML += createCategoryRow('Pressors/Sedation', categorizedMeds['pressors']);
+        tableHTML += createCategoryRow('Anticoagulation', categorizedMeds['anticoag']);
+        tableHTML += createCategoryRow('Neuro/Psych', categorizedMeds['neuro']);
+        tableHTML += createCategoryRow('GI', categorizedMeds['gi']);
+        tableHTML += createCategoryRow('Cardio/Pulm', categorizedMeds['cardio']);
+        tableHTML += createCategoryRow('Endocrine', categorizedMeds['endocrine']);
+        tableHTML += createCategoryRow('MISC', categorizedMeds['misc']);
+
+        tableHTML += '</tbody></table>';
+        tableHTML += '</div>';
+
+        fullOrdersDisplay.innerHTML = tableHTML;
         fullOrdersDisplay.classList.remove('hidden');
     } else {
         fullOrdersDisplay.classList.add('hidden');
