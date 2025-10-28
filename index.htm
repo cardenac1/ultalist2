@@ -5857,10 +5857,17 @@ function renderOrdersTable() {
             const isPRN = currentSection === 'PRN';
             const lineLower = trimmedLine.toLowerCase();
 
+            // For combination medications (e.g., "drug + carrier"), extract the first drug for categorization
+            let drugForCategorization = lineLower;
+            if (lineLower.includes(' + ')) {
+                const firstPart = lineLower.split(' + ')[0].trim();
+                drugForCategorization = firstPart;
+            }
+
             // Determine route (IV, PO, SC, etc.)
             let route = 'PO'; // default
             if (lineLower.includes('intravenous') || lineLower.includes(' iv ') || lineLower.includes(',iv,') ||
-                lineLower.includes('iv continuous') || lineLower.match(/\biv\b/)) {
+                lineLower.includes('iv continuous') || lineLower.includes('iv push') || lineLower.match(/\biv\b/)) {
                 route = 'IV';
             } else if (lineLower.includes('subcutaneous') || lineLower.includes(' sc ')) {
                 route = 'SC';
@@ -5878,26 +5885,52 @@ function renderOrdersTable() {
                 isPRN: isPRN
             };
 
-            // Categorize medications
-            if (lineLower.match(/npo|lactated\s+ringer|normal saline|parenteral|sodium chloride|dextrose|plasmalyte|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin|tube feed|enteral/i)) {
-                categorizedMeds['nutrition'].push(medObj);
-            } else if (lineLower.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine/i)) {
+            // Categorize medications - CHECK ACTIVE DRUGS FIRST before carrier fluids!
+            // Pain medications
+            if (drugForCategorization.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine/i)) {
                 categorizedMeds['pain'].push(medObj);
-            } else if (lineLower.match(/cefepime|vancomycin|piperacillin|tazobactam|ceftriaxone|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|tobramycin|erythromycin/i)) {
-                categorizedMeds['antibiotics'].push(medObj);
-            } else if (lineLower.match(/norepinephrine|epinephrine|vasopressin|phenylephrine|dopamine|dobutamine|propofol|midazolam|dexmedetomidine|lorazepam|diazepam|ketamine/i)) {
+            }
+            // Pressors and sedation - check BEFORE fluids
+            else if (drugForCategorization.match(/norepinephrine|norEPINEPHrine|epinephrine|EPINEPHrine|vasopressin|phenylephrine|dopamine|dobutamine|propofol|midazolam|dexmedetomidine|dexmedeTOMIDine|lorazepam|diazepam|ketamine|angiotensin/i)) {
                 categorizedMeds['pressors'].push(medObj);
-            } else if (lineLower.match(/heparin|enoxaparin|aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
+            }
+            // Heparin infusions - check BEFORE fluids
+            else if (drugForCategorization.match(/heparin|enoxaparin/i)) {
                 categorizedMeds['anticoag'].push(medObj);
-            } else if (lineLower.match(/levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam/i)) {
-                categorizedMeds['neuro'].push(medObj);
-            } else if (lineLower.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|metoclopramide|promethazine|prochlorperazine/i)) {
-                categorizedMeds['gi'].push(medObj);
-            } else if (lineLower.match(/metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|furosemide|lasix|bumetanide|torsemide|spironolactone|albuterol|ipratropium|duoneb|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
-                categorizedMeds['cardio'].push(medObj);
-            } else if (lineLower.match(/insulin|lispro|aspart|regular|glargine|lantus|detemir|levemir|degludec|tresiba|levothyroxine|synthroid|liothyronine|hydrocortisone|dexamethasone|decadron|hypoglycemia|dextrose\s+10%|dextrose\s+50%|glucose\s+40%|glucagon/i)) {
+            }
+            // Insulin infusions - check BEFORE fluids (but Parenteral Nutrition goes to nutrition)
+            else if (drugForCategorization.match(/insulin regular|insulin\s+\d+\s+unit/i) && !lineLower.includes('parenteral')) {
                 categorizedMeds['endocrine'].push(medObj);
-            } else {
+            }
+            // Antibiotics
+            else if (drugForCategorization.match(/cefepime|vancomycin|piperacillin|tazobactam|ceftriaxone|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|tobramycin|erythromycin/i)) {
+                categorizedMeds['antibiotics'].push(medObj);
+            }
+            // Anticoagulation (oral anticoagulants)
+            else if (drugForCategorization.match(/aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
+                categorizedMeds['anticoag'].push(medObj);
+            }
+            // Neuro/Psych
+            else if (drugForCategorization.match(/levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam/i)) {
+                categorizedMeds['neuro'].push(medObj);
+            }
+            // GI
+            else if (drugForCategorization.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|metoclopramide|promethazine|prochlorperazine/i)) {
+                categorizedMeds['gi'].push(medObj);
+            }
+            // Cardio/Pulm
+            else if (drugForCategorization.match(/metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|furosemide|lasix|bumetanide|torsemide|spironolactone|albuterol|ipratropium|duoneb|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
+                categorizedMeds['cardio'].push(medObj);
+            }
+            // Endocrine (other insulins and endocrine meds)
+            else if (drugForCategorization.match(/insulin|lispro|aspart|glargine|lantus|detemir|levemir|degludec|tresiba|levothyroxine|synthroid|liothyronine|hydrocortisone|dexamethasone|decadron|hypoglycemia|glucagon/i)) {
+                categorizedMeds['endocrine'].push(medObj);
+            }
+            // Nutrition/Fluids - checked LAST so active drugs aren't miscategorized
+            else if (lineLower.match(/npo|lactated\s+ringer|lactated ringers|normal saline|parenteral nutrition|sodium chloride|dextrose\s+5%|dextrose\s+50%|plasmalyte|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin|tube feed|enteral/i)) {
+                categorizedMeds['nutrition'].push(medObj);
+            }
+            else {
                 categorizedMeds['misc'].push(medObj);
             }
         });
@@ -5967,7 +6000,7 @@ function renderOrdersTable() {
             return shortForm;
         }
 
-        // Helper function to create category row
+        // Helper function to create category row with single medications column
         function createCategoryRow(categoryName, medList) {
             const poMeds = medList.filter(m => m.route === 'PO' || m.route === 'SC' || m.route === 'PR' ||
                                                 m.route === 'INH' || m.route === 'IM');
@@ -5976,32 +6009,40 @@ function renderOrdersTable() {
             let html = '<tr>';
             html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
 
-            // PO Route column
+            // Single medications column with PO and IV/other subsections
             html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+
+            // PO section
             if (poMeds.length > 0) {
+                html += '<div style="margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">PO:</strong></div>';
                 poMeds.forEach(med => {
                     const color = med.isPRN ? '#ff6b6b' : 'var(--primary)';
                     const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-                    html += `<div style="color: ${color};">${displayText}</div>`;
+                    html += `<div style="color: ${color}; margin-left: 0.5rem;">${displayText}</div>`;
                 });
-            } else {
-                html += '<span style="color: #555; font-style: italic;">—</span>';
             }
-            html += '</td>';
 
-            // IV Route column
-            html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+            // IV/other section
             if (ivMeds.length > 0) {
+                // Add spacing if there were PO meds
+                if (poMeds.length > 0) {
+                    html += '<div style="margin-top: 0.75rem; margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
+                } else {
+                    html += '<div style="margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
+                }
                 ivMeds.forEach(med => {
                     const color = med.isPRN ? '#ff6b6b' : '#ffa726';
                     const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-                    html += `<div style="color: ${color};">${displayText}</div>`;
+                    html += `<div style="color: ${color}; margin-left: 0.5rem;">${displayText}</div>`;
                 });
-            } else {
+            }
+
+            // If no meds at all
+            if (poMeds.length === 0 && ivMeds.length === 0) {
                 html += '<span style="color: #555; font-style: italic;">—</span>';
             }
-            html += '</td>';
 
+            html += '</td>';
             html += '</tr>';
             return html;
         }
@@ -6020,9 +6061,8 @@ function renderOrdersTable() {
 
         tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 11px; background: #252525; border-radius: 8px; overflow: hidden;">';
         tableHTML += '<thead><tr>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Category</th>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">PO Route</th>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">IV Route</th>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); width: 140px;">Category</th>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Medications</th>';
         tableHTML += '</tr></thead>';
         tableHTML += '<tbody>';
 
