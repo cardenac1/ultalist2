@@ -5793,30 +5793,44 @@ function toggleOrdersView() {
     }
     
     if (showFullOrders && (fullOrdersText || lastImportedData)) {
-        // Create categorized full orders display
+        // Create table-based full orders display
         const medsText = fullOrdersText || extractFullMeds(lastImportedData);
-        
+
         if (!medsText || medsText.trim().length === 0) {
             fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
             fullOrdersDisplay.classList.remove('hidden');
             return;
         }
-        
-        const dietMatch = lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i);
-        
+
+        const dietMatch = lastImportedData ? lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i) : null;
+
         let currentSection = 'Scheduled';
         const medsLines = medsText.split('\n');
         const categorizedMeds = {
-            'N/F': [],
-            'Pain': [],
-            'Abx': [],
-            'AC': [],
-            'Misc': []
+            'nutrition': [],
+            'pain': [],
+            'antibiotics': [],
+            'pressors': [],
+            'anticoag': [],
+            'neuro': [],
+            'gi': [],
+            'cardio': [],
+            'endocrine': [],
+            'misc': []
         };
-        
+
+        // Add diet order if found
+        if (dietMatch) {
+            categorizedMeds['nutrition'].push({
+                text: `Diet: ${dietMatch[1].trim()}`,
+                route: 'PO',
+                isPRN: false
+            });
+        }
+
         medsLines.forEach(line => {
             const trimmedLine = line.trim();
-            
+
             if (trimmedLine.toLowerCase().includes('scheduled:')) {
                 currentSection = 'Scheduled';
                 return;
@@ -5827,86 +5841,120 @@ function toggleOrdersView() {
                 currentSection = 'Continuous';
                 return;
             }
-            
+
             if (!trimmedLine) return;
-            
-            const displayLine = currentSection === 'PRN' ? `PRN ${trimmedLine}` : trimmedLine;
+
+            const isPRN = currentSection === 'PRN';
             const lineLower = trimmedLine.toLowerCase();
-            
-            if (lineLower.match(/npo|lactated ringers|normal saline|parenteral|sodium chloride|dextrose|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin/i)) {
-                categorizedMeds['N/F'].push(displayLine);
-            } else if (lineLower.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|gabapentin|pregabalin|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|dexmedetomidine|propofol|midazolam|naproxen/i)) {
-                categorizedMeds['Pain'].push(displayLine);
-            } else if (lineLower.match(/piperacillin|tazobactam|ceftriaxone|vancomycin|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|cefepime|norepinephrine|epinephrine|vasopressin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|phenylephrine|dopamine/i)) {
-                categorizedMeds['Abx'].push(displayLine);
+
+            // Determine route (IV, PO, SC, etc.)
+            let route = 'PO'; // default
+            if (lineLower.includes('intravenous') || lineLower.includes(' iv ') || lineLower.includes(',iv,') ||
+                lineLower.includes('iv continuous') || lineLower.match(/\biv\b/)) {
+                route = 'IV';
+            } else if (lineLower.includes('subcutaneous') || lineLower.includes(' sc ')) {
+                route = 'SC';
+            } else if (lineLower.includes('intramuscular') || lineLower.includes(' im ')) {
+                route = 'IM';
+            } else if (lineLower.includes('per rectum') || lineLower.includes(' pr ')) {
+                route = 'PR';
+            } else if (lineLower.includes('inhalation') || lineLower.includes('neb')) {
+                route = 'INH';
+            }
+
+            const medObj = {
+                text: trimmedLine,
+                route: route,
+                isPRN: isPRN
+            };
+
+            // Categorize medications
+            if (lineLower.match(/npo|lactated\s+ringer|normal saline|parenteral|sodium chloride|dextrose|plasmalyte|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin|tube feed|enteral/i)) {
+                categorizedMeds['nutrition'].push(medObj);
+            } else if (lineLower.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine/i)) {
+                categorizedMeds['pain'].push(medObj);
+            } else if (lineLower.match(/cefepime|vancomycin|piperacillin|tazobactam|ceftriaxone|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|tobramycin|erythromycin/i)) {
+                categorizedMeds['antibiotics'].push(medObj);
+            } else if (lineLower.match(/norepinephrine|epinephrine|vasopressin|phenylephrine|dopamine|dobutamine|propofol|midazolam|dexmedetomidine|lorazepam|diazepam|ketamine/i)) {
+                categorizedMeds['pressors'].push(medObj);
             } else if (lineLower.match(/heparin|enoxaparin|aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
-                categorizedMeds['AC'].push(displayLine);
+                categorizedMeds['anticoag'].push(medObj);
+            } else if (lineLower.match(/levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam/i)) {
+                categorizedMeds['neuro'].push(medObj);
+            } else if (lineLower.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|metoclopramide|promethazine|prochlorperazine/i)) {
+                categorizedMeds['gi'].push(medObj);
+            } else if (lineLower.match(/metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|furosemide|lasix|bumetanide|torsemide|spironolactone|albuterol|ipratropium|duoneb|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
+                categorizedMeds['cardio'].push(medObj);
+            } else if (lineLower.match(/insulin|lispro|aspart|regular|glargine|lantus|detemir|levemir|degludec|tresiba|levothyroxine|synthroid|liothyronine|hydrocortisone|dexamethasone|decadron|hypoglycemia|dextrose\s+10%|dextrose\s+50%|glucose\s+40%|glucagon/i)) {
+                categorizedMeds['endocrine'].push(medObj);
             } else {
-                categorizedMeds['Misc'].push(displayLine);
+                categorizedMeds['misc'].push(medObj);
             }
         });
-        
-        let categorizedHTML = '<div style="background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--primary);"><strong style="color: var(--primary);">Full Orders List:</strong><br><br>';
-        
-        // N/F Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">N/F (Nutrition/Fluids):</strong><br>';
-        if (dietMatch) {
-            categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">Diet: ${dietMatch[1].trim()}</div>`;
+
+        // Helper function to create category row
+        function createCategoryRow(categoryName, medList) {
+            const poMeds = medList.filter(m => m.route === 'PO' || m.route === 'SC' || m.route === 'PR' ||
+                                                m.route === 'INH' || m.route === 'IM');
+            const ivMeds = medList.filter(m => m.route === 'IV');
+
+            let html = '<tr>';
+            html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
+
+            // PO Route column
+            html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+            if (poMeds.length > 0) {
+                poMeds.forEach(med => {
+                    const color = med.isPRN ? '#ff6b6b' : 'var(--primary)';
+                    html += `<div style="color: ${color};">${med.text}</div>`;
+                });
+            } else {
+                html += '<span style="color: #555; font-style: italic;">—</span>';
+            }
+            html += '</td>';
+
+            // IV Route column
+            html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+            if (ivMeds.length > 0) {
+                ivMeds.forEach(med => {
+                    const color = med.isPRN ? '#ff6b6b' : '#ffa726';
+                    html += `<div style="color: ${color};">${med.text}</div>`;
+                });
+            } else {
+                html += '<span style="color: #555; font-style: italic;">—</span>';
+            }
+            html += '</td>';
+
+            html += '</tr>';
+            return html;
         }
-        if (categorizedMeds['N/F'].length > 0) {
-            categorizedMeds['N/F'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Pain Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Pain:</strong><br>';
-        if (categorizedMeds['Pain'].length > 0) {
-            categorizedMeds['Pain'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Antibiotics/Pressors Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Antibiotics/Pressors:</strong><br>';
-        if (categorizedMeds['Abx'].length > 0) {
-            categorizedMeds['Abx'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Anticoagulation Category
-        categorizedHTML += '<div style="margin-bottom: 1rem;"><strong style="color: var(--primary);">Anticoagulation:</strong><br>';
-        if (categorizedMeds['AC'].length > 0) {
-            categorizedMeds['AC'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div>';
-        
-        // Misc Category
-        categorizedHTML += '<div><strong style="color: var(--primary);">Misc:</strong><br>';
-        if (categorizedMeds['Misc'].length > 0) {
-            categorizedMeds['Misc'].forEach(med => {
-                categorizedHTML += `<div style="color: var(--primary); margin-left: 1rem;">${med}</div>`;
-            });
-        } else {
-            categorizedHTML += '<div style="color: var(--text-secondary); margin-left: 1rem;">None</div>';
-        }
-        categorizedHTML += '</div></div>';
-        
-        fullOrdersDisplay.innerHTML = categorizedHTML;
+
+        // Build table HTML
+        let tableHTML = '<div style="background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--primary);">';
+        tableHTML += '<strong style="color: var(--primary); font-size: 16px;">📋 Full Orders List</strong><br><br>';
+        tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 11px; background: #252525; border-radius: 8px; overflow: hidden;">';
+        tableHTML += '<thead><tr>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Category</th>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">PO Route</th>';
+        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">IV Route</th>';
+        tableHTML += '</tr></thead>';
+        tableHTML += '<tbody>';
+
+        tableHTML += createCategoryRow('Nutrition/Fluids', categorizedMeds['nutrition']);
+        tableHTML += createCategoryRow('Pain', categorizedMeds['pain']);
+        tableHTML += createCategoryRow('Antibiotics', categorizedMeds['antibiotics']);
+        tableHTML += createCategoryRow('Pressors/Sedation', categorizedMeds['pressors']);
+        tableHTML += createCategoryRow('Anticoagulation', categorizedMeds['anticoag']);
+        tableHTML += createCategoryRow('Neuro/Psych', categorizedMeds['neuro']);
+        tableHTML += createCategoryRow('GI', categorizedMeds['gi']);
+        tableHTML += createCategoryRow('Cardio/Pulm', categorizedMeds['cardio']);
+        tableHTML += createCategoryRow('Endocrine', categorizedMeds['endocrine']);
+        tableHTML += createCategoryRow('MISC', categorizedMeds['misc']);
+
+        tableHTML += '</tbody></table>';
+        tableHTML += '</div>';
+
+        fullOrdersDisplay.innerHTML = tableHTML;
         fullOrdersDisplay.classList.remove('hidden');
     } else {
         fullOrdersDisplay.classList.add('hidden');
