@@ -8473,14 +8473,14 @@ function generateFullChecklistHTML() {
 
     // DISPO/ADDENDUM
     { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Sign out DISPO to ICU/Floor/ED' },
-    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'EVIDENCE BASED RECOMMENDATIONS FOR THEIR DIAGNOSIS' },
+    { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'EVIDENCE BASED RECOMMENDATIONS FOR THEIR DIAGNOSIS AND CORMOBIDITIES' },
     { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Update family' },
     { section: 'DISPO/ADDENDUM', color: '#c026d3', text: 'Tertiary Survey' },
 
     // ORDERS/CONSULTS
     { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Extra Scans/Consults' },
     { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'PSO if admitting - call bed board' },
-    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Diet order vs. NPO/IVF' },
+    { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Diet order vs. NPO/IVF (caution with IVF if risk of fluid overload ex. CHF, CKD etc.' },
 
     // PATIENT CARE (nested)
     {
@@ -8500,7 +8500,8 @@ function generateFullChecklistHTML() {
         'Incentive spirometry', 
 	    'Continuous pulse oximetry', 
 		'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
-		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status', 
+		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status',
+		'Management of comorbid conditions' 
       ]
     },
     { section: 'ORDERS/CONSULTS', color: '#0284c7', text: 'Pain meds and bowel reg' },
@@ -8541,6 +8542,7 @@ function generateFullChecklistHTML() {
 	    'Continuous pulse oximetry', 
 		'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
 		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status', 
+		'Management of comorbid conditions' 
       ]
     },
     { section: 'ORDERS', color: '#d97706', text: 'Pain meds and bowel reg' },
@@ -8548,7 +8550,7 @@ function generateFullChecklistHTML() {
     { section: 'ORDERS', color: '#d97706', text: 'Home meds' },
     { section: 'ORDERS', color: '#d97706', text: 'Daily 2 AM labs (6am txp)' },
     { section: 'ORDERS', color: '#d97706', text: 'Consultations/Imaging/Interventions' },
-    { section: 'ORDERS', color: '#d97706', text: 'EVIDENCE BASED MANAGEMENT of their diagnosis' },
+    { section: 'ORDERS', color: '#d97706', text: 'EVIDENCE BASED MANAGEMENT of their DIAGNOSIS and COMORBID CONDITIONS' },
     { section: 'ORDERS', color: '#d97706', text: 'Booking for OR: NPO at midnight ± IVF, Book OR + Call OR, consent, Type & screen within 3 days + historical, order 2U PRBCs on hold, Urine ± HCG EKG CXR coags, Order special booking needs/instruments' },
   ];
 
