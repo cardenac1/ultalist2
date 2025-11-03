@@ -3306,7 +3306,7 @@ function displayRows(data = patientData) {
 
 
 
-	    function sortRows() {
+	   function sortRows() {
     const column = document.getElementById('columnSelect').value;
     if (column) {
         // Save the current sort column and show re-sort button
@@ -3317,12 +3317,28 @@ function displayRows(data = patientData) {
             const valueA = a[column] || '';
             const valueB = b[column] || '';
             
-            // Special handling for Priority column - numerical sort
+            // Special handling for Priority column
             if (column === 'Priority') {
-                // Convert to numbers, treating empty/non-numeric as Infinity (sort to end)
-                const numA = valueA === '' || isNaN(valueA) ? Infinity : parseInt(valueA, 10);
-                const numB = valueB === '' || isNaN(valueB) ? Infinity : parseInt(valueB, 10);
-                return numA - numB;
+                const getPriorityValue = (val) => {
+                    if (!val || val.trim() === '') return 1000; // Empty = last
+                    const trimmed = val.toString().trim().toUpperCase();
+                    
+                    // Check if it's 'C' (complete)
+                    if (trimmed === 'C') return 100; // After 1-10, before empty
+                    
+                    // Check if it's numeric 1-10
+                    const num = parseInt(trimmed, 10);
+                    if (!isNaN(num) && num >= 1 && num <= 10) {
+                        return num; // 1-10 come first
+                    }
+                    
+                    // Everything else (non-numeric text) comes last
+                    return 1000;
+                };
+                
+                const priorityA = getPriorityValue(valueA);
+                const priorityB = getPriorityValue(valueB);
+                return priorityA - priorityB;
             }
             
             // Regular string comparison for other columns
