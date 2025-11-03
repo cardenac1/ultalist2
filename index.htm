@@ -2796,23 +2796,23 @@ function getChecklistStatus(patient, patientIndex) {
             case 1:
                 return { color: '#ff0000', title: 'Priority 1 - Urgent' }; // Red
             case 2:
-                return { color: '#ff2400', title: 'Priority 2 - High' }; // Orange
+                return { color: '#ff3300', title: 'Priority 2 - High' }; // Orange
             case 3:
-                return { color: '#ff4900', title: 'Priority 3 - Medium-High' }; // Amber
+                return { color: '#ff6600', title: 'Priority 3 - Medium-High' }; // Amber
             case 4:
-                return { color: '#ff6d00', title: 'Priority 4 - Medium' }; // Yellow
+                return { color: '#ff8800', title: 'Priority 4 - Medium' }; // Yellow
             case 5:
-                return { color: '#ff9200', title: 'Priority 5 - Medium-Low' }; // yellow
+                return { color: '#ffae42', title: 'Priority 5 - Medium-Low' }; // yellow
             case 6:
-                return { color: '#ffb600', title: 'Priority 6 - Low-Medium' }; // dark yellow
+                return { color: '#d9b611', title: 'Priority 6 - Low-Medium' }; // dark yellow
             case 7:
-                return { color: '#ffdb00', title: 'Priority 7 - Low' }; // Cyan
+                return { color: '#bfa760', title: 'Priority 7 - Low' }; // Cyan
             case 8:
-                return { color: '#ffff00', title: 'Priority 8 - Very Low' }; // Blue
+                return { color: '#a09868', title: 'Priority 8 - Very Low' }; // Blue
             case 9:
-                return { color: '#800080', title: 'Priority 9 - Minimal' }; // Purple
+                return { color: '#8a8a8a', title: 'Priority 9 - Minimal' }; // Purple
             case 10:
-                return { color: '#bf00bf', title: 'Priority 10 - Lowest' }; // Violet
+                return { color: '#6c6c80', title: 'Priority 10 - Lowest' }; // Violet
             default:
                 console.log('getPriorityStatus: Numeric priority out of range:', priorityNum);
                 return { color: 'var(--card-bg)', title: `Priority ${priorityNum} - Out of range` }; // Gray
