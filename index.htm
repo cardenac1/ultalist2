@@ -6059,68 +6059,67 @@ function toggleTableView() {
             let html = '<tr>';
             html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
 
-            // Single medications column with PO and IV/other subsections
+            // Single medications column
             html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
 
-            // PO section
+            // PO section - NO LABEL, just blue medications
+            if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
-    const color = med.isPRN ? '#ff6b6b' : 'var(--primary)';
-    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-    const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
-    
-    html += `
-        <div style="color: ${color}; margin-left: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    const color = med.isPRN ? '#6b9eff' : '#4a9eff';  // Blue for PO meds
+                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
+                    
+                    html += `
+        <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.5rem;">
             <span style="flex: 1;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;">
                 <button onclick="toggleMedStatus(event, '${medId}', 'continue')" 
                         class="med-status-btn" 
                         data-med-id="${medId}"
                         data-status="continue"
-                        style="background: transparent; border: 1px solid #10b981; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem;"
+                        style="background: transparent; border: 1px solid #10b981; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
                         title="Continue this medication">▶️</button>
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
                         class="med-status-btn"
                         data-med-id="${medId}"
                         data-status="stop"
-                        style="background: transparent; border: 1px solid #ef4444; padding: 0.15rem 0.3rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem;"
+                        style="background: transparent; border: 1px solid #ef4444; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
                         title="Stop this medication">🛑</button>
             </span>
         </div>`;
-});
+                });
             }
 
-            // IV/other section
+            // IV/other section - NO LABEL, just red medications
             if (ivMeds.length > 0) {
-                // Add spacing if there were PO meds
+                // Add small spacing if there were PO meds
                 if (poMeds.length > 0) {
-                    html += '<div style="margin-top: 0.75rem; margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
-                } else {
-                    html += '<div style="margin-bottom: 0.5rem;"><strong style="color: #888; font-size: 10px;">IV/other:</strong></div>';
+                    html += '<div style="margin-top: 0.4rem;"></div>';
                 }
                 ivMeds.forEach((med, idx) => {
-    const color = med.isPRN ? '#ff6b6b' : '#ffa726';
-    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-    const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
-    
-    html += `
-        <div style="color: ${color}; margin-left: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    const color = med.isPRN ? '#ff9999' : '#ef4444';  // Red for IV meds
+                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
+                    
+                    html += `
+        <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.15rem; display: flex; align-items: center; gap: 0.5rem;">
             <span style="flex: 1;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;">
                 <button onclick="toggleMedStatus(event, '${medId}', 'continue')" 
                         class="med-status-btn"
                         data-med-id="${medId}"
                         data-status="continue"
-                        style="background: transparent; border: 1px solid #10b981; padding: 0.15rem 0.3rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem;"
+                        style="background: transparent; border: 1px solid #10b981; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
                         title="Continue this medication">▶️</button>
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
                         class="med-status-btn"
                         data-med-id="${medId}"
                         data-status="stop"
-                        style="background: transparent; border: 1px solid #ef4444; padding: 0.15rem 0.3rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem;"
+                        style="background: transparent; border: 1px solid #ef4444; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
                         title="Stop this medication">🛑</button>
             </span>
         </div>`;
-});
+                });
             }
 
             // If no meds at all
@@ -6172,8 +6171,6 @@ function toggleTableView() {
         fullOrdersDisplay.classList.add('hidden');
     }
 }
-
-
 
 
 
