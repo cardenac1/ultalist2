@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+r<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6060,7 +6060,7 @@ function toggleTableView() {
             html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
 
             // Single medications column
-            html += '<td style="padding: 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.6;">';
+            html += '<td style="padding: 4px 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.2;">';
 
             // PO section - NO LABEL, just blue medications
             if (poMeds.length > 0) {
@@ -6070,14 +6070,14 @@ function toggleTableView() {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
                     html += `
-        <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.15rem; display: flex; ali<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.05rem; display: flex; align-items: center; gap: 0.5rem;">
+		<div style="color: ${color}; margin-left: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
             <span style="flex: 1;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;">
                 <button onclick="toggleMedStatus(event, '${medId}', 'continue')" 
                         class="med-status-btn" 
                         data-med-id="${medId}"
                         data-status="continue"
-                        style="background: transparent; border: 1px solid #10b981; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
+                        style="background: transparent; border: 1px solid #10b981; padding: 0.05rem 0.2rem; border-radius: 0.2rem; cursor: pointer; font-size: 0.65rem; line-height: 1;"
                         title="Continue this medication">▶️</button>
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
                         class="med-status-btn"
@@ -6094,7 +6094,7 @@ function toggleTableView() {
             if (ivMeds.length > 0) {
                 // Add small spacing if there were PO meds
                 if (poMeds.length > 0) {
-                    html += '<div style="margin-top: 0.4rem;"></div>';
+                    html += '<div style="margin-top: 0.1rem;"></div>';
                 }
                 ivMeds.forEach((med, idx) => {
                     const color = med.isPRN ? '#ff9999' : '#ef4444';  // Red for IV meds
