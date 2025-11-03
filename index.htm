@@ -2487,7 +2487,7 @@ const helpContent = {
                 const dataToSave = {
                     version: '2.0',
                     timestamp: new Date().toISOString(),
-                    patients: patientData
+                    patients: patientData,
 					checklistStates: tempChecklistStates  // ADD THIS LINE
                 };
                 localStorage.setItem('ultimatePatientList', JSON.stringify(dataToSave));
@@ -2663,7 +2663,7 @@ function exportJSON() {
     const dataToExport = {
         version: '2.0',
         exportDate: new Date().toISOString(),
-        patients: patientData
+        patients: patientData,
 		checklistStates: tempChecklistStates  // ADD THIS LINE
 
     };
