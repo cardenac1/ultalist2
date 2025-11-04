@@ -6079,7 +6079,7 @@ function toggleTableView() {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
                     html += `
-		<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;">
+		<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.3rem;">
             <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;">
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
@@ -6106,7 +6106,7 @@ function toggleTableView() {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
                     
                     html += `
-       <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+       <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.5rem;">
             <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;"> 
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
