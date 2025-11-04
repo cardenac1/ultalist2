@@ -6485,6 +6485,12 @@ const extractLabValue = (pattern, name) => {
             extractLabValue('Hgb:', 'hgb');
             extractLabValue('Hct:', 'hct');
             extractLabValue('Platelet Count:', 'plt');
+			// Add these RIGHT AFTER the platelet extraction
+			extractLabValue('Neutrophils Automated:', 'neut');
+			extractLabValue('Lymphocytes Automated:', 'lymph');
+			extractLabValue('Monocytes Automated:', 'mono');
+			extractLabValue('Eosinophils Automated:', 'eos');
+			extractLabValue('Basophils Automated:', 'baso');
             extractLabValue('Sodium:', 'na');
             extractLabValue('Potassium:', 'k');
             extractLabValue('Chloride:', 'cl');
@@ -11200,7 +11206,12 @@ const generateLabRow = (lab) => {
     { label: 'WBC', key: 'wbc', min: 4.5, max: 11 },
     { label: 'Hgb', key: 'hgb', min: 8, max: 11 },
     { label: 'Hct', key: 'hct', min: 24, max: 36 },
-    { label: 'Plt', key: 'plt', min: 150, max: 400 }
+    { label: 'Plt', key: 'plt', min: 150, max: 400 },
+    { label: 'Neut%', key: 'neut', min: 40, max: 70 },
+    { label: 'Lymph%', key: 'lymph', min: 20, max: 40 },
+    { label: 'Mono%', key: 'mono', min: 2, max: 8 },
+    { label: 'Eos%', key: 'eos', min: 1, max: 4 },
+    { label: 'Baso%', key: 'baso', min: 0, max: 2 }
   ];
 
   const bmpLabs = [
