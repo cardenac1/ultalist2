@@ -6065,8 +6065,8 @@ function toggleTableView() {
             // PO section - NO LABEL, just blue medications
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
-                    const color = med.isPRN ? '#6b9eff' : '#4a9eff';  // Blue for PO meds
-                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const color = med.isPRN ? '#cccccc' : '#ffffff';  // White for PO meds (lighter grey for PRN)
+                    const displayText = '- ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
                     html += `
@@ -6098,7 +6098,7 @@ function toggleTableView() {
                 }
                 ivMeds.forEach((med, idx) => {
                     const color = med.isPRN ? '#ff9999' : '#ef4444';  // Red for IV meds
-                    const displayText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const displayText = '- ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
                     
                     html += `
