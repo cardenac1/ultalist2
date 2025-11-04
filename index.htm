@@ -6073,12 +6073,6 @@ function toggleTableView() {
 		<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.3rem;">
             <span style="flex: 1;">${displayText}</span>
             <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'continue')" 
-                        class="med-status-btn" 
-                        data-med-id="${medId}"
-                        data-status="continue"
-                        style="background: transparent; border: 1px solid #10b981; padding: 0.05rem 0.2rem; border-radius: 0.2rem; cursor: pointer; font-size: 0.65rem; line-height: 1;"
-                        title="Continue this medication">▶️</button>
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
                         class="med-status-btn"
                         data-med-id="${medId}"
@@ -6104,13 +6098,7 @@ function toggleTableView() {
                     html += `
        <div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.05rem; display: flex; align-items: center; gap: 0.5rem;">
             <span style="flex: 1;">${displayText}</span>
-            <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'continue')" 
-                        class="med-status-btn"
-                        data-med-id="${medId}"
-                        data-status="continue"
-                        style="background: transparent; border: 1px solid #10b981; padding: 0.1rem 0.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.7rem;"
-                        title="Continue this medication">▶️</button>
+            <span style="display: flex; gap: 0.25rem;"> 
                 <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
                         class="med-status-btn"
                         data-med-id="${medId}"
