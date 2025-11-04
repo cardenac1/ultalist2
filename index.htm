@@ -6066,7 +6066,7 @@ function toggleTableView() {
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
                     const color = med.isPRN ? '#cccccc' : '#ffffff';  // White for PO meds (lighter grey for PRN)
-                    const displayText = '- ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
+                    const displayText = '-💊 ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
                     html += `
@@ -6097,8 +6097,8 @@ function toggleTableView() {
                     html += '<div style="margin-top: 0.1rem;"></div>';
                 }
                 ivMeds.forEach((med, idx) => {
-                    const color = med.isPRN ? '#ff9999' : '#ef4444';  // Red for IV meds
-                    const displayText = '- ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
+                    const color = med.isPRN ? '#cccccc' : '#ffffff';  // White for IV meds
+					const displayText = '-💉 ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
                     
                     html += `
