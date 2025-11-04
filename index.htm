@@ -11889,6 +11889,216 @@ function createEmptyState(message) {
   return empty;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// ===== GENERATE TO DO TASKS FROM WARNINGS =====
+
+function generateTasks() {
+    const tasks = [];
+    
+    if (!lastImportedData) {
+        console.log('No imported data available');
+        return;
+    }
+    
+    // Parse the lab data (you'll need to adjust this based on your data structure)
+    const data = parseLabData(lastImportedData); // Or however you get your parsed data
+    
+    // === ELECTROLYTE REPLACEMENT TASKS ===
+    
+    // Sodium
+    if (data.labs.na && data.labs.na[0] !== undefined) {
+        const na = data.labs.na[0];
+        if (na < 135) {
+            tasks.push(`- 1L FWR, Na=${na}`);
+            tasks.push(`- Salt tabs 2g BID`);
+        } else if (na > 145) {
+            tasks.push(`- FWB/D5W/0.45NS, Na=${na}`);
+        }
+    }
+    
+    // Potassium
+    if (data.labs.k && data.labs.k[0] !== undefined) {
+        const k = data.labs.k[0];
+        if (k >= 3.3 && k <= 3.9) {
+            tasks.push(`- Give 40 meq K PO or IV, K=${k}`);
+        } else if (k >= 3 && k <= 3.2) {
+            tasks.push(`- Give 60 meq K IV, K=${k}`);
+        } else if (k >= 2.6 && k <= 2.9) {
+            tasks.push(`- Give 80 meq K IV, K=${k}`);
+            tasks.push(`- NHO potassium`);
+        } else if (k > 0 && k <= 2.6) {
+            tasks.push(`- Give 100 meq K, K=${k}`);
+            tasks.push(`- NHO potassium - CRITICAL`);
+        } else if (k > 5) {
+            tasks.push(`- Hyperkalemic K=${k} - treat!`);
+        }
+    }
+    
+    // Calcium (ionized)
+    if (data.labs.ca && data.labs.ca[0] !== undefined) {
+        const ca = data.labs.ca[0];
+        const isIonized = ca < 7 && !data.labs.caType;
+        
+        if (isIonized) {
+            if (ca >= 3.5 && ca < 4) {
+                tasks.push(`- Give 4g Ca gluconate 2g/hr, iCa=${ca}`);
+            } else if (ca >= 3 && ca <= 3.4) {
+                tasks.push(`- Give 6g Ca gluconate 2g/hr, iCa=${ca}`);
+            } else if (ca >= 2.5 && ca <= 2.9) {
+                tasks.push(`- Give 8g Ca gluconate 2g/hr, iCa=${ca}`);
+            } else if (ca > 0 && ca < 2.5) {
+                tasks.push(`- Give 10g Ca gluconate 2g/hr, iCa=${ca}`);
+                tasks.push(`- Notify senior - critical hypocalcemia`);
+            }
+        } else {
+            // Total calcium
+            if (ca >= 7.0 && ca < 8.0) {
+                tasks.push(`- Give calcium, Ca=${ca}`);
+            } else if (ca < 7.0) {
+                tasks.push(`- Give IV calcium URGENT, Ca=${ca}`);
+            } else if (ca > 13.0) {
+                tasks.push(`- Treat hypercalcemia URGENT, Ca=${ca}`);
+            }
+        }
+    }
+    
+    // Magnesium
+    if (data.labs.mg && data.labs.mg[0] !== undefined) {
+        const mg = data.labs.mg[0];
+        if (mg >= 1.6 && mg <= 1.9) {
+            tasks.push(`- Give 4g MgSO4 IV/2hr, Mg=${mg}`);
+        } else if (mg >= 1 && mg <= 1.5) {
+            tasks.push(`- Give 6g MgSO4 IV/3hr, Mg=${mg}`);
+        } else if (mg > 0 && mg <= 1) {
+            tasks.push(`- Give 8g MgSO4 IV/4hr, Mg=${mg}`);
+        }
+    }
+    
+    // Phosphorus
+    if (data.labs.phos && data.labs.phos[0] !== undefined) {
+        const p = data.labs.phos[0];
+        if (p >= 2 && p < 2.5) {
+            tasks.push(`- Give 15 mmol phos (22.5mEq K), P=${p}`);
+        } else if (p >= 1.6 && p <= 1.9) {
+            tasks.push(`- Give 30 mmol phos (45mEq K), P=${p}`);
+        } else if (p > 0 && p <= 1.6) {
+            tasks.push(`- Give 40 mmol phos (60mEq K), P=${p}`);
+        }
+    }
+    
+    // === INTAKE/OUTPUT TASKS ===
+    
+    if (window.currentIOData && data.weight) {
+        const ioWarnings = generateIntakeOutputWarnings(window.currentIOData, data.weight);
+        
+        // Extract critical I/O issues
+        ioWarnings.forEach(warning => {
+            if (warning.includes('*ANURIA*')) {
+                tasks.push(`- Anuria - investigate/treat`);
+            } else if (warning.includes('LOW URINE OUTPUT')) {
+                tasks.push(`- Low UOP - bolus/diuretics`);
+            } else if (warning.includes('HIGH OUTPUT')) {
+                tasks.push(`- High drain output - monitor`);
+            } else if (warning.includes('Estimated Blood Loss')) {
+                const match = warning.match(/(\d+)\s*mL/);
+                if (match && parseInt(match[1]) > 500) {
+                    tasks.push(`- Blood loss ${match[1]}mL - consider transfusion`);
+                }
+            }
+        });
+    }
+    
+    // === OUTDATED LAB TASKS ===
+    
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        year: '2-digit' 
+    });
+    
+    const dateCategories = {
+        'CBC': ['wbc', 'hgb', 'hct', 'plt'],
+        'CMP': ['na', 'k', 'cl', 'co2', 'bun', 'cr', 'glu', 'ca', 'mg', 'phos'],
+        'LFTs': ['ast', 'alt', 'tbil', 'dbil', 'alk', 'ggt'],
+        'Coags': ['pt', 'ptt', 'inr', 'fib']
+    };
+    
+    for (const [category, labs] of Object.entries(dateCategories)) {
+        let outdated = false;
+        let lastDate = '';
+        
+        for (const lab of labs) {
+            if (data.dates[lab] && data.dates[lab] !== currentDate) {
+                outdated = true;
+                lastDate = data.dates[lab];
+                break;
+            }
+        }
+        
+        if (outdated) {
+            tasks.push(`- Reorder ${category} (last: ${lastDate})`);
+        }
+    }
+    
+    // Add all tasks to To Do textarea
+    if (tasks.length > 0) {
+        tasks.forEach(task => addToDoTask(task));
+        console.log(`Added ${tasks.length} tasks to To Do`);
+    } else {
+        console.log('No tasks generated');
+    }
+}
+
+// Helper function to add task without duplicates
+function addToDoTask(task) {
+    const toDoTextArea = document.getElementById('todoTextArea'); // Change to your actual ID
+    
+    if (!toDoTextArea) {
+        console.error('To Do text area not found');
+        return;
+    }
+    
+    let currentContent = toDoTextArea.value.trim();
+    
+    // Check if task already exists
+    if (currentContent.includes(task)) {
+        return;
+    }
+    
+    // Add new task
+    if (currentContent) {
+        toDoTextArea.value = currentContent + '\n' + task;
+    } else {
+        toDoTextArea.value = task;
+    }
+    
+    toDoTextArea.scrollTop = toDoTextArea.scrollHeight;
+}
     </script>
 </body>
 </html>
