@@ -4998,6 +4998,12 @@ setTimeout(() => {
         updateViolinDisplay();
     }, 100);
 
+
+showFullOrders = true;
+renderOrdersTable();
+
+			
+
 			
 }
 
@@ -6065,7 +6071,7 @@ function toggleTableView() {
             // PO section 
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
-                    const color = med.isPRN ? '#cccccc' : '#D3D3D3';  // White for PO meds (lighter grey for PRN)
+                    const color = med.isPRN ? '#cccccc' : '#FFFFFF';  // White for PO meds (lighter grey for PRN)
                     const displayText = '💊 ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
@@ -6091,7 +6097,7 @@ function toggleTableView() {
                     html += '<div style="margin-top: 0.1rem;"></div>';
                 }
                 ivMeds.forEach((med, idx) => {
-                    const color = med.isPRN ? '#cccccc' : '#D3D3D3';  // White for IV meds
+                    const color = med.isPRN ? '#cccccc' : '#FFFFFF';  // White for IV meds
 					const displayText = '💉 ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
                     
