@@ -3716,6 +3716,15 @@ case 'chartcheck':
                 }
                 
                 leftPanel.appendChild(label);
+
+				        // Add full orders display below ORDERS field
+                if (header === 'ORDERS') {
+                    const fullOrdersDiv = document.createElement('div');
+                    fullOrdersDiv.id = 'fullOrdersDisplay';
+                    fullOrdersDiv.className = 'orders-section hidden';
+                    fullOrdersDiv.style.marginTop = '0.75rem';
+                    leftPanel.appendChild(fullOrdersDiv);
+                }
                 
                 // Create input field
                 let input;
@@ -3746,14 +3755,7 @@ case 'chartcheck':
                     setTimeout(() => autoResizeTextarea(input), 0);
                 }
                 
-                // Add full orders display below ORDERS field
-                if (header === 'ORDERS') {
-                    const fullOrdersDiv = document.createElement('div');
-                    fullOrdersDiv.id = 'fullOrdersDisplay';
-                    fullOrdersDiv.className = 'orders-section hidden';
-                    fullOrdersDiv.style.marginTop = '0.75rem';
-                    leftPanel.appendChild(fullOrdersDiv);
-                }
+        
             });
             
             // RIGHT PANEL - Shows "To do" field
