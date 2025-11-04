@@ -6067,7 +6067,6 @@ function toggleTableView() {
                 poMeds.forEach((med, idx) => {
                     const color = med.isPRN ? '#cccccc' : '#ffffff';  // White for PO meds (lighter grey for PRN)
                     const displayText = '💊 ' + (showAbbreviatedTable ? abbreviateMedText(med.text) : med.text);
-					const displayText = (med.route === 'SC' || med.route === 'IM') ? '💉 ' + baseText : '- ' + baseText;
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
                     
                     html += `
