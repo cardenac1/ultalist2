@@ -10510,6 +10510,35 @@ while (i < fishboneLines.length && !foundFluidBalance) {
 
   violinDisplay.innerHTML = '';
 
+
+	// === ADD WARNINGS SECTION HERE ===
+if (warningsToAdd.length > 0) {
+  const warningsDiv = document.createElement('div');
+  warningsDiv.style.cssText = `
+    background: #2a1a1a;
+    padding: 0.75rem;
+    border-left: 3px solid #ff6b6b;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+  `;
+  
+  let warningsHTML = '<strong style="color: #ff6b6b; font-size: 14px;">⚠️ WARNINGS & ALERTS:</strong><br><br>';
+  
+  warningsToAdd.forEach(warning => {
+    const isCritical = warning.includes('*') || warning.includes('!');
+    const color = isCritical ? '#ff6b6b' : '#ffa726';
+    const fontWeight = isCritical ? 'bold' : 'normal';
+    const displayWarning = warning.replace(/\*/g, '');
+    
+    warningsHTML += `<div style="color: ${color}; margin-top: 0.35rem; font-weight: ${fontWeight}; line-height: 1.4;">• ${displayWarning}</div>`;
+  });
+  
+  warningsDiv.innerHTML = warningsHTML;
+  violinDisplay.appendChild(warningsDiv);
+}
+
+	
+
   // ADD VITALS VISUALIZATION FIRST (before fishbone text)
   if (_labData?.vitals && Object.keys(_labData.vitals).length > 0) {
     const vitalsViz = createVitalsVisualization(_labData.vitals);
