@@ -5874,18 +5874,17 @@ function toggleTableView() {
 
         let currentSection = 'Scheduled';
         const medsLines = medsText.split('\n');
-        const categorizedMeds = {
-    'nutrition': [],  // Keep this for diet orders
-    'neuro': [],
-    'pulm': [],
-    'cardio': [],
-    'gi': [],
-    'renal': [],
-    'heme': [],
-    'infection': [],
-    'endocrine': [],
-    'skin': []
-};
+       const categorizedMeds = {
+	    'neuro': [],          // Pain, sedation, neurological, psychiatric
+	    'pulm': [],           // All respiratory
+	    'cardiovascular': [], // Cardiac, pressors, BP meds, statins
+	    'gi': [],             // Diet, GI meds, bowel regimen
+	    'renal': [],          // Diuretics, IV fluids
+	    'heme': [],           // Anticoagulants
+	    'infection': [],      // Antibiotics, antifungals, immunosuppressive
+	    'endocrine': [],      // Steroids, diabetes, insulin
+	    'skin': []            // Topicals, misc
+	};
 
         // Add diet order if found
         if (dietMatch) {
@@ -5943,54 +5942,51 @@ function toggleTableView() {
                 isPRN: isPRN
             };
 
-            // Categorize medications - CHECK ACTIVE DRUGS FIRST before carrier fluids!
-            // Pain medications
-            if (drugForCategorization.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine/i)) {
-                categorizedMeds['pain'].push(medObj);
-            }
-            // Pressors and sedation - check BEFORE fluids
-            else if (drugForCategorization.match(/norepinephrine|norEPINEPHrine|epinephrine|EPINEPHrine|vasopressin|phenylephrine|dopamine|dobutamine|propofol|midazolam|dexmedetomidine|dexmedeTOMIDine|lorazepam|diazepam|ketamine|angiotensin/i)) {
-                categorizedMeds['pressors'].push(medObj);
-            }
-            // Heparin infusions - check BEFORE fluids
-            else if (drugForCategorization.match(/heparin|enoxaparin/i)) {
-                categorizedMeds['anticoag'].push(medObj);
-            }
-            // Insulin infusions - check BEFORE fluids (but Parenteral Nutrition goes to nutrition)
-            else if (drugForCategorization.match(/insulin regular|insulin\s+\d+\s+unit/i) && !lineLower.includes('parenteral')) {
-                categorizedMeds['endocrine'].push(medObj);
-            }
-            // Antibiotics
-            else if (drugForCategorization.match(/cefepime|vancomycin|piperacillin|tazobactam|ceftriaxone|amoxicillin|ciprofloxacin|metronidazole|doxycycline|clindamycin|azithromycin|meropenem|levofloxacin|cephalexin|ampicillin|gentamicin|linezolid|ertapenem|trimethoprim|sulfamethoxazole|diflucan|fluconazole|daptomycin|ceftolozane|amphotericin|micafungin|cefazolin|ceftazidime|eravacycline|tobramycin|erythromycin|valganciclovir|everolimus|tacrolimus|sirolimus|thymoglobulin/i)) {
-                categorizedMeds['antibiotics'].push(medObj);
-            }
-            // Anticoagulation (oral anticoagulants)
-            else if (drugForCategorization.match(/aspirin|clopidogrel|apixaban|warfarin|rivaroxaban|fondaparinux|ticagrelor|dabigatran|prasugrel/i)) {
-                categorizedMeds['anticoag'].push(medObj);
-            }
-            // Neuro/Psych
-            else if (drugForCategorization.match(/levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam|lacosamide|clobazam|brivaracetam/i)) {
-                categorizedMeds['neuro'].push(medObj);
-            }
-            // GI
-            else if (drugForCategorization.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|metoclopramide|promethazine|prochlorperazine/i)) {
-                categorizedMeds['gi'].push(medObj);
-            }
-            // Cardio/Pulm
-            else if (drugForCategorization.match(/metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|furosemide|lasix|bumetanide|torsemide|spironolactone|albuterol|ipratropium|duoneb|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
-                categorizedMeds['cardio'].push(medObj);
-            }
-            // Endocrine (other insulins and endocrine meds)
-            else if (drugForCategorization.match(/insulin|lispro|aspart|glargine|lantus|detemir|levemir|degludec|tresiba|levothyroxine|synthroid|liothyronine|hydrocortisone|dexamethasone|decadron|hypoglycemia|glucagon/i)) {
-                categorizedMeds['endocrine'].push(medObj);
-            }
-            // Nutrition/Fluids - checked LAST so active drugs aren't miscategorized
-            else if (lineLower.match(/npo|lactated\s+ringer|lactated ringers|normal saline|parenteral nutrition|sodium chloride|dextrose\s+5%|dextrose\s+50%|plasmalyte|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric|albumin|tube feed|enteral/i)) {
-                categorizedMeds['nutrition'].push(medObj);
-            }
-            else {
-                categorizedMeds['misc'].push(medObj);
-            }
+           // Categorize medications - CHECK ACTIVE DRUGS FIRST before carrier fluids!
+// NEURO - Pain, sedation, neurological, psychiatric
+if (drugForCategorization.match(/oxycodone|hydromorphone|acetaminophen|methocarbamol|baclofen|ibuprofen|ketorolac|tramadol|lidocaine|methadone|fentanyl|morphine|celecoxib|cyclobenzaprine|naproxen|hydrocodone|meperidine|codeine|propofol|midazolam|dexmedetomidine|dexmedeTOMIDine|lorazepam|diazepam|ketamine|levetiracetam|keppra|phenytoin|dilantin|valproic|depakote|carbamazepine|lamotrigine|topiramate|gabapentin|pregabalin|lacosamide|clobazam|brivaracetam|haloperidol|quetiapine|olanzapine|risperidone|aripiprazole|ziprasidone|clozapine|lithium|sertraline|escitalopram|fluoxetine|paroxetine|citalopram|venlafaxine|duloxetine|bupropion|mirtazapine|trazodone|clonazepam|alprazolam/i)) {
+    categorizedMeds['neuro'].push(medObj);
+}
+// PULM - Respiratory
+else if (drugForCategorization.match(/albuterol|ipratropium|duoneb|combivent|budesonide|fluticasone|montelukast|theophylline|acetylcysteine/i)) {
+    categorizedMeds['pulm'].push(medObj);
+}
+// CARDIOVASCULAR - Pressors, cardiac, BP meds, statins (check BEFORE fluids)
+else if (drugForCategorization.match(/norepinephrine|norEPINEPHrine|epinephrine|EPINEPHrine|vasopressin|phenylephrine|dopamine|dobutamine|angiotensin|metoprolol|carvedilol|atenolol|labetalol|esmolol|lisinopril|enalapril|captopril|losartan|valsartan|amlodipine|diltiazem|nicardipine|hydralazine|nitroglycerin|isosorbide|digoxin|amiodarone|sotalol|flecainide|rosuvastatin|atorvastatin|simvastatin|pravastatin|lovastatin|fluvastatin|pitavastatin|crestor|lipitor|zocor/i)) {
+    categorizedMeds['cardiovascular'].push(medObj);
+}
+// GI - Diet, GI meds, bowel regimen
+else if (drugForCategorization.match(/ondansetron|pantoprazole|famotidine|omeprazole|esomeprazole|lansoprazole|ranitidine|docusate|senna|bisacodyl|polyethylene|miralax|lactulose|metoclopramide|promethazine|prochlorperazine|loperamide|diphenoxylate/i)) {
+    categorizedMeds['gi'].push(medObj);
+}
+// RENAL/FLUIDS - Diuretics and IV fluids (check IV fluids LAST)
+else if (drugForCategorization.match(/furosemide|lasix|bumetanide|torsemide|spironolactone|hydrochlorothiazide|chlorothiazide|metolazone/i)) {
+    categorizedMeds['renal'].push(medObj);
+}
+// Check for IV fluids (do this AFTER checking for active medications)
+else if (lineLower.match(/lactated\s+ringer|lactated ringers|normal saline|sodium chloride|dextrose\s+5%|dextrose\s+50%|plasmalyte|albumin/i)) {
+    categorizedMeds['renal'].push(medObj);
+}
+// HEME - Anticoagulants
+else if (drugForCategorization.match(/heparin|enoxaparin|lovenox|aspirin|clopidogrel|plavix|warfarin|coumadin|apixaban|eliquis|rivaroxaban|xarelto|dabigatran|pradaxa|fondaparinux|arixtra|ticagrelor|brilinta|prasugrel|effient|tranexamic|aminocaproic|protamine|vitamin k|phytonadione|epoetin|filgrastim/i)) {
+    categorizedMeds['heme'].push(medObj);
+}
+// INFECTION - Antibiotics, antifungals, immunosuppressive
+else if (drugForCategorization.match(/vancomycin|piperacillin|tazobactam|zosyn|ceftriaxone|cefepime|cefazolin|ceftazidime|ceftolozane|meropenem|ertapenem|imipenem|azithromycin|levofloxacin|ciprofloxacin|moxifloxacin|metronidazole|flagyl|clindamycin|doxycycline|minocycline|amoxicillin|ampicillin|trimethoprim|sulfamethoxazole|bactrim|linezolid|zyvox|daptomycin|cubicin|gentamicin|tobramycin|amikacin|fluconazole|diflucan|micafungin|caspofungin|voriconazole|amphotericin|acyclovir|valacyclovir|oseltamivir|tamiflu|ganciclovir|eravacycline|tigecycline|erythromycin|aztreonam|tacrolimus|sirolimus|everolimus|thymoglobulin|valganciclovir/i)) {
+    categorizedMeds['infection'].push(medObj);
+}
+// ENDOCRINE - Steroids, diabetes, insulin
+else if (drugForCategorization.match(/insulin|lispro|aspart|glargine|lantus|detemir|levemir|degludec|tresiba|metformin|glipizide|glyburide|levothyroxine|synthroid|liothyronine|hydrocortisone|prednisone|methylprednisolone|solumedrol|dexamethasone|decadron|fludrocortisone/i)) {
+    categorizedMeds['endocrine'].push(medObj);
+}
+// NUTRITION - Tube feeds, TPN (check after insulin to avoid insulin in TPN being miscategorized)
+else if (lineLower.match(/npo|parenteral nutrition|tube feed|enteral|infant formula|pediatric|regular diet|clear liquid|renal|cardiac|diabetic|dysphagia|soft|full liquid|bariatric/i)) {
+    categorizedMeds['gi'].push(medObj); // Put diet orders in GI
+}
+// SKIN/OTHER - Everything else
+else {
+    categorizedMeds['skin'].push(medObj);
+}
         });
 
         // Medication abbreviation database
@@ -6143,16 +6139,15 @@ function toggleTableView() {
         tableHTML += '</tr></thead>';
         tableHTML += '<tbody>';
 
-      tableHTML += createCategoryRow('Nutrition/Fluids', categorizedMeds['nutrition']);
-tableHTML += createCategoryRow('NEURO (Pain/Sedation)', categorizedMeds['neuro']);
-tableHTML += createCategoryRow('PULM', categorizedMeds['pulm']);
-tableHTML += createCategoryRow('CARDIO (Pressors/CV)', categorizedMeds['cardio']);
-tableHTML += createCategoryRow('GI', categorizedMeds['gi']);
-tableHTML += createCategoryRow('RENAL/FLUIDS', categorizedMeds['renal']);
-tableHTML += createCategoryRow('HEME (Anticoag)', categorizedMeds['heme']);
-tableHTML += createCategoryRow('INFECTION (Abx/Antifungals)', categorizedMeds['infection']);
-tableHTML += createCategoryRow('ENDOCRINE (DM/Steroids)', categorizedMeds['endocrine']);
-tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
+      tableHTML += createCategoryRow('NEURO (Pain/Sedation/Psych)', categorizedMeds['neuro']);
+tableHTML += createCategoryRow('PULM (Respiratory)', categorizedMeds['pulm']);
+tableHTML += createCategoryRow('CARDIOVASCULAR (Cardiac/Pressors/BP)', categorizedMeds['cardiovascular']);
+tableHTML += createCategoryRow('GI (Diet/Bowel/Reflux)', categorizedMeds['gi']);
+tableHTML += createCategoryRow('RENAL/FLUIDS (Diuretics/IVF)', categorizedMeds['renal']);
+tableHTML += createCategoryRow('HEME (Anticoagulation)', categorizedMeds['heme']);
+tableHTML += createCategoryRow('INFECTION (Abx/Antifungal/Immunosupp)', categorizedMeds['infection']);
+tableHTML += createCategoryRow('ENDOCRINE (DM/Steroids/Thyroid)', categorizedMeds['endocrine']);
+tableHTML += createCategoryRow('SKIN/OTHER (Topicals/Misc)', categorizedMeds['skin']); 
 
         tableHTML += '</tbody></table>';
         tableHTML += '</div>';
