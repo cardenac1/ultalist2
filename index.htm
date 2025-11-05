@@ -5875,17 +5875,17 @@ function toggleTableView() {
         let currentSection = 'Scheduled';
         const medsLines = medsText.split('\n');
         const categorizedMeds = {
-            'nutrition': [],
-            'pain': [],
-            'antibiotics': [],
-            'pressors': [],
-            'anticoag': [],
-            'neuro': [],
-            'gi': [],
-            'cardio': [],
-            'endocrine': [],
-            'misc': []
-        };
+    'nutrition': [],  // Keep this for diet orders
+    'neuro': [],
+    'pulm': [],
+    'cardio': [],
+    'gi': [],
+    'renal': [],
+    'heme': [],
+    'infection': [],
+    'endocrine': [],
+    'skin': []
+};
 
         // Add diet order if found
         if (dietMatch) {
@@ -6143,16 +6143,16 @@ function toggleTableView() {
         tableHTML += '</tr></thead>';
         tableHTML += '<tbody>';
 
-        tableHTML += createCategoryRow('Nutrition/Fluids', categorizedMeds['nutrition']);
-        tableHTML += createCategoryRow('Pain', categorizedMeds['pain']);
-        tableHTML += createCategoryRow('Antibiotics', categorizedMeds['antibiotics']);
-        tableHTML += createCategoryRow('Pressors/Sedation', categorizedMeds['pressors']);
-        tableHTML += createCategoryRow('Anticoagulation', categorizedMeds['anticoag']);
-        tableHTML += createCategoryRow('Neuro/Psych', categorizedMeds['neuro']);
-        tableHTML += createCategoryRow('GI', categorizedMeds['gi']);
-        tableHTML += createCategoryRow('Cardio/Pulm', categorizedMeds['cardio']);
-        tableHTML += createCategoryRow('Endocrine', categorizedMeds['endocrine']);
-        tableHTML += createCategoryRow('MISC', categorizedMeds['misc']);
+      tableHTML += createCategoryRow('Nutrition/Fluids', categorizedMeds['nutrition']);
+tableHTML += createCategoryRow('NEURO (Pain/Sedation)', categorizedMeds['neuro']);
+tableHTML += createCategoryRow('PULM', categorizedMeds['pulm']);
+tableHTML += createCategoryRow('CARDIO (Pressors/CV)', categorizedMeds['cardio']);
+tableHTML += createCategoryRow('GI', categorizedMeds['gi']);
+tableHTML += createCategoryRow('RENAL/FLUIDS', categorizedMeds['renal']);
+tableHTML += createCategoryRow('HEME (Anticoag)', categorizedMeds['heme']);
+tableHTML += createCategoryRow('INFECTION (Abx/Antifungals)', categorizedMeds['infection']);
+tableHTML += createCategoryRow('ENDOCRINE (DM/Steroids)', categorizedMeds['endocrine']);
+tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
         tableHTML += '</tbody></table>';
         tableHTML += '</div>';
@@ -7852,87 +7852,271 @@ function extractOrders(text) {
 
     // COMPREHENSIVE MEDICATION ABBREVIATION TABLE
     const drugAbbreviations = {
-        // Pain medications
-        'acetaminophen': { abbr: 'T', category: 'Pain' },
-        'tylenol': { abbr: 'T', category: 'Pain' },
-        'morphine': { abbr: 'm', category: 'Pain' },
-        'oxycodone': { abbr: 'o', category: 'Pain' },
-        'oxyCODONE': { abbr: 'o', category: 'Pain' },
-        'percocet': { abbr: 'perc', category: 'Pain' },
-        'hydromorphone': { abbr: 'D', category: 'Pain' },
-        'dilaudid': { abbr: 'D', category: 'Pain' },
-        'fentanyl': { abbr: 'fent', category: 'Pain' },
-        'tramadol': { abbr: 'tram', category: 'Pain' },
-        'ketorolac': { abbr: 'k', category: 'Pain' },
-        'toradol': { abbr: 'k', category: 'Pain' },
-        'gabapentin': { abbr: 'g', category: 'Pain' },
-        'neurontin': { abbr: 'g', category: 'Pain' },
-        'pregabalin': { abbr: 'lyrica', category: 'Pain' },
-        'lidocaine': { abbr: 'lido', category: 'Pain' },
-        'methocarbamol': { abbr: 'r', category: 'Pain' },
-        'robaxin': { abbr: 'r', category: 'Pain' },
-        'cyclobenzaprine': { abbr: 'flexeril', category: 'Pain' },
-        'baclofen': { abbr: 'bac', category: 'Pain' },
-        'ibuprofen': { abbr: 'ibu', category: 'Pain' },
-        'naproxen': { abbr: 'nap', category: 'Pain' },
-        'celecoxib': { abbr: 'celebrex', category: 'Pain' },
-        'dexmedetomidine': { abbr: 'precedex', category: 'Pain' },
-        
-        // Antibiotics
-        'vancomycin': { abbr: 'vanco', category: 'Abx' },
-        'piperacillin': { abbr: 'zosyn', category: 'Abx' },
-        'tazobactam': { abbr: 'zosyn', category: 'Abx' },
-        'ceftriaxone': { abbr: 'ctx', category: 'Abx' },
-        'cefepime': { abbr: 'cef', category: 'Abx' },
-        'cefazolin': { abbr: 'ancef', category: 'Abx' },
-        'meropenem': { abbr: 'mero', category: 'Abx' },
-        'azithromycin': { abbr: 'azithro', category: 'Abx' },
-        'levofloxacin': { abbr: 'levo', category: 'Abx' },
-        'ciprofloxacin': { abbr: 'cipro', category: 'Abx' },
-        'metronidazole': { abbr: 'flagyl', category: 'Abx' },
-        'clindamycin': { abbr: 'clinda', category: 'Abx' },
-        'doxycycline': { abbr: 'doxy', category: 'Abx' },
-        'fluconazole': { abbr: 'fluc', category: 'Abx' },
-        'micafungin': { abbr: 'mica', category: 'Abx' },
-        'ampicillin': { abbr: 'amp', category: 'Abx' },
-        'amoxicillin': { abbr: 'amox', category: 'Abx' },
-        'trimethoprim': { abbr: 'bactrim', category: 'Abx' },
-        'sulfamethoxazole': { abbr: 'bactrim', category: 'Abx' },
-        'linezolid': { abbr: 'linezolid', category: 'Abx' },
-	'ertapenem': { abbr: 'ertapenem', category: 'Abx' },
-	'ceftriaxone': { abbr: 'ceftriaxone', category: 'Abx' },
-        
-        // Pressors
-        'norepinephrine': { abbr: 'levo', category: 'Abx' },
-        'epinephrine': { abbr: 'epi', category: 'Abx' },
-        'vasopressin': { abbr: 'vaso', category: 'Abx' },
-        'phenylephrine': { abbr: 'neo', category: 'Abx' },
-        'dopamine': { abbr: 'dopa', category: 'Abx' },
-        
-        // Anticoagulation
-        'heparin': { abbr: 'hep', category: 'AC' },
-        'enoxaparin': { abbr: 'L', category: 'AC' },
-        'lovenox': { abbr: 'L', category: 'AC' },
-        'aspirin': { abbr: 'ASA', category: 'AC' },
-        'clopidogrel': { abbr: 'plavix', category: 'AC' },
-        'warfarin': { abbr: 'coumadin', category: 'AC' },
-        'apixaban': { abbr: 'eliquis', category: 'AC' },
-        'rivaroxaban': { abbr: 'xarelto', category: 'AC' },
-        'fondaparinux': { abbr: 'arixtra', category: 'AC' },
-        
-        // Fluids
-        'lactated ringers': { abbr: 'LR', category: 'N/F' },
-        'normal saline': { abbr: 'NS', category: 'N/F' },
-        'dextrose': { abbr: 'D', category: 'N/F' },
-        'd5w': { abbr: 'D5W', category: 'N/F' },
-        'd5ns': { abbr: 'D5NS', category: 'N/F' },
-        'albumin': { abbr: 'alb', category: 'N/F' },
-	'parenteral nutrition': { abbr: 'TPN', category: 'N/F' },
-	'total parenteral nutrition': { abbr: 'TPN', category: 'N/F' },
-	'tpn': { abbr: 'TPN', category: 'N/F' },
-	'peripheral parenteral nutrition': { abbr: 'PPN', category: 'N/F' },
-	'ppn': { abbr: 'PPN', category: 'N/F' },
-    };
+    // NEURO - Pain, Sedation, Neurological
+    'acetaminophen': { abbr: 'T', category: 'neuro' },
+    'tylenol': { abbr: 'T', category: 'neuro' },
+    'morphine': { abbr: 'm', category: 'neuro' },
+    'oxycodone': { abbr: 'o', category: 'neuro' },
+    'oxyCODONE': { abbr: 'o', category: 'neuro' },
+    'percocet': { abbr: 'perc', category: 'neuro' },
+    'hydromorphone': { abbr: 'D', category: 'neuro' },
+    'dilaudid': { abbr: 'D', category: 'neuro' },
+    'fentanyl': { abbr: 'fent', category: 'neuro' },
+    'tramadol': { abbr: 'tram', category: 'neuro' },
+    'ketorolac': { abbr: 'k', category: 'neuro' },
+    'toradol': { abbr: 'k', category: 'neuro' },
+    'gabapentin': { abbr: 'g', category: 'neuro' },
+    'neurontin': { abbr: 'g', category: 'neuro' },
+    'pregabalin': { abbr: 'lyrica', category: 'neuro' },
+    'lidocaine': { abbr: 'lido', category: 'neuro' },
+    'methocarbamol': { abbr: 'r', category: 'neuro' },
+    'robaxin': { abbr: 'r', category: 'neuro' },
+    'cyclobenzaprine': { abbr: 'flexeril', category: 'neuro' },
+    'baclofen': { abbr: 'bac', category: 'neuro' },
+    'ibuprofen': { abbr: 'ibu', category: 'neuro' },
+    'naproxen': { abbr: 'nap', category: 'neuro' },
+    'celecoxib': { abbr: 'celebrex', category: 'neuro' },
+    'propofol': { abbr: 'prop', category: 'neuro' },
+    'midazolam': { abbr: 'versed', category: 'neuro' },
+    'dexmedetomidine': { abbr: 'precedex', category: 'neuro' },
+    'lorazepam': { abbr: 'ativan', category: 'neuro' },
+    'diazepam': { abbr: 'valium', category: 'neuro' },
+    'ketamine': { abbr: 'ketamine', category: 'neuro' },
+    'levetiracetam': { abbr: 'keppra', category: 'neuro' },
+    'keppra': { abbr: 'keppra', category: 'neuro' },
+    'phenytoin': { abbr: 'dilantin', category: 'neuro' },
+    'dilantin': { abbr: 'dilantin', category: 'neuro' },
+    'valproic': { abbr: 'depakote', category: 'neuro' },
+    'depakote': { abbr: 'depakote', category: 'neuro' },
+    'carbamazepine': { abbr: 'tegretol', category: 'neuro' },
+    'lamotrigine': { abbr: 'lamictal', category: 'neuro' },
+    'topiramate': { abbr: 'topamax', category: 'neuro' },
+    'lacosamide': { abbr: 'vimpat', category: 'neuro' },
+    'haloperidol': { abbr: 'haldol', category: 'neuro' },
+    'quetiapine': { abbr: 'seroquel', category: 'neuro' },
+    'olanzapine': { abbr: 'zyprexa', category: 'neuro' },
+    'risperidone': { abbr: 'risperdal', category: 'neuro' },
+    'aripiprazole': { abbr: 'abilify', category: 'neuro' },
+    'ziprasidone': { abbr: 'geodon', category: 'neuro' },
+    'clozapine': { abbr: 'clozaril', category: 'neuro' },
+    'lithium': { abbr: 'lithium', category: 'neuro' },
+    'sertraline': { abbr: 'zoloft', category: 'neuro' },
+    'escitalopram': { abbr: 'lexapro', category: 'neuro' },
+    'fluoxetine': { abbr: 'prozac', category: 'neuro' },
+    'paroxetine': { abbr: 'paxil', category: 'neuro' },
+    'citalopram': { abbr: 'celexa', category: 'neuro' },
+    'venlafaxine': { abbr: 'effexor', category: 'neuro' },
+    'duloxetine': { abbr: 'cymbalta', category: 'neuro' },
+    'bupropion': { abbr: 'wellbutrin', category: 'neuro' },
+    'mirtazapine': { abbr: 'remeron', category: 'neuro' },
+    'trazodone': { abbr: 'trazodone', category: 'neuro' },
+    'clonazepam': { abbr: 'klonopin', category: 'neuro' },
+    'alprazolam': { abbr: 'xanax', category: 'neuro' },
+    
+    // PULM - Respiratory
+    'albuterol': { abbr: 'alb', category: 'pulm' },
+    'ipratropium': { abbr: 'atrovent', category: 'pulm' },
+    'duoneb': { abbr: 'duoneb', category: 'pulm' },
+    'combivent': { abbr: 'combivent', category: 'pulm' },
+    'budesonide': { abbr: 'pulmicort', category: 'pulm' },
+    'fluticasone': { abbr: 'flovent', category: 'pulm' },
+    'montelukast': { abbr: 'singulair', category: 'pulm' },
+    'theophylline': { abbr: 'theo', category: 'pulm' },
+    'acetylcysteine': { abbr: 'mucomyst', category: 'pulm' },
+    
+    // CARDIO - Cardiovascular & Pressors
+    'norepinephrine': { abbr: 'levo', category: 'cardio' },
+    'norEPINEPHrine': { abbr: 'levo', category: 'cardio' },
+    'epinephrine': { abbr: 'epi', category: 'cardio' },
+    'EPINEPHrine': { abbr: 'epi', category: 'cardio' },
+    'vasopressin': { abbr: 'vaso', category: 'cardio' },
+    'phenylephrine': { abbr: 'neo', category: 'cardio' },
+    'dopamine': { abbr: 'dopa', category: 'cardio' },
+    'dobutamine': { abbr: 'dobu', category: 'cardio' },
+    'metoprolol': { abbr: 'metop', category: 'cardio' },
+    'carvedilol': { abbr: 'coreg', category: 'cardio' },
+    'atenolol': { abbr: 'tenormin', category: 'cardio' },
+    'labetalol': { abbr: 'labetalol', category: 'cardio' },
+    'esmolol': { abbr: 'esmolol', category: 'cardio' },
+    'lisinopril': { abbr: 'lisinopril', category: 'cardio' },
+    'enalapril': { abbr: 'enalapril', category: 'cardio' },
+    'captopril': { abbr: 'captopril', category: 'cardio' },
+    'losartan': { abbr: 'cozaar', category: 'cardio' },
+    'valsartan': { abbr: 'diovan', category: 'cardio' },
+    'amlodipine': { abbr: 'norvasc', category: 'cardio' },
+    'diltiazem': { abbr: 'cardizem', category: 'cardio' },
+    'nicardipine': { abbr: 'cardene', category: 'cardio' },
+    'hydralazine': { abbr: 'hydral', category: 'cardio' },
+    'nitroglycerin': { abbr: 'ntg', category: 'cardio' },
+    'isosorbide': { abbr: 'imdur', category: 'cardio' },
+    'digoxin': { abbr: 'digoxin', category: 'cardio' },
+    'amiodarone': { abbr: 'amio', category: 'cardio' },
+    'sotalol': { abbr: 'sotalol', category: 'cardio' },
+    'flecainide': { abbr: 'flecainide', category: 'cardio' },
+    'rosuvastatin': { abbr: 'crestor', category: 'cardio' },
+    'atorvastatin': { abbr: 'lipitor', category: 'cardio' },
+    'simvastatin': { abbr: 'zocor', category: 'cardio' },
+    'pravastatin': { abbr: 'pravachol', category: 'cardio' },
+    'lovastatin': { abbr: 'mevacor', category: 'cardio' },
+    'fluvastatin': { abbr: 'lescol', category: 'cardio' },
+    'pitavastatin': { abbr: 'livalo', category: 'cardio' },
+    'crestor': { abbr: 'crestor', category: 'cardio' },
+    'lipitor': { abbr: 'lipitor', category: 'cardio' },
+    'zocor': { abbr: 'zocor', category: 'cardio' },
+    
+    // GI - Gastrointestinal
+    'ondansetron': { abbr: 'Z', category: 'gi' },
+    'pantoprazole': { abbr: 'protonix', category: 'gi' },
+    'famotidine': { abbr: 'pepcid', category: 'gi' },
+    'omeprazole': { abbr: 'prilosec', category: 'gi' },
+    'esomeprazole': { abbr: 'nexium', category: 'gi' },
+    'lansoprazole': { abbr: 'prevacid', category: 'gi' },
+    'ranitidine': { abbr: 'zantac', category: 'gi' },
+    'docusate': { abbr: 'colace', category: 'gi' },
+    'senna': { abbr: 'senna', category: 'gi' },
+    'bisacodyl': { abbr: 'dulcolax', category: 'gi' },
+    'polyethylene': { abbr: 'miralax', category: 'gi' },
+    'miralax': { abbr: 'miralax', category: 'gi' },
+    'lactulose': { abbr: 'lactulose', category: 'gi' },
+    'metoclopramide': { abbr: 'reglan', category: 'gi' },
+    'promethazine': { abbr: 'phenergan', category: 'gi' },
+    'prochlorperazine': { abbr: 'compazine', category: 'gi' },
+    'loperamide': { abbr: 'imodium', category: 'gi' },
+    'diphenoxylate': { abbr: 'lomotil', category: 'gi' },
+    
+    // RENAL/FLUIDS - Diuretics & IV Fluids
+    'furosemide': { abbr: 'lasix', category: 'renal' },
+    'lasix': { abbr: 'lasix', category: 'renal' },
+    'bumetanide': { abbr: 'bumex', category: 'renal' },
+    'torsemide': { abbr: 'demadex', category: 'renal' },
+    'spironolactone': { abbr: 'aldactone', category: 'renal' },
+    'hydrochlorothiazide': { abbr: 'hctz', category: 'renal' },
+    'chlorothiazide': { abbr: 'diuril', category: 'renal' },
+    'metolazone': { abbr: 'zaroxolyn', category: 'renal' },
+    'lactated ringers': { abbr: 'LR', category: 'renal' },
+    'lactated ringer': { abbr: 'LR', category: 'renal' },
+    'normal saline': { abbr: 'NS', category: 'renal' },
+    'dextrose': { abbr: 'D', category: 'renal' },
+    'd5w': { abbr: 'D5W', category: 'renal' },
+    'd5ns': { abbr: 'D5NS', category: 'renal' },
+    'albumin': { abbr: 'alb', category: 'renal' },
+    'sodium bicarbonate': { abbr: 'bicarb', category: 'renal' },
+    
+    // HEME - Anticoagulation & Hematologic
+    'heparin': { abbr: 'hep', category: 'heme' },
+    'enoxaparin': { abbr: 'L', category: 'heme' },
+    'lovenox': { abbr: 'L', category: 'heme' },
+    'aspirin': { abbr: 'ASA', category: 'heme' },
+    'clopidogrel': { abbr: 'plavix', category: 'heme' },
+    'warfarin': { abbr: 'coumadin', category: 'heme' },
+    'apixaban': { abbr: 'eliquis', category: 'heme' },
+    'rivaroxaban': { abbr: 'xarelto', category: 'heme' },
+    'dabigatran': { abbr: 'pradaxa', category: 'heme' },
+    'fondaparinux': { abbr: 'arixtra', category: 'heme' },
+    'ticagrelor': { abbr: 'brilinta', category: 'heme' },
+    'prasugrel': { abbr: 'effient', category: 'heme' },
+    'tranexamic': { abbr: 'txa', category: 'heme' },
+    'aminocaproic': { abbr: 'amicar', category: 'heme' },
+    'protamine': { abbr: 'protamine', category: 'heme' },
+    'vitamin k': { abbr: 'vitK', category: 'heme' },
+    'phytonadione': { abbr: 'vitK', category: 'heme' },
+    'epoetin': { abbr: 'epo', category: 'heme' },
+    'filgrastim': { abbr: 'neupogen', category: 'heme' },
+    
+    // INFECTION - Antibiotics, Antifungals, Antivirals
+    'vancomycin': { abbr: 'vanco', category: 'infection' },
+    'piperacillin': { abbr: 'zosyn', category: 'infection' },
+    'tazobactam': { abbr: 'zosyn', category: 'infection' },
+    'ceftriaxone': { abbr: 'ctx', category: 'infection' },
+    'cefepime': { abbr: 'cef', category: 'infection' },
+    'cefazolin': { abbr: 'ancef', category: 'infection' },
+    'ceftazidime': { abbr: 'fortaz', category: 'infection' },
+    'ceftolozane': { abbr: 'zerbaxa', category: 'infection' },
+    'meropenem': { abbr: 'mero', category: 'infection' },
+    'ertapenem': { abbr: 'invanz', category: 'infection' },
+    'imipenem': { abbr: 'primaxin', category: 'infection' },
+    'azithromycin': { abbr: 'azithro', category: 'infection' },
+    'levofloxacin': { abbr: 'levo', category: 'infection' },
+    'ciprofloxacin': { abbr: 'cipro', category: 'infection' },
+    'moxifloxacin': { abbr: 'avelox', category: 'infection' },
+    'metronidazole': { abbr: 'flagyl', category: 'infection' },
+    'clindamycin': { abbr: 'clinda', category: 'infection' },
+    'doxycycline': { abbr: 'doxy', category: 'infection' },
+    'minocycline': { abbr: 'mino', category: 'infection' },
+    'amoxicillin': { abbr: 'amox', category: 'infection' },
+    'ampicillin': { abbr: 'amp', category: 'infection' },
+    'trimethoprim': { abbr: 'bactrim', category: 'infection' },
+    'sulfamethoxazole': { abbr: 'bactrim', category: 'infection' },
+    'linezolid': { abbr: 'zyvox', category: 'infection' },
+    'daptomycin': { abbr: 'cubicin', category: 'infection' },
+    'gentamicin': { abbr: 'gent', category: 'infection' },
+    'tobramycin': { abbr: 'tobi', category: 'infection' },
+    'amikacin': { abbr: 'amikin', category: 'infection' },
+    'fluconazole': { abbr: 'diflucan', category: 'infection' },
+    'micafungin': { abbr: 'mycamine', category: 'infection' },
+    'caspofungin': { abbr: 'cancidas', category: 'infection' },
+    'voriconazole': { abbr: 'vfend', category: 'infection' },
+    'amphotericin': { abbr: 'amphoB', category: 'infection' },
+    'acyclovir': { abbr: 'acyclovir', category: 'infection' },
+    'valacyclovir': { abbr: 'valtrex', category: 'infection' },
+    'oseltamivir': { abbr: 'tamiflu', category: 'infection' },
+    'ganciclovir': { abbr: 'cytovene', category: 'infection' },
+    'eravacycline': { abbr: 'xerava', category: 'infection' },
+    'tigecycline': { abbr: 'tygacil', category: 'infection' },
+    'erythromycin': { abbr: 'ery', category: 'infection' },
+    'aztreonam': { abbr: 'azactam', category: 'infection' },
+    
+    // ENDOCRINE - Diabetes, Steroids, Thyroid
+    'insulin': { abbr: 'insulin', category: 'endocrine' },
+    'insulin regular': { abbr: 'reg', category: 'endocrine' },
+    'insulin lispro': { abbr: 'lispro', category: 'endocrine' },
+    'lispro': { abbr: 'lispro', category: 'endocrine' },
+    'insulin aspart': { abbr: 'aspart', category: 'endocrine' },
+    'aspart': { abbr: 'aspart', category: 'endocrine' },
+    'insulin glargine': { abbr: 'lantus', category: 'endocrine' },
+    'glargine': { abbr: 'lantus', category: 'endocrine' },
+    'lantus': { abbr: 'lantus', category: 'endocrine' },
+    'insulin detemir': { abbr: 'levemir', category: 'endocrine' },
+    'detemir': { abbr: 'levemir', category: 'endocrine' },
+    'levemir': { abbr: 'levemir', category: 'endocrine' },
+    'insulin degludec': { abbr: 'tresiba', category: 'endocrine' },
+    'degludec': { abbr: 'tresiba', category: 'endocrine' },
+    'tresiba': { abbr: 'tresiba', category: 'endocrine' },
+    'metformin': { abbr: 'metformin', category: 'endocrine' },
+    'glipizide': { abbr: 'glipizide', category: 'endocrine' },
+    'glyburide': { abbr: 'glyburide', category: 'endocrine' },
+    'levothyroxine': { abbr: 'synthroid', category: 'endocrine' },
+    'synthroid': { abbr: 'synthroid', category: 'endocrine' },
+    'liothyronine': { abbr: 'cytomel', category: 'endocrine' },
+    'hydrocortisone': { abbr: 'hydrocort', category: 'endocrine' },
+    'prednisone': { abbr: 'pred', category: 'endocrine' },
+    'methylprednisolone': { abbr: 'solumedrol', category: 'endocrine' },
+    'dexamethasone': { abbr: 'decadron', category: 'endocrine' },
+    'decadron': { abbr: 'decadron', category: 'endocrine' },
+    'fludrocortisone': { abbr: 'florinef', category: 'endocrine' },
+    
+    // SKIN/OTHER - Topicals, supplements, misc
+    'mupirocin': { abbr: 'bactroban', category: 'skin' },
+    'bacitracin': { abbr: 'bacitracin', category: 'skin' },
+    'silver sulfadiazine': { abbr: 'silvadene', category: 'skin' },
+    'nystatin': { abbr: 'nystatin', category: 'skin' },
+    'clotrimazole': { abbr: 'lotrimin', category: 'skin' },
+    'calcipotriene': { abbr: 'dovonex', category: 'skin' },
+    'triamcinolone': { abbr: 'kenalog', category: 'skin' },
+    'hydrocortisone cream': { abbr: 'cortisone', category: 'skin' },
+    'petrolatum': { abbr: 'vaseline', category: 'skin' },
+    'zinc oxide': { abbr: 'zinc', category: 'skin' },
+    'vitamin d': { abbr: 'vitD', category: 'skin' },
+    'calcium': { abbr: 'calcium', category: 'skin' },
+    'multivitamin': { abbr: 'MVI', category: 'skin' },
+    'folic acid': { abbr: 'folate', category: 'skin' },
+    'thiamine': { abbr: 'B1', category: 'skin' },
+    'parenteral nutrition': { abbr: 'TPN', category: 'nutrition' },
+    'total parenteral nutrition': { abbr: 'TPN', category: 'nutrition' },
+    'tpn': { abbr: 'TPN', category: 'nutrition' },
+    'peripheral parenteral nutrition': { abbr: 'PPN', category: 'nutrition' },
+    'ppn': { abbr: 'PPN', category: 'nutrition' },
+};
 
 
 
@@ -8135,74 +8319,68 @@ function extractDoseInfo(line) {
     const medLines = medsText.split('\n').filter(line => line.trim());
     const processedMeds = new Set();
     
-    medLines.forEach(line => {
-        const lineLower = line.toLowerCase();
-        
-        // Skip non-medication lines
-        if (lineLower.includes('scheduled:') || 
-            lineLower.includes('prn:') || 
-            lineLower.includes('continuous:') ||
-            line.trim().length < 3) {
-            return;
+medLines.forEach(line => {
+    const lineLower = line.toLowerCase();
+    
+    // Skip non-medication lines
+    if (lineLower.includes('scheduled:') || 
+        lineLower.includes('prn:') || 
+        lineLower.includes('continuous:') ||
+        line.trim().length < 3) {
+        return;
+    }
+    
+    // Find matching drug
+    let matched = false;
+    for (const [drug, info] of Object.entries(drugAbbreviations)) {
+        if (lineLower.includes(drug)) {
+            const { dose, freq } = extractDoseInfo(line);
+            
+            // Build abbreviation
+            let abbr = info.abbr;
+            if (dose) {
+                if (drug === 'acetaminophen' && dose === '975') abbr = 't975';
+                else if (drug === 'acetaminophen' && dose === '1000') abbr = 'T1g';
+                else if (dose && freq) abbr = `${info.abbr}${dose}${freq}`;
+                else if (dose) abbr = `${info.abbr}${dose}`;
+            }
+            if (freq && !dose) abbr = `${info.abbr}${freq}`;
+            
+            // Add IV notation
+            if (lineLower.includes('iv ') || lineLower.includes('intravenous')) {
+                abbr += 'IV';
+            }
+            
+            // Add asterisks for IV pain/sedation
+            if ((info.category === 'neuro' || info.category === 'pulm') && abbr.includes('IV')) {
+                abbr = `*${abbr}*`;
+            }
+            
+            if (!processedMeds.has(abbr)) {
+                categorizedMeds[info.category].push(abbr);
+                processedMeds.add(abbr);
+            }
+            
+            matched = true;
+            break;
         }
-        
-        // Find matching drug
-        let matched = false;
-        for (const [drug, info] of Object.entries(drugAbbreviations)) {
-            if (lineLower.includes(drug)) {
-                const { dose, freq } = extractDoseInfo(line);
-                
-                // Build abbreviation
-                let abbr = info.abbr;
-                if (dose) {
-                    // Special formatting for common doses
-                    if (drug === 'acetaminophen' && dose === '975') abbr = 't975';
-                    else if (drug === 'acetaminophen' && dose === '1000') abbr = 'T1g';
-                    else if (dose && freq) abbr = `${info.abbr}${dose}${freq}`;
-                    else if (dose) abbr = `${info.abbr}${dose}`;
-                }
-                if (freq && !dose) abbr = `${info.abbr}${freq}`;
-                
-              // Special cases for IV medications
-		if (lineLower.includes('iv ') || lineLower.includes('intravenous')) {
-		    abbr += 'IV';
-		}
-		
-		// Add asterisks around IV pain medications
-		if (info.category === 'Pain' && abbr.includes('IV')) {
-		    abbr = `*${abbr}*`;
-		}
-		
-		if (!processedMeds.has(abbr)) {
-		    orders[info.category].push(abbr);
-		    processedMeds.add(abbr);
-		}
-
-
-
-
-
-		    
-                matched = true;
-                break;
+    }
+    
+    // Special handling for fluids with rates
+    if (!matched && (lineLower.includes('ml/hr') || lineLower.includes('ml per hour'))) {
+        const rateMatch = line.match(/(\d+)\s*mL\/hr/i);
+        if (rateMatch) {
+            const rate = rateMatch[1];
+            if (lineLower.includes('lactated ringer')) {
+                categorizedMeds['renal'].push(`LR@${rate}`);
+            } else if (lineLower.includes('normal saline') || lineLower.includes('0.9%')) {
+                categorizedMeds['renal'].push(`NS@${rate}`);
+            } else if (lineLower.includes('d5w')) {
+                categorizedMeds['renal'].push(`D5W@${rate}`);
             }
         }
-        
-        // Special handling for fluids with rates
-        if (!matched && (lineLower.includes('ml/hr') || lineLower.includes('ml per hour'))) {
-            const rateMatch = line.match(/(\d+)\s*mL\/hr/i);
-            if (rateMatch) {
-                const rate = rateMatch[1];
-                if (lineLower.includes('lactated ringer')) {
-                    orders['N/F'].push(`LR@${rate}`);
-                } else if (lineLower.includes('normal saline') || lineLower.includes('0.9%')) {
-                    orders['N/F'].push(`NS@${rate}`);
-                } else if (lineLower.includes('d5w')) {
-                    orders['N/F'].push(`D5W@${rate}`);
-                }
-            }
-        }
-    });
+    }
+});
     
     // Format final orders
     const formattedOrders = [];
