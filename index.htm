@@ -11147,7 +11147,7 @@ function generateModernLabTable(data) {
   console.log('🔍 Generating lab table, data:', data); // Debug
   
   const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
-  const fmt = (v) => v !== undefined ? v.toFixed(1) : '--';
+  const fmt = (v) => v !== undefined ? String(v) : '--';
   
   // Determine max columns available across all labs (up to 5)
   let maxColumns = 1;
