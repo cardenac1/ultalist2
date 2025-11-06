@@ -6620,16 +6620,16 @@ const ioData = {
     const intakeSection = intakeMatch ? intakeMatch[1] : '';
     const outputSection = outputMatch ? outputMatch[1] : '';
 
-    // Get current time and calculate 6 AM cutoff
+    // Get current time and calculate 7 AM cutoff
     const now = new Date();
     const currentHour = now.getHours();
     const cutoffDate = new Date(now);
 
-    if (currentHour < 6) {
-        // If before 6 AM, go back to 6 AM yesterday
+    if (currentHour < 7) {
+        // If before 7 AM, go back to 7 AM yesterday
         cutoffDate.setDate(cutoffDate.getDate() - 1);
     }
-    cutoffDate.setHours(6, 0, 0, 0);
+    cutoffDate.setHours(7, 0, 0, 0);
     
     console.log('Current time:', now);
     console.log('Cutoff date:', cutoffDate);
