@@ -3483,16 +3483,6 @@ function clearSearch() {
     updateNavButtons();
 
 
-	     // ← ADD THIS: Auto-focus on "To do" field after a brief delay
-    setTimeout(() => {
-        const todoField = document.getElementById('field_To_do');
-        if (todoField) {
-            todoField.focus();
-            // Optional: scroll to the field if it's not visible
-            todoField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, 50);
-
 	 
 }
  
