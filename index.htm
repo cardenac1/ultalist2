@@ -6377,16 +6377,17 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
 
 
 
-	// Extract vitals (only from last 24 hours)
-            // Helper function to check if entry is within 24 hours
+	// Extract vitals (from last 48 hours to catch more data for suggestions)
+            // Helper function to check if entry is within 48 hours (extended from 24 for better suggestion coverage)
             const now = new Date();
-            const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
-            
+            const fortyEightHoursAgo = new Date(now - 48 * 60 * 60 * 1000);
+
             function isWithin24Hours(dateTimeStr) {
                 const parts = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
                 if (!parts) return false;
                 const dt = new Date(`20${parts[3]}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${parts[6]}`);
-                return dt >= twentyFourHoursAgo && dt <= now;
+                // Changed to 48 hours to ensure vitals are captured for suggestions
+                return dt >= fortyEightHoursAgo && dt <= now;
             }
             
             // Extract temperature with timestamps
@@ -6609,43 +6610,54 @@ extractLabValue('Procalcitonin:', 'procalcitonin');
 
             // ========== VITALS SUGGESTIONS ==========
             if (data?.vitals) {
-                console.log('Vitals data found:', data.vitals);
+                console.log('Vitals data found:', JSON.stringify(data.vitals));
 
-                // Temperature - use first() since most recent values are at index 0
-                if (data.vitals.temp && data.vitals.temp.length > 0) {
-                    const temp = num(first(data.vitals.temp));
-                    console.log('Checking temp:', temp);
-                    if (temp !== undefined && (temp > 38 || temp < 35)) {
+                // Temperature - check the most recent value (first in array)
+                if (data.vitals.temp && Array.isArray(data.vitals.temp) && data.vitals.temp.length > 0) {
+                    // Check the most recent temp (first value)
+                    const temp = num(data.vitals.temp[0]);
+                    console.log('Checking temp - raw value:', data.vitals.temp[0], 'parsed:', temp);
+                    if (temp !== undefined && !isNaN(temp) && (temp > 38 || temp < 35)) {
                         suggestions.push(`*T is ${temp.toFixed(1)}!*`);
                     }
+                } else {
+                    console.log('No temp data or invalid array:', data.vitals.temp);
                 }
 
                 // Heart Rate
-                if (data.vitals.hr && data.vitals.hr.length > 0) {
-                    const hr = num(first(data.vitals.hr));
-                    console.log('Checking HR:', hr);
-                    if (hr !== undefined && (hr > 100 || hr < 60)) {
+                if (data.vitals.hr && Array.isArray(data.vitals.hr) && data.vitals.hr.length > 0) {
+                    const hr = num(data.vitals.hr[0]);
+                    console.log('Checking HR - raw value:', data.vitals.hr[0], 'parsed:', hr);
+                    if (hr !== undefined && !isNaN(hr) && (hr > 100 || hr < 60)) {
                         suggestions.push(`*HR is ${hr}!*`);
                     }
+                } else {
+                    console.log('No HR data or invalid array:', data.vitals.hr);
                 }
 
                 // Blood Pressure
-                if (data.vitals.sbp && data.vitals.sbp.length > 0) {
-                    const sbp = num(first(data.vitals.sbp));
-                    console.log('Checking SBP:', sbp);
-                    if (sbp !== undefined && (sbp < 90 || sbp > 180)) {
+                if (data.vitals.sbp && Array.isArray(data.vitals.sbp) && data.vitals.sbp.length > 0) {
+                    const sbp = num(data.vitals.sbp[0]);
+                    console.log('Checking SBP - raw value:', data.vitals.sbp[0], 'parsed:', sbp);
+                    if (sbp !== undefined && !isNaN(sbp) && (sbp < 90 || sbp > 180)) {
                         suggestions.push(`*BP is ${sbp}!*`);
                     }
+                } else {
+                    console.log('No SBP data or invalid array:', data.vitals.sbp);
                 }
 
                 // O2 Saturation
-                if (data.vitals.o2 && data.vitals.o2.length > 0) {
-                    const o2 = num(first(data.vitals.o2));
-                    console.log('Checking O2:', o2);
-                    if (o2 !== undefined && o2 < 92) {
+                if (data.vitals.o2 && Array.isArray(data.vitals.o2) && data.vitals.o2.length > 0) {
+                    const o2 = num(data.vitals.o2[0]);
+                    console.log('Checking O2 - raw value:', data.vitals.o2[0], 'parsed:', o2);
+                    if (o2 !== undefined && !isNaN(o2) && o2 < 92) {
                         suggestions.push(`*O2 is ${o2}!!!*`);
                     }
+                } else {
+                    console.log('No O2 data or invalid array:', data.vitals.o2);
                 }
+            } else {
+                console.log('No vitals data found in data object');
             }
 
             // ========== LABS SUGGESTIONS ==========
@@ -6741,6 +6753,14 @@ extractLabValue('Procalcitonin:', 'procalcitonin');
                 }
                 if (ptt !== undefined && ptt > 40) {
                     suggestions.push(`*Coagulopathic PTT=${ptt}!!!*`);
+                }
+
+                // Fibrinogen
+                if (data.labs.fib && first(data.labs.fib) !== undefined) {
+                    const fib = num(first(data.labs.fib));
+                    if (fib < 150) {
+                        suggestions.push(`*Hypofibrinogenemia Fibrinogen=${fib}!!!!*`);
+                    }
                 }
 
                 // Albumin
