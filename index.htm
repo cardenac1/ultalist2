@@ -4947,19 +4947,48 @@ function showImportModal() {
     
     labData = extractLabValues(importText);
     const fishbone = generateFishbone(labData);
-    
+
+    // Generate suggestions and append to To do
+    const suggestions = generateSuggestions(labData, patient.Meds || '');
+    if (suggestions.length > 0) {
+        const suggestionsText = '\n\n=== AUTO-GENERATED SUGGESTIONS ===\n' +
+                               suggestions.join('\n');
+
+        // Get existing To do content
+        const existingTodo = patient['To do'] || '';
+
+        // Remove old suggestions if they exist
+        let cleanTodo = existingTodo;
+        const suggestionsMarker = '=== AUTO-GENERATED SUGGESTIONS ===';
+        const markerIndex = existingTodo.indexOf(suggestionsMarker);
+        if (markerIndex !== -1) {
+            // Remove everything from the marker onwards
+            cleanTodo = existingTodo.substring(0, markerIndex).trim();
+        }
+
+        // Append new suggestions
+        patient['To do'] = cleanTodo + suggestionsText;
+
+        // Update the To do textarea if it exists
+        const todoField = document.getElementById('field_To_do');
+        if (todoField) {
+            todoField.value = patient['To do'];
+            autoResizeTextarea(todoField);
+        }
+    }
+
     // Update patient data
     patient.VIOLIN = fishbone;
     patient.LabData = JSON.stringify(labData);
-    
+
     // Update textarea
     if (violinField) {
         violinField.value = fishbone;
         autoResizeTextarea(violinField);
     }
-    
- 
-    
+
+
+
     saveToLocalStorage();
     closeImportModal();
     
@@ -6299,7 +6328,8 @@ data.ventPeepRaw      = pickLatest(/Positive End Expiratory Pressure:\s*(\d+)\s*
 data.ventFiO2Raw      = pickLatest(/FIO2:\s*(\d+)\s*%\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
 
 // If we detected ventilator settings but o2therapyCode isn't set to 'Vent', set it
-if (data.ventModeRaw && !data.o2therapyCode) {
+// Check for any ventilator parameter (Mode, FIO2, Frequency, Tidal Volume, or PEEP)
+if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventTidalRaw || data.ventPeepRaw) && !data.o2therapyCode) {
     data.o2therapyCode = 'Vent';
     data.o2therapyRaw = 'Mechanical Ventilation';
 }
@@ -6547,6 +6577,293 @@ extractLabValue('Prealbumin:', 'prealbumin');
         }
 
 
+        // ============ SUGGESTIONS GENERATION FUNCTION ============
+        function generateSuggestions(data, patientMeds = '') {
+            const suggestions = [];
+
+            // Helper functions
+            const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
+            const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
+            const second = (arr) => (Array.isArray(arr) ? arr[1] : undefined);
+            const last = (arr) => (Array.isArray(arr) && arr.length > 0 ? arr[arr.length - 1] : undefined);
+
+            // ========== VITALS SUGGESTIONS ==========
+            if (data?.vitals) {
+                // Temperature
+                if (data.vitals.temp && last(data.vitals.temp) !== undefined) {
+                    const temp = num(last(data.vitals.temp));
+                    if (temp > 38 || temp < 35) {
+                        suggestions.push(`*T is ${temp.toFixed(1)}!*`);
+                    }
+                }
+
+                // Heart Rate
+                if (data.vitals.hr && last(data.vitals.hr) !== undefined) {
+                    const hr = num(last(data.vitals.hr));
+                    if (hr > 100 || hr < 60) {
+                        suggestions.push(`*HR is ${hr}!*`);
+                    }
+                }
+
+                // Blood Pressure
+                if (data.vitals.sbp && last(data.vitals.sbp) !== undefined) {
+                    const sbp = num(last(data.vitals.sbp));
+                    if (sbp < 90 || sbp > 180) {
+                        suggestions.push(`*BP is ${sbp}!*`);
+                    }
+                }
+
+                // O2 Saturation
+                if (data.vitals.o2 && last(data.vitals.o2) !== undefined) {
+                    const o2 = num(last(data.vitals.o2));
+                    if (o2 < 92) {
+                        suggestions.push(`*O2 is ${o2}!!!*`);
+                    }
+                }
+            }
+
+            // ========== LABS SUGGESTIONS ==========
+            if (data?.labs) {
+                // WBC
+                if (data.labs.wbc && first(data.labs.wbc) !== undefined) {
+                    const wbc = num(first(data.labs.wbc));
+                    if (wbc < 4.5) {
+                        suggestions.push(`*Leukopenia WBC= ${wbc}!!!*`);
+                    } else if (wbc > 11) {
+                        suggestions.push(`*Leukocytosis WBC= ${wbc}!!!*`);
+                    }
+                }
+
+                // Hemoglobin
+                if (data.labs.hgb && first(data.labs.hgb) !== undefined) {
+                    const hgb = num(first(data.labs.hgb));
+                    const hgbPrev = num(second(data.labs.hgb));
+                    if (hgb < 8) {
+                        suggestions.push(`*Anemia! Hgb= ${hgb}!!*`);
+                    } else if (hgbPrev !== undefined && (hgbPrev - hgb) > 1) {
+                        suggestions.push(`*Anemia! Hgb= ${hgb} (dropped from ${hgbPrev})!!*`);
+                    }
+                }
+
+                // Platelets
+                if (data.labs.plt && first(data.labs.plt) !== undefined) {
+                    const plt = num(first(data.labs.plt));
+                    const pltPrev = num(second(data.labs.plt));
+                    if (plt < 150) {
+                        suggestions.push(`*Thrombocytopenia PLT= ${plt}!!!!*`);
+                    } else if (plt > 450) {
+                        suggestions.push(`*Thrombocytosis PLT= ${plt}!!!!*`);
+                    } else if (pltPrev !== undefined && ((pltPrev - plt) / pltPrev) > 0.5) {
+                        suggestions.push(`*Thrombocytopenia (>50% fall) PLT= ${plt} (from ${pltPrev})!!!!*`);
+                    }
+                }
+
+                // Creatinine - AKI
+                if (data.labs.cr && first(data.labs.cr) !== undefined) {
+                    const cr = num(first(data.labs.cr));
+                    const crPrev = num(second(data.labs.cr));
+                    if (crPrev !== undefined) {
+                        const crDelta = cr - crPrev;
+                        if (crDelta >= 0.3) {
+                            suggestions.push(`*AKI! Creatinine is ${cr} (increased ${crDelta.toFixed(2)} from ${crPrev})!!*`);
+                        } else if (cr / crPrev >= 1.5) {
+                            suggestions.push(`*AKI! Creatinine is ${cr} (1.5x baseline ${crPrev})!!*`);
+                        }
+                    }
+                }
+
+                // Glucose
+                if (data.labs.glucose && first(data.labs.glucose) !== undefined) {
+                    const glucose = num(first(data.labs.glucose));
+                    if (glucose < 70) {
+                        suggestions.push(`*Hypoglycemia glucose= ${glucose}!!!*`);
+                    } else if (glucose > 180) {
+                        suggestions.push(`*Hyperglycemia glucose= ${glucose}!!!*`);
+                    }
+                }
+
+                // AST/ALT - Transaminitis
+                const ast = data.labs.ast ? num(first(data.labs.ast)) : undefined;
+                const alt = data.labs.alt ? num(first(data.labs.alt)) : undefined;
+                if ((ast !== undefined && ast > 40) || (alt !== undefined && alt > 40)) {
+                    const values = [];
+                    if (ast !== undefined && ast > 40) values.push(`AST=${ast}`);
+                    if (alt !== undefined && alt > 40) values.push(`ALT=${alt}`);
+                    suggestions.push(`*Transaminitis ${values.join(', ')}!!!*`);
+                }
+
+                // Bilirubin
+                if (data.labs.tbili && first(data.labs.tbili) !== undefined) {
+                    const tbili = num(first(data.labs.tbili));
+                    if (tbili > 1.2) {
+                        suggestions.push(`*Bilirubin elevated, T bili=${tbili}!!*`);
+                    }
+                }
+                if (data.labs.dbili && first(data.labs.dbili) !== undefined) {
+                    const dbili = num(first(data.labs.dbili));
+                    if (dbili > 0.1) {
+                        suggestions.push(`*D bili=${dbili}!!!*`);
+                    }
+                }
+
+                // Albumin
+                if (data.labs.albumin && first(data.labs.albumin) !== undefined) {
+                    const albumin = num(first(data.labs.albumin));
+                    if (albumin < 3.5) {
+                        suggestions.push(`*Hypoalbuminemia ${albumin}!!!!*`);
+                    }
+                }
+
+                // ABG - pH
+                if (data.labs.ph && first(data.labs.ph) !== undefined) {
+                    const ph = num(first(data.labs.ph));
+                    if (ph < 7.35) {
+                        suggestions.push(`*Acidotic! pH= ${ph}!!!*`);
+                    } else if (ph > 7.45) {
+                        suggestions.push(`*Alkalotic! pH= ${ph}!!!*`);
+                    }
+                }
+
+                // CO2/PCO2
+                if (data.labs.pco2 && first(data.labs.pco2) !== undefined) {
+                    const co2 = num(first(data.labs.pco2));
+                    if (co2 < 35) {
+                        suggestions.push(`*Hypocarbic! CO2=${co2}!!*`);
+                    } else if (co2 > 45) {
+                        suggestions.push(`*Hypercarbic! CO2=${co2}!!*`);
+                    }
+                }
+
+                // ABG O2/PO2
+                if (data.labs.po2 && first(data.labs.po2) !== undefined) {
+                    const o2 = num(first(data.labs.po2));
+                    if (o2 < 80) {
+                        suggestions.push(`*Hypoxic! O2= ${o2}!!!!*`);
+                    } else if (o2 > 120) {
+                        suggestions.push(`*Hyperoxic! O2= ${o2}!!!!*`);
+                    }
+                }
+
+                // Lactic Acid
+                if (data.labs.lactate && first(data.labs.lactate) !== undefined) {
+                    const lactate = num(first(data.labs.lactate));
+                    if (lactate > 2) {
+                        suggestions.push(`*Lactic acidosis! Lactate=${lactate}!!!*`);
+                    }
+                }
+
+                // ========== ELECTROLYTE SUGGESTIONS ==========
+                // Sodium
+                if (data.labs.na && first(data.labs.na) !== undefined) {
+                    const na = num(first(data.labs.na));
+                    const naPrev = num(second(data.labs.na));
+                    const naStr = naPrev !== undefined ? `*${na}* (*${naPrev}*)` : `*${na}*`;
+                    if (na < 135) {
+                        suggestions.push(`*Hyponatremic! 1L FWR, Salt tabs 2g BID, Na: ${naStr}*`);
+                    } else if (na > 145) {
+                        suggestions.push(`*Hypernatremic! Na: ${naStr} -> FWB/D5W/0.45 NS*`);
+                    }
+                }
+
+                // Potassium
+                if (data.labs.k && first(data.labs.k) !== undefined) {
+                    const k = num(first(data.labs.k));
+                    const kPrev = num(second(data.labs.k));
+                    const kStr = (k < 4.0 || k > 5.0) ? `*${k}*` : String(k);
+                    const kPrevStr = kPrev !== undefined ? `(${kPrev})` : '(--) ';
+                    if (k >= 3.3 && k <= 3.9) {
+                        suggestions.push(`*Give 40 meq K PO or IV, K=${kStr}${kPrevStr}*`);
+                    } else if (k >= 3.0 && k <= 3.2) {
+                        suggestions.push(`*Give 60 meq K IV, K=${kStr}${kPrevStr}*`);
+                    } else if (k > 0 && k <= 2.6) {
+                        suggestions.push(`*Give 100 meq K and NHO, K=${kStr}${kPrevStr}*`);
+                    } else if (k > 5) {
+                        suggestions.push(`*Hyperkalemic!!, K=${kStr}${kPrevStr}*`);
+                    }
+                }
+
+                // Calcium
+                if (data.labs.ca && first(data.labs.ca) !== undefined) {
+                    const ca = num(first(data.labs.ca));
+                    const caPrev = num(second(data.labs.ca));
+                    const caStr = caPrev !== undefined ? `*${ca}* (*${caPrev}*)` : `*${ca}*`;
+                    if (ca >= 3.5 && ca < 4) {
+                        suggestions.push(`*Give 4g calcium gluconate, 2g/hr, iCa=${caStr}*`);
+                    } else if (ca >= 3 && ca <= 3.4) {
+                        suggestions.push(`*Give 6g calcium gluconate 2g/hr, iCa=${caStr}*`);
+                    } else if (ca >= 2.5 && ca <= 2.9) {
+                        suggestions.push(`*Give 8g calcium gluconate 2g/hr, iCa=${caStr}*`);
+                    } else if (ca > 0 && ca < 2.5) {
+                        suggestions.push(`*Give 10g calcium gluconate 2g/hr, notify senior! iCa=${caStr}*`);
+                    }
+                }
+
+                // Magnesium
+                if (data.labs.mg && first(data.labs.mg) !== undefined) {
+                    const mg = num(first(data.labs.mg));
+                    const mgPrev = num(second(data.labs.mg));
+                    const mgStr = mgPrev !== undefined ? `*${mg}* (*${mgPrev}*)` : `*${mg}*`;
+                    if (mg >= 1.6 && mg <= 1.9) {
+                        suggestions.push(`*Give 4g mag sulfate IV/2hr@2g/hr, Mg: ${mgStr}*`);
+                    } else if (mg >= 1 && mg <= 1.5) {
+                        suggestions.push(`*Give 6g mag sulfate IV/3hr@2g/hr, Mg: ${mgStr}*`);
+                    } else if (mg > 0 && mg <= 1) {
+                        suggestions.push(`*Give 8g mag sulfate IV/4hr@2g/hr, Mg: ${mgStr}*`);
+                    }
+                }
+
+                // Phosphorus
+                if (data.labs.phos && first(data.labs.phos) !== undefined) {
+                    const p = num(first(data.labs.phos));
+                    const pPrev = num(second(data.labs.phos));
+                    const pStr = pPrev !== undefined ? `*${p}* (*${pPrev}*)` : `*${p}*`;
+                    if (p >= 2 && p < 2.5) {
+                        suggestions.push(`*Give 15 mmol phos (22.5 Meq K IV), P=${pStr}*`);
+                    } else if (p >= 1.6 && p <= 1.9) {
+                        suggestions.push(`*Give 30 mmol phos (45 Meq K IV), P=${pStr}*`);
+                    } else if (p > 0 && p <= 1.6) {
+                        suggestions.push(`*Give 40 mmol phos (60 Meq K IV), P=${pStr}*`);
+                    }
+                }
+            }
+
+            // ========== MEDICATION SUGGESTIONS ==========
+            if (patientMeds) {
+                const medsLower = patientMeds.toLowerCase();
+                const ivSubqMeds = [];
+
+                // Check for IV/SC administration
+                const medLines = patientMeds.split('\n');
+                medLines.forEach(line => {
+                    const lineLower = line.toLowerCase();
+                    if ((lineLower.includes('intravenous') || lineLower.includes('subcutaneous') ||
+                         lineLower.includes(' iv ') || lineLower.includes(' sc ')) &&
+                        !lineLower.includes('insulin') && // Exclude insulin from conversion suggestion
+                        line.trim().length > 0) {
+                        ivSubqMeds.push(line.trim());
+                    }
+                });
+
+                if (ivSubqMeds.length > 0) {
+                    suggestions.push(`*Please consider converting these to PO: ${ivSubqMeds.join('; ')}*`);
+                }
+
+                // Check for DVT prophylaxis
+                const hasDvtProphylaxis = medsLower.includes('heparin') ||
+                                         medsLower.includes('enoxaparin') ||
+                                         medsLower.includes('lovenox') ||
+                                         medsLower.includes('warfarin') ||
+                                         medsLower.includes('apixaban') ||
+                                         medsLower.includes('rivaroxaban') ||
+                                         medsLower.includes('dabigatran');
+
+                if (!hasDvtProphylaxis) {
+                    suggestions.push(`*No DVT prophylaxis!!!*`);
+                }
+            }
+
+            return suggestions;
+        }
 
 
 
