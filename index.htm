@@ -4949,7 +4949,9 @@ function showImportModal() {
     const fishbone = generateFishbone(labData);
 
     // Generate suggestions and append to To do
-    const suggestions = generateSuggestions(labData, patient.Meds || '');
+    // Use imported data to get full medication orders
+    const fullMedsText = extractFullMeds(importText);
+    const suggestions = generateSuggestions(labData, fullMedsText);
     if (suggestions.length > 0) {
         const suggestionsText = '\n\n=== AUTO-GENERATED SUGGESTIONS ===\n' +
                                suggestions.join('\n');
@@ -6863,7 +6865,7 @@ extractLabValue('Procalcitonin:', 'procalcitonin');
             }
 
             // ========== MEDICATION SUGGESTIONS ==========
-            console.log('Checking medications:', patientMeds);
+            console.log('Checking medications (full text):', patientMeds ? patientMeds.substring(0, 200) + '...' : 'No meds');
             if (patientMeds && patientMeds.trim().length > 0) {
                 const medsLower = patientMeds.toLowerCase();
                 const ivSubqMeds = [];
@@ -6871,30 +6873,73 @@ extractLabValue('Procalcitonin:', 'procalcitonin');
                 // Check for IV/SC administration
                 const medLines = patientMeds.split('\n');
                 console.log('Processing med lines:', medLines.length);
+
                 medLines.forEach(line => {
                     const lineLower = line.toLowerCase();
-                    // Enhanced detection for IV/SC routes
-                    if ((lineLower.includes('intravenous') ||
-                         lineLower.includes('subcutaneous') ||
-                         lineLower.includes(' iv ') ||
-                         lineLower.includes(' iv,') ||
-                         lineLower.includes('(iv)') ||
-                         lineLower.includes(' sc ') ||
-                         lineLower.includes(' sc,') ||
-                         lineLower.includes('(sc)') ||
-                         lineLower.includes('intravascular') ||
-                         lineLower.includes(' im ') ||
-                         lineLower.includes('intramuscular')) &&
-                        !lineLower.includes('insulin') && // Exclude insulin from conversion suggestion
-                        !lineLower.includes('heparin') && // Exclude heparin (usually needs to be IV/SC)
-                        line.trim().length > 0) {
-                        ivSubqMeds.push(line.trim());
+                    const trimmedLine = line.trim();
+
+                    // Skip empty lines and section headers
+                    if (!trimmedLine ||
+                        lineLower.includes('scheduled:') ||
+                        lineLower.includes('prn:') ||
+                        lineLower.includes('continuous:')) {
+                        return;
+                    }
+
+                    // Check if medication is IV or SC
+                    const isIV = lineLower.includes('intravenous') ||
+                                 lineLower.includes(', iv ') ||
+                                 lineLower.includes(' iv,') ||
+                                 lineLower.includes('(iv)') ||
+                                 lineLower.includes('iv bolus') ||
+                                 lineLower.includes('iv piggyback') ||
+                                 lineLower.includes('iv push') ||
+                                 lineLower.match(/,\s*iv\s*,/);
+
+                    const isSC = lineLower.includes('subcutaneous') ||
+                                 lineLower.includes(', subcutaneous') ||
+                                 lineLower.includes(' sc,') ||
+                                 lineLower.includes('(sc)');
+
+                    const isIM = lineLower.includes('intramuscular') ||
+                                 lineLower.includes(' im,') ||
+                                 lineLower.includes(', im ');
+
+                    if (isIV || isSC || isIM) {
+                        // Exclude insulin and hypoglycemia protocol
+                        const isInsulin = lineLower.includes('insulin');
+                        const isHypoglycemiaProtocol =
+                            lineLower.includes('glucagon') ||
+                            lineLower.includes('glucose 40%') ||
+                            lineLower.includes('dextrose 10%');
+
+                        // Exclude heparin (anticoagulation typically needs IV/SC)
+                        const isHeparin = lineLower.includes('heparin') &&
+                                         !lineLower.includes('heparin flush');
+
+                        if (!isInsulin && !isHypoglycemiaProtocol && !isHeparin) {
+                            // Extract medication name (remove emojis and simplify)
+                            let medName = trimmedLine
+                                .replace(/^[💊💉🟥\s]+/, '')  // Remove emojis at start
+                                .replace(/\s+\d+\s*(mg|mcg|g|mL|mmol|unit|units|Inj|Tab|Cap).*$/i, '')  // Remove dose/form
+                                .trim();
+
+                            // Take only the first part before dose details
+                            const parts = medName.split(/\s+\d/);
+                            if (parts.length > 0) {
+                                medName = parts[0].trim();
+                            }
+
+                            ivSubqMeds.push(medName);
+                        }
                     }
                 });
 
                 console.log('Found IV/SC meds:', ivSubqMeds);
                 if (ivSubqMeds.length > 0) {
-                    suggestions.push(`*Please consider converting these to PO: ${ivSubqMeds.join('; ')}*`);
+                    // Remove duplicates
+                    const uniqueMeds = [...new Set(ivSubqMeds)];
+                    suggestions.push(`*Please consider converting these to PO: ${uniqueMeds.join(', ')}*`);
                 }
 
                 // Check for DVT prophylaxis
