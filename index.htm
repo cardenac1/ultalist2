@@ -5146,6 +5146,7 @@ renderOrdersTable();
                 'bun': 'BUN',
                 'cr': 'Creatinine',
                 'glu': 'Glucose',
+                'glucose': 'Glucose',
                 'ca': 'Calcium',
                 'mg': 'Magnesium',
                 'phos': 'Phosphorus',
@@ -5156,10 +5157,20 @@ renderOrdersTable();
                 'lactate': 'Lactic Acid',
                 'ast': 'AST',
                 'alt': 'ALT',
-                'tbili': 'Total Bilirubin',
-                'dbili': 'Direct Bilirubin',
-                'alkphos': 'Alk Phos',
-                'ggt': 'GGT'
+                'tbil': 'Total Bilirubin',
+                'dbil': 'Direct Bilirubin',
+                'alk': 'Alk Phos',
+                'ggt': 'GGT',
+                'inr': 'INR',
+                'pt': 'PT',
+                'ptt': 'PTT/APTT',
+                'fib': 'Fibrinogen',
+                'trop': 'Troponin',
+                'procalcitonin': 'Procalcitonin',
+                'albumin': 'Albumin',
+                'prealbumin': 'Prealbumin',
+                'amylase': 'Amylase',
+                'lipase': 'Lipase'
             };
             
             if (labData.labs) {
@@ -6570,6 +6581,9 @@ extractLabValue('Lipase:', 'lipase');
 extractLabValue('Albumin:', 'albumin');
 extractLabValue('Prealbumin:', 'prealbumin');
 
+// Extract procalcitonin
+extractLabValue('Procalcitonin:', 'procalcitonin');
+
 
 
 
@@ -6581,6 +6595,10 @@ extractLabValue('Prealbumin:', 'prealbumin');
         function generateSuggestions(data, patientMeds = '') {
             const suggestions = [];
 
+            // Debug logging
+            console.log('generateSuggestions called with data:', data);
+            console.log('patientMeds:', patientMeds);
+
             // Helper functions
             const num = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v));
             const first = (arr) => (Array.isArray(arr) ? arr[0] : undefined);
@@ -6589,34 +6607,40 @@ extractLabValue('Prealbumin:', 'prealbumin');
 
             // ========== VITALS SUGGESTIONS ==========
             if (data?.vitals) {
-                // Temperature
-                if (data.vitals.temp && last(data.vitals.temp) !== undefined) {
-                    const temp = num(last(data.vitals.temp));
-                    if (temp > 38 || temp < 35) {
+                console.log('Vitals data found:', data.vitals);
+
+                // Temperature - use first() since most recent values are at index 0
+                if (data.vitals.temp && data.vitals.temp.length > 0) {
+                    const temp = num(first(data.vitals.temp));
+                    console.log('Checking temp:', temp);
+                    if (temp !== undefined && (temp > 38 || temp < 35)) {
                         suggestions.push(`*T is ${temp.toFixed(1)}!*`);
                     }
                 }
 
                 // Heart Rate
-                if (data.vitals.hr && last(data.vitals.hr) !== undefined) {
-                    const hr = num(last(data.vitals.hr));
-                    if (hr > 100 || hr < 60) {
+                if (data.vitals.hr && data.vitals.hr.length > 0) {
+                    const hr = num(first(data.vitals.hr));
+                    console.log('Checking HR:', hr);
+                    if (hr !== undefined && (hr > 100 || hr < 60)) {
                         suggestions.push(`*HR is ${hr}!*`);
                     }
                 }
 
                 // Blood Pressure
-                if (data.vitals.sbp && last(data.vitals.sbp) !== undefined) {
-                    const sbp = num(last(data.vitals.sbp));
-                    if (sbp < 90 || sbp > 180) {
+                if (data.vitals.sbp && data.vitals.sbp.length > 0) {
+                    const sbp = num(first(data.vitals.sbp));
+                    console.log('Checking SBP:', sbp);
+                    if (sbp !== undefined && (sbp < 90 || sbp > 180)) {
                         suggestions.push(`*BP is ${sbp}!*`);
                     }
                 }
 
                 // O2 Saturation
-                if (data.vitals.o2 && last(data.vitals.o2) !== undefined) {
-                    const o2 = num(last(data.vitals.o2));
-                    if (o2 < 92) {
+                if (data.vitals.o2 && data.vitals.o2.length > 0) {
+                    const o2 = num(first(data.vitals.o2));
+                    console.log('Checking O2:', o2);
+                    if (o2 !== undefined && o2 < 92) {
                         suggestions.push(`*O2 is ${o2}!!!*`);
                     }
                 }
@@ -6692,18 +6716,29 @@ extractLabValue('Prealbumin:', 'prealbumin');
                     suggestions.push(`*Transaminitis ${values.join(', ')}!!!*`);
                 }
 
-                // Bilirubin
-                if (data.labs.tbili && first(data.labs.tbili) !== undefined) {
-                    const tbili = num(first(data.labs.tbili));
+                // Bilirubin (note: keys are 'tbil' and 'dbil' not 'tbili'/'dbili')
+                if (data.labs.tbil && first(data.labs.tbil) !== undefined) {
+                    const tbili = num(first(data.labs.tbil));
                     if (tbili > 1.2) {
-                        suggestions.push(`*Bilirubin elevated, T bili=${tbili}!!*`);
+                        suggestions.push(`*Hyperbilirubinemia!! Tbili=${tbili}!!!*`);
                     }
                 }
-                if (data.labs.dbili && first(data.labs.dbili) !== undefined) {
-                    const dbili = num(first(data.labs.dbili));
+                if (data.labs.dbil && first(data.labs.dbil) !== undefined) {
+                    const dbili = num(first(data.labs.dbil));
                     if (dbili > 0.1) {
                         suggestions.push(`*D bili=${dbili}!!!*`);
                     }
+                }
+
+                // INR and PTT - Coagulopathy detection
+                const inr = data.labs.inr ? num(first(data.labs.inr)) : undefined;
+                const ptt = data.labs.ptt ? num(first(data.labs.ptt)) : undefined;
+
+                if (inr !== undefined && inr > 2) {
+                    suggestions.push(`*Coagulopathic INR=${inr}!!!*`);
+                }
+                if (ptt !== undefined && ptt > 40) {
+                    suggestions.push(`*Coagulopathic PTT=${ptt}!!!*`);
                 }
 
                 // Albumin
@@ -6828,22 +6863,36 @@ extractLabValue('Prealbumin:', 'prealbumin');
             }
 
             // ========== MEDICATION SUGGESTIONS ==========
-            if (patientMeds) {
+            console.log('Checking medications:', patientMeds);
+            if (patientMeds && patientMeds.trim().length > 0) {
                 const medsLower = patientMeds.toLowerCase();
                 const ivSubqMeds = [];
 
                 // Check for IV/SC administration
                 const medLines = patientMeds.split('\n');
+                console.log('Processing med lines:', medLines.length);
                 medLines.forEach(line => {
                     const lineLower = line.toLowerCase();
-                    if ((lineLower.includes('intravenous') || lineLower.includes('subcutaneous') ||
-                         lineLower.includes(' iv ') || lineLower.includes(' sc ')) &&
+                    // Enhanced detection for IV/SC routes
+                    if ((lineLower.includes('intravenous') ||
+                         lineLower.includes('subcutaneous') ||
+                         lineLower.includes(' iv ') ||
+                         lineLower.includes(' iv,') ||
+                         lineLower.includes('(iv)') ||
+                         lineLower.includes(' sc ') ||
+                         lineLower.includes(' sc,') ||
+                         lineLower.includes('(sc)') ||
+                         lineLower.includes('intravascular') ||
+                         lineLower.includes(' im ') ||
+                         lineLower.includes('intramuscular')) &&
                         !lineLower.includes('insulin') && // Exclude insulin from conversion suggestion
+                        !lineLower.includes('heparin') && // Exclude heparin (usually needs to be IV/SC)
                         line.trim().length > 0) {
                         ivSubqMeds.push(line.trim());
                     }
                 });
 
+                console.log('Found IV/SC meds:', ivSubqMeds);
                 if (ivSubqMeds.length > 0) {
                     suggestions.push(`*Please consider converting these to PO: ${ivSubqMeds.join('; ')}*`);
                 }
@@ -6855,13 +6904,19 @@ extractLabValue('Prealbumin:', 'prealbumin');
                                          medsLower.includes('warfarin') ||
                                          medsLower.includes('apixaban') ||
                                          medsLower.includes('rivaroxaban') ||
-                                         medsLower.includes('dabigatran');
+                                         medsLower.includes('dabigatran') ||
+                                         medsLower.includes('fondaparinux') ||
+                                         medsLower.includes('arixtra');
 
+                console.log('Has DVT prophylaxis:', hasDvtProphylaxis);
                 if (!hasDvtProphylaxis) {
                     suggestions.push(`*No DVT prophylaxis!!!*`);
                 }
+            } else {
+                console.log('No medications data available');
             }
 
+            console.log('Total suggestions generated:', suggestions.length, suggestions);
             return suggestions;
         }
 
