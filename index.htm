@@ -7103,17 +7103,24 @@ const ioData = {
     // Helper function to extract output type from description
     function extractOutputType(line) {
         // Extract the type/description before the volume
-        // e.g., "JP Drain #1 - Output: 50 mL" -> "JP Drain #1"
-        // e.g., "CRRT Actual UF Rate Removed: 88 mL" -> "CRRT Actual UF Rate Removed"
-        let description = line.split(':')[0].trim();
+        let description = '';
 
-        // Remove any leading "#<n> " patterns
-        description = description.replace(/^#\d+\s*/, '');
-
-        // For lines with "Other:" prefix, extract the actual type
-        if (/^Other:/i.test(description)) {
-            const m = line.match(/Other:\s*([^:-]+?)(?:\s*-\s*|:)/i);
-            description = m ? m[1].trim() : description;
+        // Check if this is an "Other:" prefixed line
+        // e.g., "#1 Other: JP Neck right - Surgical Drain, Tube Output: 20 mL"
+        if (/Other:/i.test(line)) {
+            // Extract the part between "Other:" and the volume
+            // Pattern: "Other: <description>: <volume> mL"
+            const m = line.match(/Other:\s*(.+?):\s*\d+\s*mL/i);
+            if (m) {
+                description = m[1].trim();
+                // Remove trailing parts like ", Tube Output" or "- Tube Output" if present
+                description = description.replace(/[,-]\s*(?:Tube\s+)?Output\s*$/i, '').trim();
+            }
+        } else {
+            // For regular lines, take everything before the first colon
+            description = line.split(':')[0].trim();
+            // Remove any leading "#<n> " patterns
+            description = description.replace(/^#\d+\s*/, '');
         }
 
         return description;
