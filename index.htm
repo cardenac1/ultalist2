@@ -5471,51 +5471,23 @@ Object.keys(diastolicReadings).forEach(timeKey => {
     // Extract I/O data
     const ioData = extractIntakeOutputData(lastImportedData);
     
-    // Add intake readings
-    if (ioData.intakes.enteral && ioData.intakes.enteral.length > 0) {
-        ioData.intakes.enteral.forEach(entry => {
-            const timeKey = entry.dateTimeStr;
-            timeSet.add(timeKey);
-            vitalReadings.push({
-                type: 'Enteral Feeding',
-                value: entry.volume,
-                unit: 'mL',
-                time: timeKey,
-                datetime: entry.dateTime,
-                abnormal: false
+    // Add intake readings - iterate through all intake types
+    Object.entries(ioData.intakes).forEach(([intakeType, entries]) => {
+        if (entries && entries.length > 0) {
+            entries.forEach(entry => {
+                const timeKey = entry.dateTimeStr;
+                timeSet.add(timeKey);
+                vitalReadings.push({
+                    type: intakeType,
+                    value: entry.volume,
+                    unit: 'mL',
+                    time: timeKey,
+                    datetime: entry.dateTime,
+                    abnormal: false
+                });
             });
-        });
-    }
-    
-    if (ioData.intakes.bloodProducts && ioData.intakes.bloodProducts.length > 0) {
-        ioData.intakes.bloodProducts.forEach(entry => {
-            const timeKey = entry.dateTimeStr;
-            timeSet.add(timeKey);
-            vitalReadings.push({
-                type: 'Blood Products',
-                value: entry.volume,
-                unit: 'mL',
-                time: timeKey,
-                datetime: entry.dateTime,
-                abnormal: false
-            });
-        });
-    }
-    
-    if (ioData.intakes.other && ioData.intakes.other.length > 0) {
-        ioData.intakes.other.forEach(entry => {
-            const timeKey = entry.dateTimeStr;
-            timeSet.add(timeKey);
-            vitalReadings.push({
-                type: entry.description || 'Other Intake',
-                value: entry.volume,
-                unit: 'mL',
-                time: timeKey,
-                datetime: entry.dateTime,
-                abnormal: false
-            });
-        });
-    }
+        }
+    });
     
     // Add output readings
     if (ioData.outputs.urine && ioData.outputs.urine.length > 0) {
@@ -5603,13 +5575,10 @@ Object.keys(diastolicReadings).forEach(timeKey => {
     
 // Categorize the types
 const vitalTypes = ['Temperature', 'Heart Rate', 'Systolic BP', 'Diastolic BP', 'O2 Saturation'];
-const intakeTypes = allTypes.filter(t => 
-    t.includes('Enteral') || t.includes('Blood Product') || 
-    (vitalReadings.find(r => r.type === t && ioData.intakes.other && 
-     ioData.intakes.other.some(i => i.description === t)))
-);
+// Get all intake types from the ioData structure
+const intakeTypes = allTypes.filter(t => Object.keys(ioData.intakes).includes(t));
 const countTypes = allTypes.filter(t => t.includes('Count'));
-const outputTypes = allTypes.filter(t => 
+const outputTypes = allTypes.filter(t =>
     !vitalTypes.includes(t) && !intakeTypes.includes(t) && !countTypes.includes(t)
 );
 
@@ -7018,13 +6987,9 @@ extractLabValue('Procalcitonin:', 'procalcitonin');
 
 function extractIntakeOutputData(text) {
     console.log('extractIntakeOutputData called with text length:', text ? text.length : 0);
-    
+
 const ioData = {
-    intakes: {
-        enteral: [],
-        bloodProducts: [],
-        other: []
-    },
+    intakes: {},  // Changed to object to group by type
     outputs: {
         urine: [],
         urinaryCatheter: false,
@@ -7046,14 +7011,14 @@ const ioData = {
         console.log('No I/O section found in text');
         return ioData;
     }
-    
+
     console.log('Found I/O section');
     const ioText = ioMatch[1];
-    
+
     // Split into intake and output sections
     const intakeMatch = ioText.match(/Intake\s*\n([\s\S]*?)(?=Output|$)/i);
     const outputMatch = ioText.match(/Output\s*\n([\s\S]*?)$/i);
-    
+
     const intakeSection = intakeMatch ? intakeMatch[1] : '';
     const outputSection = outputMatch ? outputMatch[1] : '';
 
@@ -7061,13 +7026,13 @@ const ioData = {
     const now = new Date();
     const currentHour = now.getHours();
     const cutoffDate = new Date(now);
-    
+
     if (currentHour < 7) {
         // If before 7 AM, go back to 7 AM yesterday
         cutoffDate.setDate(cutoffDate.getDate() - 1);
     }
     cutoffDate.setHours(7, 0, 0, 0);
-    
+
     console.log('Current time:', now);
     console.log('Cutoff date:', cutoffDate);
 
@@ -7076,10 +7041,10 @@ const ioData = {
         // Format: (06/14/25 07:00:00)
         const match = dateTimeStr.match(/\((\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})\)/);
         if (!match) return null;
-        
+
         const [_, month, day, year, hour, minute, second] = match;
         const fullYear = 2000 + parseInt(year);
-        return new Date(fullYear, parseInt(month) - 1, parseInt(day), 
+        return new Date(fullYear, parseInt(month) - 1, parseInt(day),
                        parseInt(hour), parseInt(minute), parseInt(second));
     }
 
@@ -7089,50 +7054,69 @@ const ioData = {
         return dateTime >= cutoffDate && dateTime <= now;
     }
 
+    // Helper function to extract intake type from description
+    function extractIntakeType(description) {
+        // Extract the specific type from descriptions like:
+        // "Nasogastric Nostril, left - Enteral Medication Intake"
+        // "Nasogastric Nostril, left - Enteral Tube Feed Continuous"
+        // Returns: "Enteral Medication Intake", "Enteral Tube Feed Continuous", etc.
+        const dashMatch = description.match(/\s*-\s*(.+)$/);
+        if (dashMatch) {
+            return dashMatch[1].trim();
+        }
+        return description;
+    }
+
     // Process intake entries
     if (intakeSection && !intakeSection.includes('No qualifying data available')) {
         const intakeLines = intakeSection.split('\n').filter(line => line.trim());
-        
+
         intakeLines.forEach(line => {
             if (line.trim() === '') return;
-            
+
             const dateTime = parseDateTime(line);
             if (!isWithinTimeWindow(dateTime)) return;
-            
+
             const volumeMatch = line.match(/:\s*(\d+)\s*mL/);
             if (!volumeMatch) return;
-            
+
             const volume = parseInt(volumeMatch[1]);
+            const fullDescription = line.split(':')[0].trim();
+            const intakeType = extractIntakeType(fullDescription);
+
             const entry = {
-                description: line.split(':')[0].trim(),
+                description: fullDescription,
+                type: intakeType,
                 volume: volume,
                 dateTime: dateTime,
                 dateTimeStr: line.match(/\(([^)]+)\)/)[1]
             };
-            
-       // Categorize intake
-            if (line.toLowerCase().includes('enteral') || 
-                line.toLowerCase().includes('tube feed') ||
-                line.toLowerCase().includes('feeding tube') ||
-                line.toLowerCase().includes('nasogastric') ||
-                line.toLowerCase().includes('ng tube') ||
-                line.toLowerCase().includes('peg') ||
-                line.toLowerCase().includes('jejunostomy')) {
-                ioData.intakes.enteral.push(entry);
-            } else if (line.toLowerCase().includes('blood') || 
-                       line.toLowerCase().includes('red blood cells') ||
-                       line.toLowerCase().includes('packed cells') ||
-                       line.toLowerCase().includes('plasma') || 
-                       line.toLowerCase().includes('platelets') ||
-                       line.toLowerCase().includes('fresh frozen') ||
-                       line.toLowerCase().includes('cryoprecipitate') ||
-                       line.toLowerCase().includes('albumin')) {
-                ioData.intakes.bloodProducts.push(entry);
-            } else {
-                ioData.intakes.other.push(entry);
+
+            // Group by specific intake type
+            if (!ioData.intakes[intakeType]) {
+                ioData.intakes[intakeType] = [];
             }
-			
+            ioData.intakes[intakeType].push(entry);
         });
+    }
+
+    // Helper function to extract output type from description
+    function extractOutputType(line) {
+        // Extract the type/description before the volume
+        // e.g., "JP Drain #1 - Output: 50 mL" -> "JP Drain #1"
+        // e.g., "CRRT Actual UF Rate Removed: 88 mL" -> "CRRT Actual UF Rate Removed"
+        let description = line.split(':')[0].trim();
+
+        // Remove any leading "#<n> " patterns
+        description = description.replace(/^#\d+\s*/, '');
+
+        // For lines with "Other:" prefix, extract the actual type
+        if (/^Other:/i.test(description)) {
+            const m = line.match(/Other:\s*([^:-]+?)(?:\s*-\s*|:)/i);
+            description = m ? m[1].trim() : description;
+        }
+
+        return description;
     }
 
     // Process output entries
@@ -7140,29 +7124,24 @@ const ioData = {
         const outputLines = outputSection.split('\n').filter(l => l.trim());
         outputLines.forEach(rawLine => {
             let line = rawLine.trim();
-            // strip any leading "#<n> "
-            line = line.replace(/^#\d+\s*/, '');
             // skip bare headers
             if (/^output$/i.test(line) && !line.includes(':')) return;
+
             const dateTime = parseDateTime(line);
             if (!isWithinTimeWindow(dateTime)) return;
+
             const volumeMatch = line.match(/:\s*(\d+)\s*mL/i);
             if (!volumeMatch) return;
+
             const volume = +volumeMatch[1];
             const dateTimeStr = (line.match(/\(([^)]+)\)/) || [,''])[1];
-            // Extract a clean description:
-            let description = '';
-            if (/Other:/i.test(line)) {
-                // grab text after "Other:" up to the next " - " or ":" 
-                const m = line.match(/Other:\s*([^:-]+?)(?:\s*-\s*|:)/i);
-                description = m ? m[1].trim() : '';
-            } else {
-                description = line.split(':')[0].trim();
-            }
+            const description = extractOutputType(line);
+
             const entry = { description, volume, dateTime, dateTimeStr };
-            // now categorize
+
+            // Categorize outputs
             if (/urinary catheter/i.test(line) || /straight cath/i.test(line) ||
-                /urine output/i.test(line) || /void/i.test(line)) {
+                /urine output/i.test(line) || /urine voided/i.test(line)) {
                 ioData.outputs.urine.push(entry);
                 if (/catheter/i.test(line)) ioData.outputs.urinaryCatheter = true;
                 if (!ioData.outputs.lastUrineTime || dateTime > ioData.outputs.lastUrineTime) {
@@ -7170,16 +7149,16 @@ const ioData = {
                     ioData.outputs.lastUrineTimeStr = dateTimeStr;
                 }
             } else if (/estimated blood loss/i.test(line)) {
-                ioData.outputs.other['Estimated Blood Loss'] = 
-                    ioData.outputs.other['Estimated Blood Loss'] || [];
-                ioData.outputs.other['Estimated Blood Loss'].push(entry);
+                const key = 'Estimated Blood Loss';
+                ioData.outputs.other[key] = ioData.outputs.other[key] || [];
+                ioData.outputs.other[key].push(entry);
             } else if (/drain/i.test(description) || /jp/i.test(description)) {
-                // surgical drains now grouped correctly by the cleaned description
-                ioData.outputs.drains[description] = 
+                // Group drains by their specific description
+                ioData.outputs.drains[description] =
                     ioData.outputs.drains[description] || [];
                 ioData.outputs.drains[description].push(entry);
             } else {
-                // anything else
+                // Group all other outputs by their specific type
                 const key = description || 'Other Output';
                 ioData.outputs.other[key] = ioData.outputs.other[key] || [];
                 ioData.outputs.other[key].push(entry);
@@ -7224,17 +7203,18 @@ ioData.counts = countData;
     const elapsedHours = elapsedMs / (1000 * 60 * 60);
     ioData.elapsedHours = elapsedHours;
     ioData.cutoffTime = cutoffDate;
-    
+
     console.log('I/O data processed:', {
-        enteralCount: ioData.intakes.enteral.length,
-        bloodProductCount: ioData.intakes.bloodProducts.length,
+        intakeTypes: Object.keys(ioData.intakes),
+        intakeCounts: Object.fromEntries(Object.entries(ioData.intakes).map(([k, v]) => [k, v.length])),
         urineCount: ioData.outputs.urine.length,
         hasCatheter: ioData.outputs.urinaryCatheter,
         drainTypes: Object.keys(ioData.outputs.drains),
+        otherOutputTypes: Object.keys(ioData.outputs.other),
         elapsedHours: elapsedHours
     });
 
-	
+
 
     return ioData;
 }
@@ -7462,10 +7442,10 @@ const intakeSummaryMatch = lastImportedData.match(/Total\s+Summary[\s\S]*?Intake
 if (intakeSummaryMatch) {
     totalIntake = parseFloat(intakeSummaryMatch[1].replace(/,/g, ''));
 } else {
-    // Fallback to calculation if summary not found
-    totalIntake += ioData.intakes.enteral.reduce((sum, entry) => sum + entry.volume, 0);
-    totalIntake += ioData.intakes.bloodProducts.reduce((sum, entry) => sum + entry.volume, 0);
-    totalIntake += ioData.intakes.other.reduce((sum, entry) => sum + entry.volume, 0);
+    // Fallback to calculation if summary not found - sum all intake types
+    Object.values(ioData.intakes).forEach(entries => {
+        totalIntake += entries.reduce((sum, entry) => sum + entry.volume, 0);
+    });
 }
 		
         
@@ -7490,39 +7470,25 @@ if (outputSummaryMatch) {
         fishbone += `I: ${totalIntake}\n`;
         let hasIntakes = false;
 
-		
-        
-        if (ioData.intakes.enteral.length > 0) {
-            const totalEnteral = ioData.intakes.enteral.reduce((sum, entry) => sum + entry.volume, 0);
-            const hourlyEnteral = Math.round(totalEnteral / elapsedHours);
-            const latestEnteral = ioData.intakes.enteral.sort((a, b) => b.dateTime - a.dateTime)[0];
-            fishbone += `Enteral: ${totalEnteral}mL/${elapsedHoursDisplay}hr (${hourlyEnteral}mL/hr) - last: ${latestEnteral.dateTimeStr}\n`;
-            hasIntakes = true;
-        }
-        
-        if (ioData.intakes.bloodProducts.length > 0) {
-            const totalBlood = ioData.intakes.bloodProducts.reduce((sum, entry) => sum + entry.volume, 0);
-            const latestBlood = ioData.intakes.bloodProducts.sort((a, b) => b.dateTime - a.dateTime)[0];
-            fishbone += `Blood products: ${totalBlood}mL/${elapsedHoursDisplay}hr - last: ${latestBlood.dateTimeStr}\n`;
-            hasIntakes = true;
-        }
-        
-        if (ioData.intakes.other.length > 0) {
-            const groupedIntakes = {};
-            ioData.intakes.other.forEach(entry => {
-                const type = entry.description || 'Other intake';
-                if (!groupedIntakes[type]) groupedIntakes[type] = [];
-                groupedIntakes[type].push(entry);
-            });
-            
-            Object.entries(groupedIntakes).forEach(([type, entries]) => {
+        // Display each intake type separately
+        Object.entries(ioData.intakes).forEach(([intakeType, entries]) => {
+            if (entries.length > 0) {
                 const total = entries.reduce((sum, entry) => sum + entry.volume, 0);
+                const hourly = Math.round(total / elapsedHours);
                 const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-                fishbone += `${type}: ${total}mL/${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}\n`;
+
+                // Check if this is enteral intake to show hourly rate
+                const isEnteral = /enteral|tube feed|nasogastric|ng tube|peg|jejunostomy/i.test(intakeType);
+
+                if (isEnteral) {
+                    fishbone += `${intakeType}: ${total}mL/${elapsedHoursDisplay}hr (${hourly}mL/hr) - last: ${latest.dateTimeStr}\n`;
+                } else {
+                    fishbone += `${intakeType}: ${total}mL/${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}\n`;
+                }
                 hasIntakes = true;
-            });
-        }
-        
+            }
+        });
+
         if (!hasIntakes) {
             fishbone += ``;
         }
@@ -10069,21 +10035,30 @@ function generateMissingValuesMessages(data) {
     if (lastImportedData) {
         const ioData = extractIntakeOutputData(lastImportedData);
         
-        // Check for specific I/O types
-        if (ioData.intakes.bloodProducts.length === 0) {
-            const hasBloodProducts = /blood.*product|packed.*cell|plasma|platelet/i.test(lastImportedData);
-            if (!hasBloodProducts) missing.push('No blood products');
+        // Check for specific I/O types using new intake structure
+        const hasBloodProducts = Object.keys(ioData.intakes).some(type =>
+            /blood|plasma|platelet/i.test(type)
+        );
+        if (!hasBloodProducts) {
+            const hasBloodProductsInText = /blood.*product|packed.*cell|plasma|platelet/i.test(lastImportedData);
+            if (!hasBloodProductsInText) missing.push('No blood products');
         }
-        
-        if (ioData.intakes.other.length === 0) {
-            const hasOralIntake = /oral|po\s|by\s+mouth/i.test(lastImportedData);
-            if (!hasOralIntake) missing.push('No oral intake');
+
+        const hasOralIntake = Object.keys(ioData.intakes).some(type =>
+            /oral/i.test(type)
+        );
+        if (!hasOralIntake) {
+            const hasOralInText = /oral|po\s|by\s+mouth/i.test(lastImportedData);
+            if (!hasOralInText) missing.push('No oral intake');
         }
-        
+
         const hasIVF = /lactated.*ringer|normal.*saline|dextrose.*water|d5w|lr|ns/i.test(lastImportedData);
         if (!hasIVF) missing.push('No IVF');
-        
-        if (ioData.intakes.enteral.length === 0) {
+
+        const hasEnteralIntake = Object.keys(ioData.intakes).some(type =>
+            /enteral|tube feed|nasogastric/i.test(type)
+        );
+        if (!hasEnteralIntake) {
             const hasTubeFeeds = /tube.*feed|enteral|nasogastric.*feed/i.test(lastImportedData);
             if (!hasTubeFeeds) missing.push('No tube feeds');
         }
@@ -12083,12 +12058,10 @@ function buildIOWarnings(ioData, patient) {
     }
   }
 
-  // Intake check
-  const enteral = Array.isArray(ioData.intakes?.enteral) ? ioData.intakes.enteral : [];
-  const blood = Array.isArray(ioData.intakes?.bloodProducts) ? ioData.intakes.bloodProducts : [];
-  const otherIntake = Array.isArray(ioData.intakes?.other) ? ioData.intakes.other : [];
+  // Intake check using new structure
+  const hasAnyIntake = Object.keys(ioData.intakes || {}).length > 0;
 
-  if (enteral.length === 0 && blood.length === 0 && otherIntake.length === 0) {
+  if (!hasAnyIntake) {
     out.push(`No intake recorded in last ${elapsedHoursDisplay}hr!`);
   }
 
@@ -12138,9 +12111,10 @@ function createIODashboard(ioData, data) {
   if (intakeSummaryMatch) {
     totalIntake = parseFloat(intakeSummaryMatch[1].replace(/,/g, ''));
   } else {
-    totalIntake += ioData.intakes.enteral.reduce((sum, entry) => sum + entry.volume, 0);
-    totalIntake += ioData.intakes.bloodProducts.reduce((sum, entry) => sum + entry.volume, 0);
-    totalIntake += ioData.intakes.other.reduce((sum, entry) => sum + entry.volume, 0);
+    // Sum all intake types using new structure
+    Object.values(ioData.intakes).forEach(entries => {
+      totalIntake += entries.reduce((sum, entry) => sum + entry.volume, 0);
+    });
   }
   
   if (outputSummaryMatch) {
@@ -12211,73 +12185,41 @@ function createIODashboard(ioData, data) {
   
   
 
-// INTAKES DETAIL
+// INTAKES DETAIL - Using new intake structure
 const intakesCard = createDetailCard('IN', '#3b82f6');
 
-if (ioData.intakes.enteral.length > 0) {
-  // Group by description to avoid duplicates
-  const groupedEnteral = {};
-  ioData.intakes.enteral.forEach(entry => {
-    const desc = entry.description || 'Enteral';
-    if (!groupedEnteral[desc]) {
-      groupedEnteral[desc] = [];
-    }
-    groupedEnteral[desc].push(entry);
-  });
-  
-  // Show each unique enteral feed with its latest rate
-  Object.entries(groupedEnteral).forEach(([desc, entries]) => {
-    const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-    const rate = latest.volume; // This is the hourly rate for continuous feeds
-    
-    // Clean up description - remove redundant "Enteral" text
-    let cleanDesc = desc.replace(/Percutaneous endo gastrostomy/i, 'PEG')
-                        .replace(/Abdominal wall -/i, '')
-                        .replace(/Enteral Tube Feed Continuous:/i, 'Tube Feed')
-                        .replace(/Enteral/i, '')
-                        .trim();
-    
-    intakesCard.appendChild(createDetailItem(
-      `🍼 ${cleanDesc}`,
-      `${rate} mL/hr`,
-      `${latest.dateTimeStr}`,
-      '#60a5fa'
-    ));
-  });
-}
-
-if (ioData.intakes.bloodProducts.length > 0) {
-  const totalBlood = ioData.intakes.bloodProducts.reduce((sum, entry) => sum + entry.volume, 0);
-  const latest = ioData.intakes.bloodProducts.sort((a, b) => b.dateTime - a.dateTime)[0];
-  intakesCard.appendChild(createDetailItem(
-    '🩸 Blood',
-    `${totalBlood} mL`,
-    `${latest.dateTimeStr}`,
-    '#ef4444'
-  ));
-}
-
-if (ioData.intakes.other.length > 0) {
-  const groupedIntakes = {};
-  ioData.intakes.other.forEach(entry => {
-    const type = entry.description || 'Other';
-    if (!groupedIntakes[type]) groupedIntakes[type] = [];
-    groupedIntakes[type].push(entry);
-  });
-  
-  Object.entries(groupedIntakes).forEach(([type, entries]) => {
+// Iterate through all intake types
+Object.entries(ioData.intakes).forEach(([intakeType, entries]) => {
+  if (entries && entries.length > 0) {
     const total = entries.reduce((sum, entry) => sum + entry.volume, 0);
     const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
-    intakesCard.appendChild(createDetailItem(
-      `💧 ${type}`,
-      `${total} mL`,
-      `${latest.dateTimeStr}`,
-      '#3b82f6'
-    ));
-  });
-}
 
-if (!ioData.intakes.enteral.length && !ioData.intakes.bloodProducts.length && !ioData.intakes.other.length) {
+    // Choose icon and color based on type
+    let icon = '💧';
+    let color = '#3b82f6';
+
+    if (/blood|plasma|platelet/i.test(intakeType)) {
+      icon = '🩸';
+      color = '#ef4444';
+    } else if (/enteral|tube feed|nasogastric/i.test(intakeType)) {
+      icon = '🍼';
+      color = '#60a5fa';
+    }
+
+    // For continuous feeds, show hourly rate; for others show total
+    const isContinuous = /continuous/i.test(intakeType);
+    const displayValue = isContinuous ? `${latest.volume} mL/hr` : `${total} mL`;
+
+    intakesCard.appendChild(createDetailItem(
+      `${icon} ${intakeType}`,
+      displayValue,
+      `${latest.dateTimeStr}`,
+      color
+    ));
+  }
+});
+
+if (Object.keys(ioData.intakes).length === 0) {
   intakesCard.appendChild(createEmptyState('No intake'));
 }
 
