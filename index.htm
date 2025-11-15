@@ -7104,6 +7104,13 @@ const ioData = {
     function extractOutputType(line) {
         // Extract the type/description before the volume
         let description = '';
+        let drainNumber = '';
+
+        // Check for drain number at the beginning (e.g., "#1 ", "#2 ", etc.)
+        const drainNumMatch = line.match(/^(#\d+)\s+/);
+        if (drainNumMatch) {
+            drainNumber = drainNumMatch[1];
+        }
 
         // Check if this is an "Other:" prefixed line
         // e.g., "#1 Other: JP Neck right - Surgical Drain, Tube Output: 20 mL"
@@ -7115,12 +7122,18 @@ const ioData = {
                 description = m[1].trim();
                 // Remove trailing parts like ", Tube Output" or "- Tube Output" if present
                 description = description.replace(/[,-]\s*(?:Tube\s+)?Output\s*$/i, '').trim();
+                // Prepend drain number if present
+                if (drainNumber) {
+                    description = drainNumber + ' ' + description;
+                }
             }
         } else {
             // For regular lines, take everything before the first colon
             description = line.split(':')[0].trim();
-            // Remove any leading "#<n> " patterns
-            description = description.replace(/^#\d+\s*/, '');
+            // For drains, preserve the drain number; for other outputs, remove it
+            if (!drainNumber || !/drain|jp/i.test(description)) {
+                description = description.replace(/^#\d+\s*/, '');
+            }
         }
 
         return description;
