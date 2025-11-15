@@ -7130,10 +7130,8 @@ const ioData = {
         } else {
             // For regular lines, take everything before the first colon
             description = line.split(':')[0].trim();
-            // For drains, preserve the drain number; for other outputs, remove it
-            if (!drainNumber || !/drain|jp/i.test(description)) {
-                description = description.replace(/^#\d+\s*/, '');
-            }
+            // Preserve number prefixes for ALL numbered output types
+            // (Don't strip the number - it's needed to differentiate multiple instances)
         }
 
         return description;
