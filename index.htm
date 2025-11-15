@@ -9164,7 +9164,7 @@ function generateFullChecklistHTML() {
         'Code / resuscitation status',
         'Incentive spirometry', 
 	    'Continuous pulse oximetry', 
-		'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
+		'Notify provider of abnormal vital signs (T <35 or >38, HR <60 or >100, SBP <90 or >180, DBP <60 or >120, O2 <94)',
 		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status',
 		'Consult to palliative care',
       ]
@@ -9205,7 +9205,7 @@ function generateFullChecklistHTML() {
         'Code / resuscitation status',
         'Incentive spirometry', 
 	    'Continuous pulse oximetry', 
-		'Notify provider of abnormal vital signs (SBP >180 or <100, MAP <65, HR >110 or <50, RR >30 or <10, Change in O2 delivery)',
+		'Notify provider of abnormal vital signs (T <35 or >38, HR <60 or >100, SBP <90 or >180, DBP <60 or >120, O2 <94)',
 		'Activity: OOB ad lib/with assistance/Bedrest, weight bearing status', 
 		'Management of comorbid conditions' 
       ]
@@ -12048,7 +12048,7 @@ function buildIOWarnings(ioData, patient) {
       if (+upkh < 0.1) {
         out.push(`ANURIA! *${upkh} mL/kg/hr* - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
       } else if (+upkh < 0.5) {
-        out.push(`LOW URINE OUTPUT! *${upkh} mL/kg/hr* (goal ≥0.5) - total *${Math.round(totalUrine)} mL* in ${elapsedHoursDisplay}hr`);
+        out.push(`Oliguric UOP=${Math.round(hourly)} cc/hr, ${upkh} cc/kg/hr`);
       }
     }
   } else {
