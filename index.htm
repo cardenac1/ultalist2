@@ -7100,6 +7100,66 @@ const ioData = {
         });
     }
 
+    // Parse NUTRITION line from raw data to extract tube feed information
+    // Format: NUTRITION: Enteral Feeding Continuous - 11/05/25 15:59:00 EST, Vivonex RTF, Full strength, Cortrak, 100, 4 hours...
+    const nutritionMatch = text.match(/NUTRITION:\s*(.+)/i);
+    if (nutritionMatch) {
+        const nutritionLine = nutritionMatch[1];
+
+        // Split by comma to get individual parts
+        const parts = nutritionLine.split(',').map(p => p.trim());
+
+        if (parts.length >= 5) {
+            // Part 0: Feeding type and datetime (e.g., "Enteral Feeding Continuous - 11/05/25 15:59:00 EST")
+            // Part 1: Formula name (e.g., "Vivonex RTF")
+            // Part 2: Strength (e.g., "Full strength")
+            // Part 3: Tube type (e.g., "Cortrak")
+            // Part 4: Rate (e.g., "100")
+
+            const feedingInfo = parts[0]; // Contains feeding type and datetime
+            const formulaName = parts[1];
+            const rate = parts[4];
+
+            // Extract datetime from the feeding info
+            const nutritionDateMatch = feedingInfo.match(/(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})/);
+            let nutritionDateTime = null;
+            let nutritionDateTimeStr = '';
+
+            if (nutritionDateMatch) {
+                nutritionDateTime = parseDateTime(`(${nutritionDateMatch[1]} ${nutritionDateMatch[2]})`);
+                nutritionDateTimeStr = `${nutritionDateMatch[1]} ${nutritionDateMatch[2]}`;
+            }
+
+            // Only add if rate is a valid number
+            if (rate && /^\d+$/.test(rate)) {
+                const rateValue = parseInt(rate);
+
+                // Format as "[Formula Name] @[Rate]cc/hr" - this will be used as the intake type for display
+                const formattedDescription = `${formulaName.toUpperCase()} @${rateValue}cc/hr`;
+
+                const entry = {
+                    description: formattedDescription,
+                    type: formattedDescription, // Use formatted description as type so it displays correctly
+                    volume: rateValue, // Store rate as volume for hourly display
+                    dateTime: nutritionDateTime || now,
+                    dateTimeStr: nutritionDateTimeStr || 'Current'
+                };
+
+                // Add to intakes using formatted description as the key
+                if (!ioData.intakes[formattedDescription]) {
+                    ioData.intakes[formattedDescription] = [];
+                }
+                ioData.intakes[formattedDescription].push(entry);
+
+                console.log('Parsed nutrition data:', {
+                    formula: formulaName,
+                    rate: rateValue,
+                    formatted: formattedDescription
+                });
+            }
+        }
+    }
+
     // Helper function to extract output type from description
     function extractOutputType(line) {
         // Extract the type/description before the volume
@@ -7496,7 +7556,8 @@ if (outputSummaryMatch) {
                 const latest = entries.sort((a, b) => b.dateTime - a.dateTime)[0];
 
                 // Check if this is enteral intake to show hourly rate
-                const isEnteral = /enteral|tube feed|nasogastric|ng tube|peg|jejunostomy/i.test(intakeType);
+                // Also match nutrition entries like "VIVONEX RTF @100cc/hr"
+                const isEnteral = /enteral|tube feed|nasogastric|ng tube|peg|jejunostomy|@\d+cc\/hr/i.test(intakeType);
 
                 if (isEnteral) {
                     fishbone += `${intakeType}: ${total}mL/${elapsedHoursDisplay}hr (${hourly}mL/hr) - last: ${latest.dateTimeStr}\n`;
@@ -10074,10 +10135,10 @@ function generateMissingValuesMessages(data) {
         if (!hasIVF) missing.push('No IVF');
 
         const hasEnteralIntake = Object.keys(ioData.intakes).some(type =>
-            /enteral|tube feed|nasogastric/i.test(type)
+            /enteral|tube feed|nasogastric|@\d+cc\/hr/i.test(type)
         );
         if (!hasEnteralIntake) {
-            const hasTubeFeeds = /tube.*feed|enteral|nasogastric.*feed/i.test(lastImportedData);
+            const hasTubeFeeds = /tube.*feed|enteral|nasogastric.*feed|NUTRITION:/i.test(lastImportedData);
             if (!hasTubeFeeds) missing.push('No tube feeds');
         }
         
@@ -12219,13 +12280,15 @@ Object.entries(ioData.intakes).forEach(([intakeType, entries]) => {
     if (/blood|plasma|platelet/i.test(intakeType)) {
       icon = '🩸';
       color = '#ef4444';
-    } else if (/enteral|tube feed|nasogastric/i.test(intakeType)) {
+    } else if (/enteral|tube feed|nasogastric|@\d+cc\/hr/i.test(intakeType)) {
+      // Match enteral feeds including formatted nutrition entries like "VIVONEX RTF @100cc/hr"
       icon = '🍼';
       color = '#60a5fa';
     }
 
     // For continuous feeds, show hourly rate; for others show total
-    const isContinuous = /continuous/i.test(intakeType);
+    // Also treat nutrition entries (with @XXcc/hr pattern) as continuous
+    const isContinuous = /continuous|@\d+cc\/hr/i.test(intakeType);
     const displayValue = isContinuous ? `${latest.volume} mL/hr` : `${total} mL`;
 
     intakesCard.appendChild(createDetailItem(
