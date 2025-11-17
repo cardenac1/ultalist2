@@ -7116,46 +7116,37 @@ const ioData = {
             // Part 3: Tube type (e.g., "Cortrak")
             // Part 4: Rate (e.g., "100")
 
-            const feedingInfo = parts[0]; // Contains feeding type and datetime
             const formulaName = parts[1];
             const rate = parts[4];
 
-            // Extract datetime from the feeding info
-            const nutritionDateMatch = feedingInfo.match(/(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})/);
-            let nutritionDateTime = null;
-            let nutritionDateTimeStr = '';
-
-            if (nutritionDateMatch) {
-                nutritionDateTime = parseDateTime(`(${nutritionDateMatch[1]} ${nutritionDateMatch[2]})`);
-                nutritionDateTimeStr = `${nutritionDateMatch[1]} ${nutritionDateMatch[2]}`;
-            }
-
-            // Only add if rate is a valid number
+            // Only process if rate is a valid number
             if (rate && /^\d+$/.test(rate)) {
                 const rateValue = parseInt(rate);
 
-                // Format as "[Formula Name] @[Rate]cc/hr" - this will be used as the intake type for display
+                // Format as "[Formula Name] @[Rate]cc/hr"
                 const formattedDescription = `${formulaName.toUpperCase()} @${rateValue}cc/hr`;
 
-                const entry = {
-                    description: formattedDescription,
-                    type: formattedDescription, // Use formatted description as type so it displays correctly
-                    volume: rateValue, // Store rate as volume for hourly display
-                    dateTime: nutritionDateTime || now,
-                    dateTimeStr: nutritionDateTimeStr || 'Current'
-                };
+                // Find and update existing "Enteral Tube Feed Continuous" entries
+                if (ioData.intakes['Enteral Tube Feed Continuous']) {
+                    // Move entries to the new formatted key
+                    ioData.intakes[formattedDescription] = ioData.intakes['Enteral Tube Feed Continuous'];
 
-                // Add to intakes using formatted description as the key
-                if (!ioData.intakes[formattedDescription]) {
-                    ioData.intakes[formattedDescription] = [];
+                    // Update each entry's description and type
+                    ioData.intakes[formattedDescription].forEach(entry => {
+                        entry.description = formattedDescription;
+                        entry.type = formattedDescription;
+                    });
+
+                    // Remove the old key
+                    delete ioData.intakes['Enteral Tube Feed Continuous'];
+
+                    console.log('Updated Enteral Tube Feed Continuous entries with nutrition info:', {
+                        formula: formulaName,
+                        rate: rateValue,
+                        formatted: formattedDescription,
+                        entriesUpdated: ioData.intakes[formattedDescription].length
+                    });
                 }
-                ioData.intakes[formattedDescription].push(entry);
-
-                console.log('Parsed nutrition data:', {
-                    formula: formulaName,
-                    rate: rateValue,
-                    formatted: formattedDescription
-                });
             }
         }
     }
