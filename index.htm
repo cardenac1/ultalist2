@@ -8826,9 +8826,21 @@ medLines.forEach(line => {
             if ((info.category === 'neuro' || info.category === 'pulm') && abbr.includes('IV')) {
                 abbr = `*${abbr}*`;
             }
-            
+
             if (!processedMeds.has(abbr)) {
-                categorizedMeds[info.category].push(abbr);
+                // Map medication categories to order categories
+                if (info.category === 'neuro' || info.category === 'pulm') {
+                    orders['Pain'].push(abbr);
+                } else if (info.category === 'infection') {
+                    orders['Abx'].push(abbr);
+                } else if (info.category === 'heme') {
+                    orders['AC'].push(abbr);
+                } else if (info.category === 'gi' || info.category === 'renal') {
+                    orders['N/F'].push(abbr);
+                } else {
+                    // Other categories (cardiovascular, endocrine, skin) go to Pain
+                    orders['Pain'].push(abbr);
+                }
                 processedMeds.add(abbr);
             }
             
@@ -8843,11 +8855,11 @@ medLines.forEach(line => {
         if (rateMatch) {
             const rate = rateMatch[1];
             if (lineLower.includes('lactated ringer')) {
-                categorizedMeds['renal'].push(`LR@${rate}`);
+                orders['N/F'].push(`LR@${rate}`);
             } else if (lineLower.includes('normal saline') || lineLower.includes('0.9%')) {
-                categorizedMeds['renal'].push(`NS@${rate}`);
+                orders['N/F'].push(`NS@${rate}`);
             } else if (lineLower.includes('d5w')) {
-                categorizedMeds['renal'].push(`D5W@${rate}`);
+                orders['N/F'].push(`D5W@${rate}`);
             }
         }
     }
