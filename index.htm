@@ -8830,20 +8830,42 @@ medLines.forEach(line => {
             }
 
             if (!processedMeds.has(abbr)) {
+                // Define specific pain and sedation medications
+                const painMeds = [
+                    'acetaminophen', 'tylenol', 'morphine', 'oxycodone', 'oxyCODONE',
+                    'hydromorphone', 'dilaudid', 'fentanyl', 'tramadol',
+                    'ketorolac', 'toradol', 'ibuprofen', 'naproxen', 'celecoxib',
+                    'gabapentin', 'neurontin', 'pregabalin', 'lidocaine',
+                    'albuterol', 'ipratropium', 'duoneb'
+                ];
+
+                const sedationMeds = [
+                    'propofol', 'midazolam', 'dexmedetomidine',
+                    'lorazepam', 'diazepam', 'ketamine'
+                ];
+
                 // Map medication categories to order categories
-                if (info.category === 'neuro' || info.category === 'pulm') {
+                const drugName = Object.keys(drugAbbreviations).find(key =>
+                    lineLower.includes(key) && drugAbbreviations[key] === info
+                );
+
+                // Check for TPN (Total Parenteral Nutrition)
+                if (lineLower.includes('tpn') || lineLower.includes('parenteral nutrition')) {
+                    orders['N/F'].push(abbr);
+                } else if (painMeds.includes(drugName) || sedationMeds.includes(drugName)) {
+                    // Only actual pain meds and sedation meds
                     orders['Pain'].push(abbr);
                 } else if (info.category === 'infection' || info.category === 'cardio') {
                     // Antibiotics, antifungals, vasopressors, and cardiac meds
                     orders['Abx'].push(abbr);
                 } else if (info.category === 'heme') {
                     orders['AC'].push(abbr);
-                } else if (info.category === 'gi' || info.category === 'renal') {
+                } else if (info.category === 'renal') {
+                    // Only IV fluids in N/F, not all renal/diuretic meds
                     orders['N/F'].push(abbr);
-                } else {
-                    // Other categories (endocrine, skin) go to Pain
-                    orders['Pain'].push(abbr);
                 }
+                // Skip everything else (GI, endocrine, psych, anticonvulsants, etc.)
+
                 processedMeds.add(abbr);
             }
             
