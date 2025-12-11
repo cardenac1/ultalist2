@@ -3899,6 +3899,33 @@ if (currentViewMode === 'consult' && CONSULT_MODE_LABELS[header]) {
     }
 }
 
+// Add toggle buttons for ORDERS and VIOLIN in basic/consult mode
+if (currentViewMode !== 'chartcheck') {
+    if (header === 'ORDERS') {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'help-button';
+        toggleBtn.textContent = '!';
+        toggleBtn.title = 'Toggle Full Orders Display';
+        toggleBtn.onclick = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleFullOrdersDisplay();
+        };
+        label.appendChild(toggleBtn);
+    } else if (header === 'VIOLIN') {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'help-button';
+        toggleBtn.textContent = '!';
+        toggleBtn.title = 'Show Lab Values Table';
+        toggleBtn.onclick = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            showTableView();
+        };
+        label.appendChild(toggleBtn);
+    }
+}
+
 				
 				
 
@@ -5852,6 +5879,18 @@ function toggleOrdersView() {
 function toggleTableView() {
     showAbbreviatedTable = !showAbbreviatedTable;
     renderOrdersTable();
+}
+
+function toggleFullOrdersDisplay() {
+    const fullOrdersDisplay = document.getElementById('fullOrdersDisplay');
+    if (!fullOrdersDisplay) return;
+
+    if (fullOrdersDisplay.classList.contains('hidden')) {
+        showFullOrders = true;
+        renderOrdersTable();
+    } else {
+        fullOrdersDisplay.classList.add('hidden');
+    }
 }
 
 
@@ -8892,8 +8931,8 @@ medLines.forEach(line => {
     
     // Format final orders
     const formattedOrders = [];
-    formattedOrders.push(`N/F: ${orders['N/F'].length > 0 ? orders['N/F'].join(', ') : ''}`);
     formattedOrders.push(`Pain: ${orders['Pain'].length > 0 ? orders['Pain'].join(', ') : ''}`);
+    formattedOrders.push(`N/F: ${orders['N/F'].length > 0 ? orders['N/F'].join(', ') : ''}`);
     formattedOrders.push(existingLTD ? `LTD: ${existingLTD}` : `LTD:`);
     formattedOrders.push(`Abx: ${orders['Abx'].length > 0 ? orders['Abx'].join(', ') : ''}`);
     formattedOrders.push(`AC: ${orders['AC'].length > 0 ? orders['AC'].join(', ') : '*NO DVT PPX*'}`);
