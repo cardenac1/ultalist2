@@ -8833,14 +8833,15 @@ medLines.forEach(line => {
                 // Map medication categories to order categories
                 if (info.category === 'neuro' || info.category === 'pulm') {
                     orders['Pain'].push(abbr);
-                } else if (info.category === 'infection') {
+                } else if (info.category === 'infection' || info.category === 'cardio') {
+                    // Antibiotics, antifungals, vasopressors, and cardiac meds
                     orders['Abx'].push(abbr);
                 } else if (info.category === 'heme') {
                     orders['AC'].push(abbr);
                 } else if (info.category === 'gi' || info.category === 'renal') {
                     orders['N/F'].push(abbr);
                 } else {
-                    // Other categories (cardiovascular, endocrine, skin) go to Pain
+                    // Other categories (endocrine, skin) go to Pain
                     orders['Pain'].push(abbr);
                 }
                 processedMeds.add(abbr);
