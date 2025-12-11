@@ -4042,9 +4042,9 @@ input.addEventListener('input', function() {
 
 
                 form.appendChild(label);
-                
+
                 // Add full orders display above ORDERS field
-                if (header === 'ORDERS' && currentViewMode === 'chartcheck') {
+                if (header === 'ORDERS') {
                     const fullOrdersDiv = document.createElement('div');
                     fullOrdersDiv.id = 'fullOrdersDisplay';
                     fullOrdersDiv.className = 'orders-section hidden';
