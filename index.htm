@@ -3501,23 +3501,39 @@ function clearSearch() {
 function switchView(mode) {
     currentViewMode = mode;
     const patient = patientData[currentPatientIndex];
-    
+
+    // Load ImportedData and LabData for ALL modes (not just chartcheck)
+    if (patient.ImportedData) {
+        lastImportedData = patient.ImportedData;
+    } else {
+        lastImportedData = '';
+    }
+    if (patient.LabData) {
+        try {
+            labData = JSON.parse(patient.LabData);
+        } catch (e) {
+            labData = {};
+        }
+    } else {
+        labData = {};
+    }
+
     // Update active button
     document.querySelectorAll('.view-button').forEach(btn => {
         btn.classList.remove('active');
     });
     document.querySelector(`.view-button[onclick*="${mode}"]`).classList.add('active');
-    
+
     // Hide all mode-specific controls
     document.getElementById('consultControls').classList.add('hidden');
-    
+
     // Generate form based on mode
     const form = document.getElementById('editForm');
     form.innerHTML = '';
-    
+
     let fieldsToShow = []; // DECLARE HERE, OUTSIDE the switch
     let isChartCheckMode = false;
-    
+
     switch(mode) {
         case 'basic':
             fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do', 'Priority'];
@@ -3805,22 +3821,13 @@ case 'chartcheck':
             chartCheckContainer.appendChild(leftPanel);
             chartCheckContainer.appendChild(rightPanel);
             form.appendChild(chartCheckContainer);
-            
-            if (patient.ImportedData) {
-                lastImportedData = patient.ImportedData;
-            }
-            if (patient.LabData) {
-                try {
-                    labData = JSON.parse(patient.LabData);
-                } catch (e) {
-                    labData = {};
-                }
-            }
-            
+
+            // ImportedData and LabData are now loaded at the top of switchView for all modes
+
             setTimeout(() => {
                 updateChartCheckProgress();
             }, 100);
-            
+
             break;
        
 
