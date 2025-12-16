@@ -2402,6 +2402,10 @@ async function testOCRAvailability() {
         let currentChart = null;
 		let currentSortColumn = ''; // Track current sort column
 		let violinRedStylingApplied = false; // Add this flag
+
+		// Manual orders management
+		let manualOrders = []; // Store manually added orders: {category, text, route, isPRN}
+		let deletedOrders = new Set(); // Store IDs of deleted medications
 		let tempChecklistStates = {}; // Temporary checklist states
 
 
@@ -5900,9 +5904,118 @@ function toggleFullOrdersDisplay() {
     }
 }
 
+// Toggle medication status (delete)
+function toggleMedStatus(event, medId, action) {
+    event.stopPropagation();
+    event.preventDefault();
 
-		
-		
+    if (action === 'stop') {
+        if (confirm('Remove this medication from the display?')) {
+            deletedOrders.add(medId);
+            renderOrdersTable();
+        }
+    }
+}
+
+// Open modal to add manual order
+function openAddOrderModal() {
+    const modalHTML = `
+        <div id="addOrderModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid var(--primary); max-width: 500px; width: 90%;">
+                <h3 style="color: var(--primary); margin-top: 0;">Add Manual Order</h3>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Category:</label>
+                    <select id="orderCategory" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <option value="neuro">NEURO</option>
+                        <option value="pulm">PULM</option>
+                        <option value="cardiovascular">CARDIOVASCULAR</option>
+                        <option value="gi">GI</option>
+                        <option value="renal">RENAL/FLUIDS</option>
+                        <option value="heme">HEME</option>
+                        <option value="infection">INFECTION</option>
+                        <option value="endocrine">ENDOCRINE</option>
+                        <option value="skin">SKIN/OTHER</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Medication Details:</label>
+                    <textarea id="orderText" rows="3" placeholder="e.g., Aspirin 81 mg Oral daily" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Route:</label>
+                    <select id="orderRoute" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <option value="PO">PO (Oral)</option>
+                        <option value="IV">IV (Intravenous)</option>
+                        <option value="SC">SC (Subcutaneous)</option>
+                        <option value="IM">IM (Intramuscular)</option>
+                        <option value="PR">PR (Per Rectum)</option>
+                        <option value="INH">INH (Inhalation)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; color: var(--text-secondary); cursor: pointer;">
+                        <input type="checkbox" id="orderIsPRN" style="margin-right: 0.5rem;">
+                        PRN (As Needed)
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button onclick="closeAddOrderModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="addManualOrder()" style="padding: 0.6rem 1.2rem; background: var(--primary); color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Add Order</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('orderText').focus();
+}
+
+// Close add order modal
+function closeAddOrderModal() {
+    const modal = document.getElementById('addOrderModal');
+    if (modal) modal.remove();
+}
+
+// Add manual order
+function addManualOrder() {
+    const category = document.getElementById('orderCategory').value;
+    const text = document.getElementById('orderText').value.trim();
+    const route = document.getElementById('orderRoute').value;
+    const isPRN = document.getElementById('orderIsPRN').checked;
+
+    if (!text) {
+        alert('Please enter medication details');
+        return;
+    }
+
+    manualOrders.push({
+        category: category,
+        text: text,
+        route: route,
+        isPRN: isPRN
+    });
+
+    closeAddOrderModal();
+    renderOrdersTable();
+}
+
+// Reset manual changes
+function resetManualChanges() {
+    if (confirm('Reset all manual changes (added and deleted orders)?')) {
+        manualOrders = [];
+        deletedOrders.clear();
+        renderOrdersTable();
+    }
+}
+
+
+
+
 		function renderOrdersTable() {
     const fullOrdersDisplay = document.getElementById('fullOrdersDisplay');
 
@@ -6040,6 +6153,16 @@ else {
 }
         });
 
+        // Add manual orders to categorized meds
+        manualOrders.forEach(order => {
+            categorizedMeds[order.category].push({
+                text: order.text,
+                route: order.route,
+                isPRN: order.isPRN,
+                isManual: true // Mark as manual order
+            });
+        });
+
         // Medication abbreviation database
         const MED_ABBREVIATIONS = {
             'hydromorphone': 'D', 'oxycodone': 'O', 'morphine': 'M', 'fentanyl': 'F',
@@ -6117,21 +6240,26 @@ else {
             // Single medications column
             html += '<td style="padding: 4px 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.2;">';
 
-            // PO section 
+            // PO section
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
+                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
+
+                    // Skip if deleted
+                    if (deletedOrders.has(medId)) return;
+
 				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for PO meds (lighter grey for PRN)
 				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const displayText = '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
-                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
-                    
+				    const manualIndicator = med.isManual ? '✏️ ' : '';
+				    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
+
                     html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.3rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span> <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
+                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                         class="med-status-btn"
                         data-med-id="${medId}"
                         data-status="stop"
-					    style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;" 
-                        title="Stop this medication">🟥</button>
+					    style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
+                        title="Remove this medication">🟥</button>
             </span>
         </div>`;
                 });
@@ -6144,18 +6272,23 @@ else {
                     html += '<div style="margin-top: 0.1rem;"></div>';
                 }
                 ivMeds.forEach((med, idx) => {
+                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
+
+                    // Skip if deleted
+                    if (deletedOrders.has(medId)) return;
+
 				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for IV meds
 				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const displayText = '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
-                    const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
-                    
-                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.5rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>  <span style="display: flex; gap: 0.25rem;"> 
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')" 
+				    const manualIndicator = med.isManual ? '✏️ ' : '';
+				    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
+
+                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.5rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>  <span style="display: flex; gap: 0.25rem;">
+                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                         class="med-status-btn"
                         data-med-id="${medId}"
                         data-status="stop"
 						style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
-                        title="Stop this medication">🟥</button>
+                        title="Remove this medication">🟥</button>
             </span>
         </div>`;
                 });
@@ -6178,6 +6311,13 @@ else {
 
         // Toggle buttons
         tableHTML += '<div style="display: flex; gap: 5px;">';
+        tableHTML += `<button onclick="openAddOrderModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Add manual order">➕ Add Order</button>`;
+
+        // Show reset button only if there are manual changes
+        if (manualOrders.length > 0 || deletedOrders.size > 0) {
+            tableHTML += `<button onclick="resetManualChanges()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Reset all manual changes">🔄 Reset</button>`;
+        }
+
         tableHTML += `<button onclick="showAbbreviatedTable = true; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${showAbbreviatedTable ? '600' : '400'};">Abbreviated</button>`;
         tableHTML += `<button onclick="showAbbreviatedTable = false; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${!showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${!showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${!showAbbreviatedTable ? '600' : '400'};">Full</button>`;
         tableHTML += '</div>';
