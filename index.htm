@@ -2406,6 +2406,7 @@ async function testOCRAvailability() {
 		// Manual orders management
 		let manualOrders = []; // Store manually added orders: {category, text, route, isPRN}
 		let deletedOrders = new Set(); // Store IDs of deleted medications
+		let editedOrders = new Map(); // Store edited imported orders: medId -> {text, route, isPRN}
 		let tempChecklistStates = {}; // Temporary checklist states
 
 
@@ -6081,19 +6082,25 @@ function saveEditedOrder(medId) {
         return;
     }
 
-    // Find the medication in manual orders and update it
-    // For now, we'll just delete the old one and add a new one
-    // This is a simplified approach - you might want to track edits differently
-    alert('Note: Editing imported medications will remove them and add as manual orders. Click the Add Order button to add the edited version.');
+    // Store the edited order
+    editedOrders.set(medId, {
+        text: newText,
+        route: newRoute,
+        isPRN: newIsPRN
+    });
 
     closeEditOrderModal();
+
+    // Re-render the table to show the changes
+    renderOrdersTable();
 }
 
 // Reset manual changes
 function resetManualChanges() {
-    if (confirm('Reset all manual changes (added and deleted orders)?')) {
+    if (confirm('Reset all manual changes (added, edited, and deleted orders)?')) {
         manualOrders = [];
         deletedOrders.clear();
+        editedOrders.clear();
         renderOrdersTable();
     }
 }
@@ -6448,8 +6455,8 @@ else {
             let html = '';
 
             // Category header
-            html += `<div style="margin-bottom: 0.75rem;">`;
-            html += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">${categoryName}:</div>`;
+            html += `<div style="margin-bottom: 0.3rem;">`;
+            html += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.25rem;">${categoryName}:</div>`;
 
             // PO medications
             if (poMeds.length > 0) {
@@ -6459,16 +6466,31 @@ else {
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
-                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-                    const manualIndicator = med.isManual ? '✏️ ' : '';
-                    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    // Check if this order has been edited
+                    let medText = med.text;
+                    let medRoute = med.route;
+                    let medIsPRN = med.isPRN;
+                    let isEdited = false;
 
-                    const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    if (editedOrders.has(medId)) {
+                        const editedMed = editedOrders.get(medId);
+                        medText = editedMed.text;
+                        medRoute = editedMed.route;
+                        medIsPRN = editedMed.isPRN;
+                        isEdited = true;
+                    }
+
+                    const color = medIsPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(medText) : medText;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const editedIndicator = isEdited ? '📝 ' : '';
+                    const displayText = editedIndicator + manualIndicator + '💊 ' + baseText + (medIsPRN ? ' PRN' : '');
+
+                    const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.15rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.3;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
-                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${medRoute}', ${medIsPRN})"
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
@@ -6491,16 +6513,31 @@ else {
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
-                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-                    const manualIndicator = med.isManual ? '✏️ ' : '';
-                    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    // Check if this order has been edited
+                    let medText = med.text;
+                    let medRoute = med.route;
+                    let medIsPRN = med.isPRN;
+                    let isEdited = false;
 
-                    const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    if (editedOrders.has(medId)) {
+                        const editedMed = editedOrders.get(medId);
+                        medText = editedMed.text;
+                        medRoute = editedMed.route;
+                        medIsPRN = editedMed.isPRN;
+                        isEdited = true;
+                    }
+
+                    const color = medIsPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(medText) : medText;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const editedIndicator = isEdited ? '📝 ' : '';
+                    const displayText = editedIndicator + manualIndicator + '💉 ' + baseText + (medIsPRN ? ' PRN' : '');
+
+                    const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.15rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.3;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
-                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${medRoute}', ${medIsPRN})"
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
@@ -6516,7 +6553,7 @@ else {
             }
 
             // Category separator
-            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.5rem;"></div>`;
+            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.25rem;"></div>`;
             html += '</div>';
 
             return html;
@@ -6532,7 +6569,7 @@ else {
         tableHTML += `<button type="button" onclick="openAddOrderModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Add manual order">➕ Add Order</button>`;
 
         // Show reset button only if there are manual changes
-        if (manualOrders.length > 0 || deletedOrders.size > 0) {
+        if (manualOrders.length > 0 || deletedOrders.size > 0 || editedOrders.size > 0) {
             tableHTML += `<button type="button" onclick="resetManualChanges()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Reset all manual changes">🔄 Reset</button>`;
         }
 
@@ -7811,10 +7848,13 @@ ioData.counts = countData;
 
 function generateFishbone(data) {
     let fishbone = '';
-    
+
+    // Add Subj: line at the beginning
+    fishbone += 'Subj:\n\n';
+
     // Helper function to wrap abnormal values
     const markAbnormal = (value) => `*${value}*`;
-    
+
     // ===== VITALS SECTION =====
     if (data.vitals.temp && data.vitals.temp.length > 0) {
         const tempMin = Math.min(...data.vitals.temp).toFixed(1);
