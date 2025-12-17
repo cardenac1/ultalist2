@@ -6098,6 +6098,126 @@ function resetManualChanges() {
     }
 }
 
+// Edit LTD
+function editLTD() {
+    const currentOrders = document.getElementById('field_ORDERS')?.value || '';
+    let existingLTD = '';
+
+    const ltdMatch = currentOrders.match(/^LTD:[ \t]*([^\r\n]*)/m);
+    if (ltdMatch) existingLTD = ltdMatch[1].trim();
+
+    const modalHTML = `
+        <div id="editLTDModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid var(--primary); max-width: 500px; width: 90%;">
+                <h3 style="color: var(--primary); margin-top: 0;">Edit LTD</h3>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">LTD Details:</label>
+                    <textarea id="ltdText" rows="3" placeholder="e.g., FAST, Stroke Alert, Sepsis" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;">${existingLTD}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeLTDModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="saveLTD()" style="padding: 0.6rem 1.2rem; background: var(--primary); color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('ltdText')?.focus(), 50);
+}
+
+function closeLTDModal() {
+    const modal = document.getElementById('editLTDModal');
+    if (modal) modal.remove();
+}
+
+function saveLTD() {
+    const newLTD = document.getElementById('ltdText')?.value.trim() || '';
+    const ordersField = document.getElementById('field_ORDERS');
+
+    if (!ordersField) {
+        alert('Orders field not found');
+        closeLTDModal();
+        return;
+    }
+
+    let currentOrders = ordersField.value;
+
+    // Remove existing LTD line if present
+    currentOrders = currentOrders.replace(/^LTD:[ \t]*[^\r\n]*/m, '');
+
+    // Add new LTD at the beginning
+    if (newLTD) {
+        currentOrders = 'LTD: ' + newLTD + '\n' + currentOrders.trim();
+    }
+
+    ordersField.value = currentOrders.trim();
+    closeLTDModal();
+    renderOrdersTable();
+}
+
+// Edit DISPO
+function editDISPO() {
+    const currentOrders = document.getElementById('field_ORDERS')?.value || '';
+    let existingDispo = '';
+
+    const dispoMatch = currentOrders.match(/dispo:\s*([^\n]+)/i);
+    if (dispoMatch) existingDispo = dispoMatch[1].trim();
+
+    const modalHTML = `
+        <div id="editDISPOModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid var(--primary); max-width: 500px; width: 90%;">
+                <h3 style="color: var(--primary); margin-top: 0;">Edit DISPO</h3>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Disposition Details:</label>
+                    <textarea id="dispoText" rows="3" placeholder="e.g., Discharge home, Transfer to ICU" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;">${existingDispo}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeDISPOModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="saveDISPO()" style="padding: 0.6rem 1.2rem; background: var(--primary); color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('dispoText')?.focus(), 50);
+}
+
+function closeDISPOModal() {
+    const modal = document.getElementById('editDISPOModal');
+    if (modal) modal.remove();
+}
+
+function saveDISPO() {
+    const newDispo = document.getElementById('dispoText')?.value.trim() || '';
+    const ordersField = document.getElementById('field_ORDERS');
+
+    if (!ordersField) {
+        alert('Orders field not found');
+        closeDISPOModal();
+        return;
+    }
+
+    let currentOrders = ordersField.value;
+
+    // Remove existing dispo line if present
+    currentOrders = currentOrders.replace(/dispo:\s*[^\n]+/gi, '');
+
+    // Add new dispo at the end
+    if (newDispo) {
+        currentOrders = currentOrders.trim() + '\ndispo: ' + newDispo;
+    }
+
+    ordersField.value = currentOrders.trim();
+    closeDISPOModal();
+    renderOrdersTable();
+}
+
 
 
 
@@ -6345,14 +6465,14 @@ else {
                     const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
 
                     const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; display: flex; align-items: center; justify-content: space-between;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
-                    html += `<button onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
-                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
@@ -6377,14 +6497,14 @@ else {
                     const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
 
                     const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; display: flex; align-items: center; justify-content: space-between;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
-                    html += `<button onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                    html += `<button type="button" onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
-                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
@@ -6409,15 +6529,15 @@ else {
 
         // Toggle buttons
         tableHTML += '<div style="display: flex; gap: 5px;">';
-        tableHTML += `<button onclick="openAddOrderModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Add manual order">➕ Add Order</button>`;
+        tableHTML += `<button type="button" onclick="openAddOrderModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Add manual order">➕ Add Order</button>`;
 
         // Show reset button only if there are manual changes
         if (manualOrders.length > 0 || deletedOrders.size > 0) {
-            tableHTML += `<button onclick="resetManualChanges()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Reset all manual changes">🔄 Reset</button>`;
+            tableHTML += `<button type="button" onclick="resetManualChanges()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;" title="Reset all manual changes">🔄 Reset</button>`;
         }
 
-        tableHTML += `<button onclick="showAbbreviatedTable = true; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${showAbbreviatedTable ? '600' : '400'};">Abbreviated</button>`;
-        tableHTML += `<button onclick="showAbbreviatedTable = false; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${!showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${!showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${!showAbbreviatedTable ? '600' : '400'};">Full</button>`;
+        tableHTML += `<button type="button" onclick="showAbbreviatedTable = true; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${showAbbreviatedTable ? '600' : '400'};">Abbreviated</button>`;
+        tableHTML += `<button type="button" onclick="showAbbreviatedTable = false; renderOrdersTable();" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: ${!showAbbreviatedTable ? 'var(--primary)' : '#444'}; color: ${!showAbbreviatedTable ? '#000' : '#fff'}; border: none; border-radius: 4px; cursor: pointer; font-weight: ${!showAbbreviatedTable ? '600' : '400'};">Full</button>`;
         tableHTML += '</div>';
         tableHTML += '</div>';
 
@@ -6447,8 +6567,11 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
         // LTD Section
         tableHTML += `<div style="margin-bottom: 0.75rem;">`;
-        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">LTD:</div>`;
-        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">`;
+        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px;">LTD:</div>`;
+        tableHTML += `<button type="button" onclick="editLTD()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: var(--primary);" title="Edit LTD">✏️</button>`;
+        tableHTML += `</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0;">`;
         tableHTML += existingLTD || '<em style="color: var(--text-secondary);">No LTD data</em>';
         tableHTML += `</div>`;
         tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.5rem;"></div>`;
@@ -6456,8 +6579,11 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
         // DISPO Section
         tableHTML += `<div style="margin-bottom: 0.75rem;">`;
-        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">DISPO:</div>`;
-        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">`;
+        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px;">DISPO:</div>`;
+        tableHTML += `<button type="button" onclick="editDISPO()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: var(--primary);" title="Edit DISPO">✏️</button>`;
+        tableHTML += `</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0;">`;
         tableHTML += existingDispo || '<em style="color: var(--text-secondary);">No dispo data</em>';
         tableHTML += `</div>`;
         tableHTML += '</div>';
