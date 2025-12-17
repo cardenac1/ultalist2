@@ -6487,7 +6487,7 @@ else {
                     const displayText = editedIndicator + manualIndicator + '💊 ' + baseText + (medIsPRN ? ' PRN' : '');
 
                     const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.15rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.3;">`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.15rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.0;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
                     html += `<button type="button" onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${medRoute}', ${medIsPRN})"
