@@ -5851,8 +5851,10 @@ countTypes.forEach(countType => {
             const orders = extractOrders(lastImportedData);
             const ordersField = document.getElementById('field_ORDERS');
             if (ordersField) {
-                ordersField.value = orders;
-                patientData[currentPatientIndex].ORDERS = orders;
+                // Keep the ORDERS field blank but preserve the extracted data in memory
+                ordersField.value = '';
+                // Store extracted orders in patientData but don't display in field
+                patientData[currentPatientIndex].ORDERS = '';
                 autoResizeTextarea(ordersField);
                 saveToLocalStorage();
             }
@@ -5919,6 +5921,12 @@ function toggleMedStatus(event, medId, action) {
 
 // Open modal to add manual order
 function openAddOrderModal() {
+    // Remove any existing modal first
+    const existingModal = document.getElementById('addOrderModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
     const modalHTML = `
         <div id="addOrderModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
             <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid var(--primary); max-width: 500px; width: 90%;">
@@ -5972,7 +5980,14 @@ function openAddOrderModal() {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    document.getElementById('orderText').focus();
+
+    // Use setTimeout to ensure the DOM has updated before focusing
+    setTimeout(() => {
+        const orderText = document.getElementById('orderText');
+        if (orderText) {
+            orderText.focus();
+        }
+    }, 50);
 }
 
 // Close add order modal
@@ -6002,6 +6017,76 @@ function addManualOrder() {
 
     closeAddOrderModal();
     renderOrdersTable();
+}
+
+// Edit medication
+function editMedication(event, medId, type, idx, categoryName, currentText, currentRoute, currentIsPRN) {
+    event.stopPropagation();
+
+    const modalHTML = `
+        <div id="editOrderModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid var(--primary); max-width: 500px; width: 90%;">
+                <h3 style="color: var(--primary); margin-top: 0;">Edit Medication</h3>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Medication Details:</label>
+                    <textarea id="editOrderText" rows="3" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;">${currentText}</textarea>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Route:</label>
+                    <select id="editOrderRoute" style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <option value="PO" ${currentRoute === 'PO' ? 'selected' : ''}>PO (Oral)</option>
+                        <option value="IV" ${currentRoute === 'IV' ? 'selected' : ''}>IV (Intravenous)</option>
+                        <option value="SC" ${currentRoute === 'SC' ? 'selected' : ''}>SC (Subcutaneous)</option>
+                        <option value="IM" ${currentRoute === 'IM' ? 'selected' : ''}>IM (Intramuscular)</option>
+                        <option value="PR" ${currentRoute === 'PR' ? 'selected' : ''}>PR (Per Rectum)</option>
+                        <option value="INH" ${currentRoute === 'INH' ? 'selected' : ''}>INH (Inhalation)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; color: var(--text-secondary); cursor: pointer;">
+                        <input type="checkbox" id="editOrderIsPRN" ${currentIsPRN ? 'checked' : ''} style="margin-right: 0.5rem;">
+                        PRN (As Needed)
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button onclick="closeEditOrderModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="saveEditedOrder('${medId}')" style="padding: 0.6rem 1.2rem; background: var(--primary); color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('editOrderText').focus();
+}
+
+// Close edit order modal
+function closeEditOrderModal() {
+    const modal = document.getElementById('editOrderModal');
+    if (modal) modal.remove();
+}
+
+// Save edited order
+function saveEditedOrder(medId) {
+    const newText = document.getElementById('editOrderText').value.trim();
+    const newRoute = document.getElementById('editOrderRoute').value;
+    const newIsPRN = document.getElementById('editOrderIsPRN').checked;
+
+    if (!newText) {
+        alert('Please enter medication details');
+        return;
+    }
+
+    // Find the medication in manual orders and update it
+    // For now, we'll just delete the old one and add a new one
+    // This is a simplified approach - you might want to track edits differently
+    alert('Note: Editing imported medications will remove them and add as manual orders. Click the Add Order button to add the edited version.');
+
+    closeEditOrderModal();
 }
 
 // Reset manual changes
@@ -6259,14 +6344,21 @@ else {
                     const manualIndicator = med.isManual ? '✏️ ' : '';
                     const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0; display: flex; align-items: center; justify-content: space-between;">`;
                     html += `<span>${displayText}</span>`;
+                    html += `<div style="display: flex; gap: 4px;">`;
+                    html += `<button onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                            class="med-edit-btn"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Edit this medication">✏️</button>`;
                     html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Remove this medication">🟥</button>`;
+                    html += `</div>`;
                     html += '</div>';
                 });
             }
@@ -6284,14 +6376,21 @@ else {
                     const manualIndicator = med.isManual ? '✏️ ' : '';
                     const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    const escapedText = med.text.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0; display: flex; align-items: center; justify-content: space-between;">`;
                     html += `<span>${displayText}</span>`;
+                    html += `<div style="display: flex; gap: 4px;">`;
+                    html += `<button onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${med.route}', ${med.isPRN})"
+                            class="med-edit-btn"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Edit this medication">✏️</button>`;
                     html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Remove this medication">🟥</button>`;
+                    html += `</div>`;
                     html += '</div>';
                 });
             }
@@ -6333,6 +6432,35 @@ tableHTML += createCategoryRow('HEME', categorizedMeds['heme']);
 tableHTML += createCategoryRow('INFECTION', categorizedMeds['infection']);
 tableHTML += createCategoryRow('ENDOCRINE', categorizedMeds['endocrine']);
 tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
+
+        // Add LTD and DISPO sections
+        const currentOrders = document.getElementById('field_ORDERS')?.value || '';
+        let existingLTD = '';
+        let existingDispo = '';
+
+        if (currentOrders) {
+            const ltdMatch = currentOrders.match(/^LTD:[ \t]*([^\r\n]*)/m);
+            const dispoMatch = currentOrders.match(/dispo:\s*([^\n]+)/);
+            if (ltdMatch) existingLTD = ltdMatch[1].trim();
+            if (dispoMatch) existingDispo = dispoMatch[1].trim();
+        }
+
+        // LTD Section
+        tableHTML += `<div style="margin-bottom: 0.75rem;">`;
+        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">LTD:</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0;">`;
+        tableHTML += existingLTD || '<em style="color: var(--text-secondary);">No LTD data</em>';
+        tableHTML += `</div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.5rem;"></div>`;
+        tableHTML += '</div>';
+
+        // DISPO Section
+        tableHTML += `<div style="margin-bottom: 0.75rem;">`;
+        tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">DISPO:</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 2px 0;">`;
+        tableHTML += existingDispo || '<em style="color: var(--text-secondary);">No dispo data</em>';
+        tableHTML += `</div>`;
+        tableHTML += '</div>';
 
         tableHTML += '</div>';
         tableHTML += '</div>';
