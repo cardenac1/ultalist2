@@ -6024,20 +6024,23 @@ function resetManualChanges() {
         return;
     }
 
-    if (showFullOrders && (fullOrdersText || lastImportedData)) {
+    if (showFullOrders && (fullOrdersText || lastImportedData || manualOrders.length > 0)) {
         // Create table-based full orders display
         const medsText = fullOrdersText || extractFullMeds(lastImportedData);
 
         if (!medsText || medsText.trim().length === 0) {
-            fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
-            fullOrdersDisplay.classList.remove('hidden');
-            return;
+            // If there are manual orders but no imported data, continue to render
+            if (manualOrders.length === 0) {
+                fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
+                fullOrdersDisplay.classList.remove('hidden');
+                return;
+            }
         }
 
         const dietMatch = lastImportedData ? lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i) : null;
 
         let currentSection = 'Scheduled';
-        const medsLines = medsText.split('\n');
+        const medsLines = medsText ? medsText.split('\n') : [];
        const categorizedMeds = {
 	    'neuro': [],          // Pain, sedation, neurological, psychiatric
 	    'pulm': [],           // All respiratory
@@ -6234,13 +6237,16 @@ else {
                                                 m.route === 'INH' || m.route === 'IM');
             const ivMeds = medList.filter(m => m.route === 'IV');
 
-            let html = '<tr>';
-            html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
+            // Skip empty categories
+            if (poMeds.length === 0 && ivMeds.length === 0) return '';
 
-            // Single medications column
-            html += '<td style="padding: 4px 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.2;">';
+            let html = '';
 
-            // PO section
+            // Category header
+            html += `<div style="margin-bottom: 0.75rem;">`;
+            html += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">${categoryName}:</div>`;
+
+            // PO medications
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
@@ -6248,59 +6254,52 @@ else {
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for PO meds (lighter grey for PRN)
-				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const manualIndicator = med.isManual ? '✏️ ' : '';
-				    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.3rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span> <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
-                        class="med-status-btn"
-                        data-med-id="${medId}"
-                        data-status="stop"
-					    style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
-                        title="Remove this medication">🟥</button>
-            </span>
-        </div>`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span>${displayText}</span>`;
+                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
+                            title="Remove this medication">🟥</button>`;
+                    html += '</div>';
                 });
             }
 
-            // IV/other section - NO LABEL, just red medications
+            // IV medications
             if (ivMeds.length > 0) {
-                // Add small spacing if there were PO meds
-                if (poMeds.length > 0) {
-                    html += '<div style="margin-top: 0.1rem;"></div>';
-                }
                 ivMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
 
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for IV meds
-				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const manualIndicator = med.isManual ? '✏️ ' : '';
-				    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.5rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>  <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
-                        class="med-status-btn"
-                        data-med-id="${medId}"
-                        data-status="stop"
-						style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
-                        title="Remove this medication">🟥</button>
-            </span>
-        </div>`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span>${displayText}</span>`;
+                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
+                            title="Remove this medication">🟥</button>`;
+                    html += '</div>';
                 });
             }
 
-            // If no meds at all
-            if (poMeds.length === 0 && ivMeds.length === 0) {
-                html += '<span style="color: #555; font-style: italic;">—</span>';
-            }
+            // Category separator
+            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.5rem;"></div>`;
+            html += '</div>';
 
-            html += '</td>';
-            html += '</tr>';
             return html;
         }
 
@@ -6323,12 +6322,7 @@ else {
         tableHTML += '</div>';
         tableHTML += '</div>';
 
-        tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 13px; font-weight: bold; background: #252525; border-radius: 8px; overflow: hidden;">';
-        tableHTML += '<thead><tr>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); width: 140px;">Category</th>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Medications</th>';
-        tableHTML += '</tr></thead>';
-        tableHTML += '<tbody>';
+        tableHTML += '<div style="font-family: \'Courier New\', monospace; font-size: 13px; background: #252525; border-radius: 8px; padding: 1rem;">';
 
       tableHTML += createCategoryRow('NEURO', categorizedMeds['neuro']);
 tableHTML += createCategoryRow('PULM', categorizedMeds['pulm']);
@@ -6338,9 +6332,9 @@ tableHTML += createCategoryRow('RENAL/FLUIDS', categorizedMeds['renal']);
 tableHTML += createCategoryRow('HEME', categorizedMeds['heme']);
 tableHTML += createCategoryRow('INFECTION', categorizedMeds['infection']);
 tableHTML += createCategoryRow('ENDOCRINE', categorizedMeds['endocrine']);
-tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']); 
+tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
-        tableHTML += '</tbody></table>';
+        tableHTML += '</div>';
         tableHTML += '</div>';
 
         fullOrdersDisplay.innerHTML = tableHTML;
