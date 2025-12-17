@@ -6237,13 +6237,9 @@ else {
                                                 m.route === 'INH' || m.route === 'IM');
             const ivMeds = medList.filter(m => m.route === 'IV');
 
-            let html = '<tr>';
-            html += `<td style="background: #1e1e1e; font-weight: 600; color: var(--primary); padding: 8px; border-bottom: 1px solid #333; vertical-align: top; width: 140px;">${categoryName}</td>`;
+            let html = '';
 
-            // Single medications column
-            html += '<td style="padding: 4px 8px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.2;">';
-
-            // PO section
+            // Create a row for each PO medication
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
@@ -6251,59 +6247,56 @@ else {
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for PO meds (lighter grey for PRN)
-				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const manualIndicator = med.isManual ? '✏️ ' : '';
-				    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.3rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span> <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
-                        class="med-status-btn"
-                        data-med-id="${medId}"
-                        data-status="stop"
-					    style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
-                        title="Remove this medication">🟥</button>
-            </span>
-        </div>`;
+                    html += '<tr>';
+                    html += `<td style="padding: 6px 12px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">`;
+                    html += `<span style="color: var(--primary); font-weight: 600; margin-right: 8px;">${categoryName}:</span>`;
+                    html += `${displayText}</span>`;
+                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Remove this medication">🟥</button>`;
+                    html += '</td>';
+                    html += '</tr>';
                 });
             }
 
-            // IV/other section - NO LABEL, just red medications
+            // Create a row for each IV medication
             if (ivMeds.length > 0) {
-                // Add small spacing if there were PO meds
-                if (poMeds.length > 0) {
-                    html += '<div style="margin-top: 0.1rem;"></div>';
-                }
                 ivMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
 
                     // Skip if deleted
                     if (deletedOrders.has(medId)) return;
 
-				    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';  // White for IV meds
-				    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
-				    const manualIndicator = med.isManual ? '✏️ ' : '';
-				    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
+                    const color = med.isPRN ? '#FFFFFF' : '#FFFFFF';
+                    const baseText = showAbbreviatedTable ? abbreviateMedText(med.text) : med.text;
+                    const manualIndicator = med.isManual ? '✏️ ' : '';
+                    const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += `<div style="color: ${color}; margin-left: 0.5rem; margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.5rem;"> <span style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">${displayText}</span>  <span style="display: flex; gap: 0.25rem;">
-                <button onclick="toggleMedStatus(event, '${medId}', 'stop')"
-                        class="med-status-btn"
-                        data-med-id="${medId}"
-                        data-status="stop"
-						style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1;"
-                        title="Remove this medication">🟥</button>
-            </span>
-        </div>`;
+                    html += '<tr>';
+                    html += `<td style="padding: 6px 12px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">`;
+                    html += `<span style="color: var(--primary); font-weight: 600; margin-right: 8px;">${categoryName}:</span>`;
+                    html += `${displayText}</span>`;
+                    html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Remove this medication">🟥</button>`;
+                    html += '</td>';
+                    html += '</tr>';
                 });
             }
 
-            // If no meds at all
-            if (poMeds.length === 0 && ivMeds.length === 0) {
-                html += '<span style="color: #555; font-style: italic;">—</span>';
-            }
-
-            html += '</td>';
-            html += '</tr>';
             return html;
         }
 
@@ -6328,7 +6321,6 @@ else {
 
         tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 13px; font-weight: bold; background: #252525; border-radius: 8px; overflow: hidden;">';
         tableHTML += '<thead><tr>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); width: 140px;">Category</th>';
         tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Medications</th>';
         tableHTML += '</tr></thead>';
         tableHTML += '<tbody>';
