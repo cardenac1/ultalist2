@@ -6237,9 +6237,16 @@ else {
                                                 m.route === 'INH' || m.route === 'IM');
             const ivMeds = medList.filter(m => m.route === 'IV');
 
+            // Skip empty categories
+            if (poMeds.length === 0 && ivMeds.length === 0) return '';
+
             let html = '';
 
-            // Create a row for each PO medication
+            // Category header
+            html += `<div style="margin-bottom: 0.75rem;">`;
+            html += `<div style="color: var(--primary); font-weight: 600; font-size: 14px; margin-bottom: 0.5rem;">${categoryName}:</div>`;
+
+            // PO medications
             if (poMeds.length > 0) {
                 poMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_po_${idx}`;
@@ -6252,23 +6259,19 @@ else {
                     const manualIndicator = med.isManual ? '✏️ ' : '';
                     const displayText = manualIndicator + '💊 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += '<tr>';
-                    html += `<td style="padding: 6px 12px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">`;
-                    html += `<span style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">`;
-                    html += `<span style="color: var(--primary); font-weight: 600; margin-right: 8px;">${categoryName}:</span>`;
-                    html += `${displayText}</span>`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span>${displayText}</span>`;
                     html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
                             title="Remove this medication">🟥</button>`;
-                    html += '</td>';
-                    html += '</tr>';
+                    html += '</div>';
                 });
             }
 
-            // Create a row for each IV medication
+            // IV medications
             if (ivMeds.length > 0) {
                 ivMeds.forEach((med, idx) => {
                     const medId = `med_${categoryName.replace(/\s+/g, '_')}_iv_${idx}`;
@@ -6281,21 +6284,21 @@ else {
                     const manualIndicator = med.isManual ? '✏️ ' : '';
                     const displayText = manualIndicator + '💉 ' + baseText + (med.isPRN ? ' PRN' : '');
 
-                    html += '<tr>';
-                    html += `<td style="padding: 6px 12px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">`;
-                    html += `<span style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal;">`;
-                    html += `<span style="color: var(--primary); font-weight: 600; margin-right: 8px;">${categoryName}:</span>`;
-                    html += `${displayText}</span>`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 4px 0; display: flex; align-items: center; justify-content: space-between;">`;
+                    html += `<span>${displayText}</span>`;
                     html += `<button onclick="toggleMedStatus(event, '${medId}', 'stop')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0; margin-left: 8px;"
                             title="Remove this medication">🟥</button>`;
-                    html += '</td>';
-                    html += '</tr>';
+                    html += '</div>';
                 });
             }
+
+            // Category separator
+            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.5rem;"></div>`;
+            html += '</div>';
 
             return html;
         }
@@ -6319,11 +6322,7 @@ else {
         tableHTML += '</div>';
         tableHTML += '</div>';
 
-        tableHTML += '<table style="width: 100%; border-collapse: collapse; font-family: \'Courier New\', monospace; font-size: 13px; font-weight: bold; background: #252525; border-radius: 8px; overflow: hidden;">';
-        tableHTML += '<thead><tr>';
-        tableHTML += '<th style="background: linear-gradient(135deg, #2d5a7b 0%, #1e3a5f 100%); color: var(--primary); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary);">Medications</th>';
-        tableHTML += '</tr></thead>';
-        tableHTML += '<tbody>';
+        tableHTML += '<div style="font-family: \'Courier New\', monospace; font-size: 13px; background: #252525; border-radius: 8px; padding: 1rem;">';
 
       tableHTML += createCategoryRow('NEURO', categorizedMeds['neuro']);
 tableHTML += createCategoryRow('PULM', categorizedMeds['pulm']);
@@ -6333,9 +6332,9 @@ tableHTML += createCategoryRow('RENAL/FLUIDS', categorizedMeds['renal']);
 tableHTML += createCategoryRow('HEME', categorizedMeds['heme']);
 tableHTML += createCategoryRow('INFECTION', categorizedMeds['infection']);
 tableHTML += createCategoryRow('ENDOCRINE', categorizedMeds['endocrine']);
-tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']); 
+tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
-        tableHTML += '</tbody></table>';
+        tableHTML += '</div>';
         tableHTML += '</div>';
 
         fullOrdersDisplay.innerHTML = tableHTML;
