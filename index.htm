@@ -3523,6 +3523,12 @@ function switchView(mode) {
         labData = {};
     }
 
+    // Clear orders-related state to prevent data retention from previous patient
+    fullOrdersText = '';
+    manualOrders = [];
+    deletedOrders = new Set();
+    editedOrders = new Map();
+
     // Update active button
     document.querySelectorAll('.view-button').forEach(btn => {
         btn.classList.remove('active');
