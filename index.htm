@@ -6024,20 +6024,23 @@ function resetManualChanges() {
         return;
     }
 
-    if (showFullOrders && (fullOrdersText || lastImportedData)) {
+    if (showFullOrders && (fullOrdersText || lastImportedData || manualOrders.length > 0)) {
         // Create table-based full orders display
         const medsText = fullOrdersText || extractFullMeds(lastImportedData);
 
         if (!medsText || medsText.trim().length === 0) {
-            fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
-            fullOrdersDisplay.classList.remove('hidden');
-            return;
+            // If there are manual orders but no imported data, continue to render
+            if (manualOrders.length === 0) {
+                fullOrdersDisplay.innerHTML = '<em style="color: var(--text-secondary);">No medication orders found in imported data.</em>';
+                fullOrdersDisplay.classList.remove('hidden');
+                return;
+            }
         }
 
         const dietMatch = lastImportedData ? lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i) : null;
 
         let currentSection = 'Scheduled';
-        const medsLines = medsText.split('\n');
+        const medsLines = medsText ? medsText.split('\n') : [];
        const categorizedMeds = {
 	    'neuro': [],          // Pain, sedation, neurological, psychiatric
 	    'pulm': [],           // All respiratory
