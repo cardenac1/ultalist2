@@ -11607,11 +11607,81 @@ function resolveKeys(preferredKeys, obj) {
   return out;
 }
 
+// ========= PARSE VITALS FROM FISHBONE FORMAT =========
+function parseVitalsFromFishbone(fishboneText) {
+  const vitals = {};
+
+  // Get the first line (should contain vitals)
+  const lines = fishboneText.split('\n');
+  if (lines.length === 0) return vitals;
+
+  // Find the vitals line (skip "Subj:" if present)
+  let vitalsLine = lines[0];
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i].trim();
+    if (line && !line.startsWith('Subj:') && (line.includes('T ') || line.includes('HR ') || line.includes('BP '))) {
+      vitalsLine = line;
+      break;
+    }
+  }
+
+  if (!vitalsLine) return vitals;
+
+  // Remove asterisks (abnormal markers)
+  vitalsLine = vitalsLine.replace(/\*/g, '');
+
+  // Parse Temperature: "T 36.2-37.8 (37.0)"
+  const tempMatch = vitalsLine.match(/T\s+([\d.]+)-([\d.]+)\s*\(([\d.]+)\)/);
+  if (tempMatch) {
+    const min = parseFloat(tempMatch[1]);
+    const max = parseFloat(tempMatch[2]);
+    const avg = parseFloat(tempMatch[3]);
+    vitals.temp = [min, avg, max];
+  }
+
+  // Parse Heart Rate: "HR 60-100(80)" or "HR 60-100 (80)"
+  const hrMatch = vitalsLine.match(/HR\s+(\d+)-(\d+)\s*\((\d+)\)/);
+  if (hrMatch) {
+    const min = parseInt(hrMatch[1]);
+    const max = parseInt(hrMatch[2]);
+    const avg = parseInt(hrMatch[3]);
+    vitals.hr = [min, avg, max];
+  }
+
+  // Parse Systolic BP: "SBP 110-140 (125)"
+  const sbpMatch = vitalsLine.match(/SBP\s+(\d+)-(\d+)\s*\((\d+)\)/);
+  if (sbpMatch) {
+    const min = parseInt(sbpMatch[1]);
+    const max = parseInt(sbpMatch[2]);
+    const avg = parseInt(sbpMatch[3]);
+    vitals.sbp = [min, avg, max];
+  }
+
+  // Parse Diastolic BP: "DBP 60-80 (70)"
+  const dbpMatch = vitalsLine.match(/DBP\s+(\d+)-(\d+)\s*\((\d+)\)/);
+  if (dbpMatch) {
+    const min = parseInt(dbpMatch[1]);
+    const max = parseInt(dbpMatch[2]);
+    const avg = parseInt(dbpMatch[3]);
+    vitals.dbp = [min, avg, max];
+  }
+
+  // Parse O2 Saturation: "O2 95-99" (may not have average)
+  const o2Match = vitalsLine.match(/O2\s+(\d+)-(\d+)/);
+  if (o2Match) {
+    const min = parseInt(o2Match[1]);
+    const max = parseInt(o2Match[2]);
+    vitals.o2 = [min, max];
+  }
+
+  return vitals;
+}
+
 // ========= MAIN UPDATE FUNCTION =========
 function updateViolinDisplay(ctx = {}) {
   const _patientData = ctx.patientData || patientData;
   const _currentIdx = Number.isInteger(ctx.currentPatientIndex) ? ctx.currentPatientIndex : currentPatientIndex;
-  const _labData = ctx.labData || labData;
+  let _labData = ctx.labData || labData;
   const _lastImportedData = ctx.lastImportedData || lastImportedData;
 
   if (!_patientData || _currentIdx < 0 || !_patientData[_currentIdx]) return;
@@ -11620,6 +11690,15 @@ function updateViolinDisplay(ctx = {}) {
 
   // Extract I/O data
   const _ioData = _lastImportedData ? extractIntakeOutputData(_lastImportedData) : null;
+
+  // Parse fishbone to extract vitals from the VIOLIN text itself
+  const parsedVitals = parseVitalsFromFishbone(patient.VIOLIN);
+
+  // If we have parsed vitals from fishbone, merge them into _labData
+  if (Object.keys(parsedVitals).length > 0) {
+    _labData = _labData || {};
+    _labData.vitals = { ...(_labData.vitals || {}), ...parsedVitals };
+  }
 
   // Parse fishbone to extract vitals/I/O section
   const fishboneLines = String(patient.VIOLIN).split('\n');
