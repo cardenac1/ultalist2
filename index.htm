@@ -9435,28 +9435,28 @@ function showStaffPresentation() {
 
     // Build presentation with the requested fields
     let presentation = '';
-    presentation += `NAME\n${name}\n\n`;
-    presentation += `RM\n${rm}\n\n`;
-    presentation += `MRN\n${mrn}\n\n`;
+    presentation += `${name}\n`;
+    presentation += `${rm}\n`;
+    presentation += `${mrn}\n\n`;
 
     if (problems) {
-        presentation += `PROBLEMS\n${problems}\n\n`;
+        presentation += `${problems}\n\n`;
     }
 
     if (ics) {
-        presentation += `ICS\n${ics}\n\n`;
+        presentation += `${ics}\n\n`;
     }
 
     if (violin) {
-        presentation += `VIOLIN\n${violin}\n\n`;
+        presentation += `${violin}\n\n`;
     }
 
     if (orders) {
-        presentation += `ORDERS\n${orders}\n\n`;
+        presentation += `${orders}\n\n`;
     }
 
     if (todo) {
-        presentation += `TO DO\n${todo}`;
+        presentation += `${todo}`;
     }
 
     // Modal
