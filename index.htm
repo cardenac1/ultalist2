@@ -9412,65 +9412,52 @@ function showStaffPresentation() {
 
     const patient = patientData[currentPatientIndex];
 
-    // Check if it's a consult
-    if (patient.Type !== 'Consult') {
-        alert("This is a regular patient entry. Convert to consult first to generate staff presentation.");
-        return;
-    }
-
     // Small helper
     const isBlank = v => v == null || String(v).trim() === '';
 
-    // Extract common data
-    const cc     = isBlank(patient.CC) ? '' : patient.CC.trim();
-    const violin = isBlank(patient.VIOLIN) ? '' : patient.VIOLIN.trim();
-    const pe     = isBlank(patient.PE) ? '' : patient.PE.trim();
-    const todo   = isBlank(patient['To do']) ? '' : String(patient['To do']).trim();
-
-    // Identifiers
+    // Extract patient data
     const name = isBlank(patient.Name) ? 'Unknown' : patient.Name.trim();
     const rm   = isBlank(patient.RM) ? 'Unknown' : String(patient.RM).trim();
     const mrn  = isBlank(patient.MRN) ? 'Unknown' : String(patient.MRN).trim();
 
-    // Decide which mode to use
-    const ageGender = isBlank(patient['A/G']) ? '' : String(patient['A/G']).trim();
-    const useProblemsMode = isBlank(ageGender);
+    // Extract Problems field
+    const problems =
+        !isBlank(patient.Problems) ? String(patient.Problems).trim() :
+        !isBlank(patient.PROBLEMS) ? String(patient.PROBLEMS).trim() :
+        !isBlank(patient['Problem List']) ? String(patient['Problem List']).trim() :
+        '';
 
-    // Build content for each mode
-    let middleBlock = '';
-    if (useProblemsMode) {
-        // Prefer 'Problems', but fall back to a few common variants just in case
-        const problems =
-            !isBlank(patient.Problems) ? String(patient.Problems).trim() :
-            !isBlank(patient.PROBLEMS) ? String(patient.PROBLEMS).trim() :
-            !isBlank(patient['Problem List']) ? String(patient['Problem List']).trim() :
-            'No problems listed';
+    // Extract other fields
+    const ics    = isBlank(patient.ICS) ? '' : String(patient.ICS).trim();
+    const violin = isBlank(patient.VIOLIN) ? '' : patient.VIOLIN.trim();
+    const orders = isBlank(patient.ORDERS) ? '' : String(patient.ORDERS).trim();
+    const todo   = isBlank(patient['To do']) ? '' : String(patient['To do']).trim();
 
-        middleBlock = `${problems}\n\n`;
-    } else {
-        const pmh = isBlank(patient.PMH) ? '' : String(patient.PMH).trim();
-        const hpi = isBlank(patient.HPI) ? '' : String(patient.HPI).trim();
-        const ros = isBlank(patient.ROS) ? '' : String(patient.ROS).trim();
+    // Build presentation with the requested fields
+    let presentation = '';
+    presentation += `NAME\n${name}\n\n`;
+    presentation += `RM\n${rm}\n\n`;
+    presentation += `MRN\n${mrn}\n\n`;
 
-        // PMH phrase
-        const pmhPhrase = pmh ? `with PMH ${pmh}` : 'with no PMH';
-
-        // Assemble the narrative; trim empty parts gracefully
-        const parts = [
-            `${ageGender} ${pmhPhrase}`,
-            hpi,
-            ros
-        ].filter(s => !isBlank(s));
-
-        middleBlock = parts.join(', ').replace(/\s+,/g, ',') + '\n\n';
+    if (problems) {
+        presentation += `PROBLEMS\n${problems}\n\n`;
     }
 
-    // Build final presentation
-    let presentation = `${name}\n${rm}\nMRN: ${mrn}\n\n`;
-    presentation += `Consult for ${cc}\n\n`;
-    presentation += middleBlock;
-    presentation += `${violin}\n\n${pe}\n\n`;
-    presentation += `Plan: ${todo}`;
+    if (ics) {
+        presentation += `ICS\n${ics}\n\n`;
+    }
+
+    if (violin) {
+        presentation += `VIOLIN\n${violin}\n\n`;
+    }
+
+    if (orders) {
+        presentation += `ORDERS\n${orders}\n\n`;
+    }
+
+    if (todo) {
+        presentation += `TO DO\n${todo}`;
+    }
 
     // Modal
     const modal = document.createElement('div');
