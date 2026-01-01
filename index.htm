@@ -2794,7 +2794,7 @@ function getChecklistStatus(patient, patientIndex) {
     // Handle priority "C" explicitly for green (ANSI GREEN - RESERVED)
     if (priority === 'c') {
         console.log('getPriorityStatus: Matched priority C, returning green');
-        return { color: '#00FF00', title: 'Priority C - Complete' }; // ANSI Bright Green (RESERVED)
+        return { color: '#00A36C', title: 'Priority C - Complete' }; // ANSI Bright Green (RESERVED)
     }
 
     // Handle numeric priorities (ANSI color scheme)
@@ -2831,7 +2831,7 @@ function getChecklistStatus(patient, patientIndex) {
     // Text-based priority fallback (GREEN RESERVED for complete/done only)
     console.log('getPriorityStatus: Checking text-based priority:', priority);
     if (priority.includes('done') || priority.includes('complete')) {
-        return { color: '#00FF00', title: `${priority} - Complete` }; // ANSI Green (RESERVED)
+        return { color: '#00A36C', title: `${priority} - Complete` }; // ANSI Green (RESERVED)
     }
     if (priority.includes('urgent') || priority.includes('stat')) {
         return { color: '#FF0000', title: `${priority} - Urgent` }; // ANSI Bright Red
@@ -2879,7 +2879,7 @@ function generateStatusIndicator(patient, index) {
 
     // Handle priority "C" explicitly for complete green (ANSI GREEN - RESERVED)
     if (priority === 'C' || priority === 'c') {
-        color = '#00FF00'; // ANSI Bright Green (RESERVED)
+        color = '#00A36C'; // ANSI Bright Green (RESERVED)
         title = 'Priority C - Complete';
     } else if (!isNaN(parseInt(priority))) {
         // Numeric priorities (ANSI color scheme)
@@ -2932,7 +2932,7 @@ function generateStatusIndicator(patient, index) {
     } else if (priority) {
         // Text-based priorities (GREEN RESERVED for complete/done only)
         if (priority.includes('done') || priority.includes('complete')) {
-            color = '#00FF00'; // ANSI Green (RESERVED)
+            color = '#00A36C'; // ANSI Green (RESERVED)
             title = `${priority} - Complete`;
         } else if (priority.includes('urgent') || priority.includes('stat')) {
             color = '#FF0000'; // ANSI Bright Red
@@ -11070,7 +11070,7 @@ function showStatusSelector(patient, index, statusElement) {
     // ANSI Color Scheme Priority Options (GREEN reserved for Priority C only)
     const priorityOptions = [
         { num: '', name: 'No Priority', color: '#555555' },                   // Dark gray
-        { num: 'C', name: 'Priority C - Complete/Done', color: '#00FF00' },   // ANSI Bright Green (RESERVED)
+        { num: 'C', name: 'Priority C - Complete/Done', color: '#00A36C' },   // ANSI Bright Green (RESERVED)
         { num: '1', name: 'Priority 1 - Urgent- See immediately: consults, patients, emergencies', color: '#FF0000' },  // ANSI Bright Red
         { num: '2', name: 'Priority 2 - Urgent consults/patients/orders- see within 1 hour ', color: '#DD0000' },       // ANSI Red
         { num: '3', name: 'Priority 3 - Semi-urgent, see in 1-2 hours ', color: '#FF5500' },     // Orange
@@ -11127,7 +11127,7 @@ function getStatusColor(colorName) {
     const colors = {
         'red': '#ef4444',
         'yellow': '#f59e0b', 
-        'green': '#10b981',
+        'green': '#00A36C',
         'blue': '#3b82f6',
         'purple': '#8b5cf6',
         'orange': '#f97316',
