@@ -1842,7 +1842,7 @@ select,
 .priority-3 { --priority-color: #FF5500; } /* Priority 3 - Medium-High - Orange */
 .priority-4 { --priority-color: #FF8800; } /* Priority 4 - Medium - Bright Orange */
 .priority-5 { --priority-color: #FFFF00; } /* Priority 5 - Medium-Low - ANSI Bright Yellow */
-.priority-6 { --priority-color: #00FFFF; } /* Priority 6 - Low-Medium - ANSI Bright Cyan */
+.priority-6 { --priority-color: #A39600; } /* Priority 6 - Low-Medium - ANSI Bright Cyan */
 .priority-7 { --priority-color: #5555FF; } /* Priority 7 - Low - Light Blue */
 .priority-8 { --priority-color: #0000FF; } /* Priority 8 - Very Low - ANSI Bright Blue */
 .priority-9 { --priority-color: #FF00FF; } /* Priority 9 - Minimal - ANSI Bright Magenta */
@@ -2813,7 +2813,7 @@ function getChecklistStatus(patient, patientIndex) {
             case 5:
                 return { color: '#FFFF00', title: 'Priority 5 - Medium-Low' }; // ANSI Bright Yellow
             case 6:
-                return { color: '#00FFFF', title: 'Priority 6 - Low-Medium' }; // ANSI Bright Cyan
+                return { color: '#A39600', title: 'Priority 6 - Low-Medium' }; // ANSI Bright Cyan
             case 7:
                 return { color: '#5555FF', title: 'Priority 7 - Low' }; // Light Blue
             case 8:
@@ -2843,7 +2843,7 @@ function getChecklistStatus(patient, patientIndex) {
         return { color: '#FFFF00', title: `${priority} - Medium` }; // ANSI Bright Yellow
     }
     if (priority.includes('low')) {
-        return { color: '#00FFFF', title: `${priority} - Low` }; // ANSI Bright Cyan (NO GREEN!)
+        return { color: '#A39600', title: `${priority} - Low` }; // ANSI Bright Cyan (NO GREEN!)
     }
 
     console.log('getPriorityStatus: Unrecognized priority, returning default:', priority);
@@ -2906,7 +2906,7 @@ function generateStatusIndicator(patient, index) {
                 title = 'Priority 5 - Medium-Low';
                 break;
             case 6:
-                color = '#00FFFF'; // ANSI Bright Cyan
+                color = '#A39600'; // ANSI Bright Cyan
                 title = 'Priority 6 - Low-Medium';
                 break;
             case 7:
@@ -2944,7 +2944,7 @@ function generateStatusIndicator(patient, index) {
             color = '#FFFF00'; // ANSI Bright Yellow
             title = `${priority} - Medium`;
         } else if (priority.includes('low')) {
-            color = '#00FFFF'; // ANSI Bright Cyan (NO GREEN!)
+            color = '#A39600'; // ANSI Bright Cyan (NO GREEN!)
             title = `${priority} - Low`;
         } else {
             color = 'var(--card-bg)'; // Grey for unrecognized text
