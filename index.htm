@@ -5367,7 +5367,7 @@ function generateVitalsTable() {
             value: parseFloat(match[1]),
             unit: '°C',
             time: timeKey,
-            datetime: new Date(`20${match[2].split('/')[2]}-${match[2].split('/')[0]}-${match[2].split('/')[1]} ${match[3]}`),
+            datetime: (() => { const p = match[2].split('/'); const y = p[2].length === 2 ? '20'+p[2] : p[2]; return new Date(`${y}-${p[0]}-${p[1]} ${match[3]}`); })(),
             abnormal: parseFloat(match[1]) > 38 || parseFloat(match[1]) < 35
         });
     }
@@ -5383,7 +5383,7 @@ function generateVitalsTable() {
             value: hr,
             unit: 'bpm',
             time: timeKey,
-            datetime: new Date(`20${match[2].split('/')[2]}-${match[2].split('/')[0]}-${match[2].split('/')[1]} ${match[3]}`),
+            datetime: (() => { const p = match[2].split('/'); const y = p[2].length === 2 ? '20'+p[2] : p[2]; return new Date(`${y}-${p[0]}-${p[1]} ${match[3]}`); })(),
             abnormal: hr > 100 || hr < 60
         });
     }
@@ -5411,7 +5411,7 @@ function generateVitalsTable() {
 // Extract blood pressure readings - SEPARATE PATTERNS
 // First, collect all systolic readings
 const systolicReadings = {};
-const systolicRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
+const systolicRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High|Critical))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
 while ((match = systolicRegex.exec(lastImportedData)) !== null) {
     const timeKey = `${match[2]} ${match[3]}`;
     systolicReadings[timeKey] = parseInt(match[1]);
@@ -5419,7 +5419,7 @@ while ((match = systolicRegex.exec(lastImportedData)) !== null) {
 
 // Then collect all diastolic readings
 const diastolicReadings = {};
-const diastolicRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
+const diastolicRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High|Critical))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
 while ((match = diastolicRegex.exec(lastImportedData)) !== null) {
     const timeKey = `${match[2]} ${match[3]}`;
     diastolicReadings[timeKey] = parseInt(match[1]);
@@ -5434,7 +5434,7 @@ Object.keys(systolicReadings).forEach(timeKey => {
     // Parse the date
     const [dateStr, timeStr] = timeKey.split(' ');
     const [month, day, year] = dateStr.split('/');
-    const datetime = new Date(`20${year}-${month}-${day} ${timeStr}`);
+    const datetime = new Date(`${year.length === 2 ? '20'+year : year}-${month}-${day} ${timeStr}`);
     
     // Add systolic reading
     vitalReadings.push({
@@ -5466,7 +5466,7 @@ Object.keys(diastolicReadings).forEach(timeKey => {
         const dbp = diastolicReadings[timeKey];
         const [dateStr, timeStr] = timeKey.split(' ');
         const [month, day, year] = dateStr.split('/');
-        const datetime = new Date(`20${year}-${month}-${day} ${timeStr}`);
+        const datetime = new Date(`${year.length === 2 ? '20'+year : year}-${month}-${day} ${timeStr}`);
         
         vitalReadings.push({
             type: 'Diastolic BP',
@@ -5512,7 +5512,7 @@ Object.keys(diastolicReadings).forEach(timeKey => {
             value: o2,
             unit: '%',
             time: timeKey,
-            datetime: new Date(`20${match[2].split('/')[2]}-${match[2].split('/')[0]}-${match[2].split('/')[1]} ${match[3]}`),
+            datetime: (() => { const p = match[2].split('/'); const y = p[2].length === 2 ? '20'+p[2] : p[2]; return new Date(`${y}-${p[0]}-${p[1]} ${match[3]}`); })(),
             abnormal: o2 < 92
         });
     }
@@ -5603,15 +5603,21 @@ Object.keys(diastolicReadings).forEach(timeKey => {
     
     const times = Array.from(timeSet)
         .filter(timeStr => {
-            const parts = timeStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+            const parts = timeStr.match(/(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?/);
             if (!parts) return false;
-            const dt = new Date(`20${parts[3]}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${parts[6]}`);
+            const yr = parts[3].length === 2 ? '20' + parts[3] : parts[3];
+            const sec = parts[6] || '00';
+            const dt = new Date(`${yr}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${sec}`);
             return dt >= twentyFourHoursAgo && dt <= now;
         })
         .sort((a, b) => {
-            const dateA = new Date(a.replace(/(\d{2})\/(\d{2})\/(\d{2})/, '20$3-$1-$2'));
-            const dateB = new Date(b.replace(/(\d{2})\/(\d{2})\/(\d{2})/, '20$3-$1-$2'));
-            return dateB - dateA; // Most recent first
+            function parseTimeKey(s) {
+                const p = s.match(/(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?/);
+                if (!p) return new Date(0);
+                const yr = p[3].length === 2 ? '20' + p[3] : p[3];
+                return new Date(`${yr}-${p[1]}-${p[2]} ${p[4]}:${p[5]}:${p[6]||'00'}`);
+            }
+            return parseTimeKey(b) - parseTimeKey(a); // Most recent first
         });
     
     if (times.length === 0) {
@@ -6841,9 +6847,11 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             const fortyEightHoursAgo = new Date(now - 48 * 60 * 60 * 1000);
 
             function isWithin24Hours(dateTimeStr) {
-                const parts = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+                const parts = dateTimeStr.match(/(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?/);
                 if (!parts) return false;
-                const dt = new Date(`20${parts[3]}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${parts[6]}`);
+                const yr = parts[3].length === 2 ? '20' + parts[3] : parts[3];
+                const sec = parts[6] || '00';
+                const dt = new Date(`${yr}-${parts[1]}-${parts[2]} ${parts[4]}:${parts[5]}:${sec}`);
                 // Changed to 48 hours to ensure vitals are captured for suggestions
                 return dt >= fortyEightHoursAgo && dt <= now;
             }
@@ -6877,7 +6885,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract systolic BP with timestamps
-            const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
+            const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High|Critical))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const sbpValues = [];
             let sbpMatch;
             while ((sbpMatch = sbpRegex.exec(text)) !== null) {
@@ -6891,7 +6899,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract diastolic BP with timestamps
-            const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
+            const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High|Critical))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const dbpValues = [];
             let dbpMatch;
             while ((dbpMatch = dbpRegex.exec(text)) !== null) {
@@ -6924,7 +6932,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
 
 // Extract lab values with dates
 const extractLabValue = (pattern, name) => {
-    const matches = text.match(new RegExp(pattern + '.*?([\\d.]+).*?\\((\\d{2}/\\d{2}/\\d{2})\\s+(\\d{2}:\\d{2}:\\d{2})\\)', 'gi'));
+    const matches = text.match(new RegExp(pattern + '.*?([\\d.]+).*?\\((\\d{2}/\\d{2}/\\d{2,4})\\s+(\\d{2}:\\d{2}(?::\\d{2})?)\\)', 'gi'));
     if (matches && matches.length > 0) {
         const values = [];
         const dates = [];
@@ -7527,14 +7535,14 @@ const ioData = {
 
     // Helper function to parse date/time
     function parseDateTime(dateTimeStr) {
-        // Format: (06/14/25 07:00:00)
-        const match = dateTimeStr.match(/\((\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})\)/);
+        // Format: (06/14/25 07:00:00) or (02/06/2026 10:55)
+        const match = dateTimeStr.match(/\((\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?\)/);
         if (!match) return null;
 
         const [_, month, day, year, hour, minute, second] = match;
-        const fullYear = 2000 + parseInt(year);
+        const fullYear = year.length === 2 ? 2000 + parseInt(year) : parseInt(year);
         return new Date(fullYear, parseInt(month) - 1, parseInt(day),
-                       parseInt(hour), parseInt(minute), parseInt(second));
+                       parseInt(hour), parseInt(minute), parseInt(second || 0));
     }
 
     // Helper function to check if entry is within time window
