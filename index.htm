@@ -8194,7 +8194,9 @@ yesterday.setDate(yesterday.getDate() - 1);
 const isRecentDate = (dateStr) => {
     if (!dateStr) return false;
     const [month, day, year] = dateStr.split('/').map(n => parseInt(n));
-    const labDate = new Date(2000 + year, month - 1, day);
+    // Handle both 2-digit and 4-digit years
+    const fullYear = year < 100 ? 2000 + year : year;
+    const labDate = new Date(fullYear, month - 1, day);
     labDate.setHours(0, 0, 0, 0);
     return labDate >= yesterday && labDate <= currentDate;
 };
