@@ -6705,10 +6705,18 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 // Helper: parse "MM/DD/YY HH:MM:SS" into a Date
 function parseTS(dateStr, timeStr) {
   const [mo, day, yr] = dateStr.split('/').map(n => parseInt(n, 10));
-  const [h, m, s]    = timeStr.split(':').map(n => parseInt(n, 10));
-  return new Date(2000 + yr, mo - 1, day, h, m, s);
+  const timeParts = timeStr.split(':').map(n => parseInt(n, 10));
+  const h = timeParts[0];
+  const m = timeParts[1];
+  const s = timeParts[2] || 0;  // Default to 0 if no seconds
+  
+  // Handle both 2-digit and 4-digit years
+  const year = yr < 100 ? 2000 + yr : yr;
+  
+  return new Date(year, mo - 1, day, h, m, s);
 }
 
+			
 // Helper function to pick latest entry
 function pickLatest(regex, text) {
   const arr = [];
@@ -6924,7 +6932,7 @@ const extractLabValue = (pattern, name) => {
         
         matches.forEach(match => {
             const valueMatch = match.match(/:\s*[<>]?\s*([\d.]+)/);
-            const dateTimeMatch = match.match(/\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/);
+            const dateTimeMatch = match.match(/\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/);
             if (valueMatch) {
                 values.push(parseFloat(valueMatch[1]));
                 if (dateTimeMatch) {
