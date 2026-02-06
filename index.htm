@@ -5357,7 +5357,7 @@ function generateVitalsTable() {
     const timeSet = new Set();
     
     // Extract temperature readings
-    const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+    const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
     let match;
     while ((match = tempRegex.exec(lastImportedData)) !== null) {
         const timeKey = `${match[2]} ${match[3]}`;
@@ -5373,7 +5373,7 @@ function generateVitalsTable() {
     }
     
     // Extract heart rate readings
-    const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+    const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
     while ((match = hrRegex.exec(lastImportedData)) !== null) {
         const timeKey = `${match[2]} ${match[3]}`;
         timeSet.add(timeKey);
@@ -5411,7 +5411,7 @@ function generateVitalsTable() {
 // Extract blood pressure readings - SEPARATE PATTERNS
 // First, collect all systolic readings
 const systolicReadings = {};
-const systolicRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+const systolicRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
 while ((match = systolicRegex.exec(lastImportedData)) !== null) {
     const timeKey = `${match[2]} ${match[3]}`;
     systolicReadings[timeKey] = parseInt(match[1]);
@@ -5419,7 +5419,7 @@ while ((match = systolicRegex.exec(lastImportedData)) !== null) {
 
 // Then collect all diastolic readings
 const diastolicReadings = {};
-const diastolicRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+const diastolicRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
 while ((match = diastolicRegex.exec(lastImportedData)) !== null) {
     const timeKey = `${match[2]} ${match[3]}`;
     diastolicReadings[timeKey] = parseInt(match[1]);
@@ -5502,7 +5502,7 @@ Object.keys(diastolicReadings).forEach(timeKey => {
 
     
     // Extract O2 saturation readings
-    const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+    const o2Regex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
     while ((match = o2Regex.exec(lastImportedData)) !== null) {
         const timeKey = `${match[2]} ${match[3]}`;
         timeSet.add(timeKey);
@@ -6734,7 +6734,7 @@ function pickLatest(regex, text) {
 
 // ——— Oxygen Therapy ———
 const o2Entries = [];
-const o2Regex = /Oxygen Therapy:\s*(.+?)\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+const o2Regex = /Oxygen Therapy:\s*(.+?)\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
 let m;
 while ((m = o2Regex.exec(text)) !== null) {
   o2Entries.push({
@@ -6770,7 +6770,7 @@ if (o2Entries.length) {
 
 // ——— Oxygen Flow Rate ———
 const flowEntries = [];
-const flowRegex = /Oxygen Flow Rate:\s*([\d.]+\s*L\/min)\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi;
+const flowRegex = /Oxygen Flow Rate:\s*([\d.]+\s*L\/min)\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi;
 while ((m = flowRegex.exec(text)) !== null) {
   flowEntries.push({
     rate: m[1].trim(),
@@ -6792,11 +6792,11 @@ if (flowEntries.length) {
 
 
 		// ——— Ventilator Settings ———
-data.ventModeRaw      = pickLatest(/Ventilator Mode:\s*([^(]+)\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
-data.ventFrequencyRaw = pickLatest(/Ventilator Frequency(?:,\s*Mandatory)?:\s*(\d+)\s*br\/min\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
-data.ventTidalRaw     = pickLatest(/Tidal Volume(?:,\s*Delivered)?:\s*(\d+)\s*mL\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
-data.ventPeepRaw      = pickLatest(/Positive End Expiratory Pressure:\s*(\d+)\s*cmH2O\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
-data.ventFiO2Raw      = pickLatest(/FIO2:\s*(\d+)\s*%\s*\(\s*(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s*\)/gi, text);
+data.ventModeRaw      = pickLatest(/Ventilator Mode:\s*([^(]+)\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi, text);
+data.ventFrequencyRaw = pickLatest(/Ventilator Frequency(?:,\s*Mandatory)?:\s*(\d+)\s*br\/min\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi, text);
+data.ventTidalRaw     = pickLatest(/Tidal Volume(?:,\s*Delivered)?:\s*(\d+)\s*mL\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi, text);
+data.ventPeepRaw      = pickLatest(/Positive End Expiratory Pressure:\s*(\d+)\s*cmH2O\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi, text);
+data.ventFiO2Raw      = pickLatest(/FIO2:\s*(\d+)\s*%\s*\(\s*(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\s*\)/gi, text);
 
 // If we detected ventilator settings but o2therapyCode isn't set to 'Vent', set it
 // Check for any ventilator parameter (Mode, FIO2, Frequency, Tidal Volume, or PEEP)
@@ -6849,7 +6849,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract temperature with timestamps
-            const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const tempRegex = /Temperature\s*(?:Temporal Artery|Axillary)?:\s*([\d.]+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const tempValues = [];
             let tempMatch;
             while ((tempMatch = tempRegex.exec(text)) !== null) {
@@ -6863,7 +6863,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract heart rate with timestamps
-            const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const hrRegex = /(?:Heart Rate|Heart Rate Monitored|Apical Heart Rate).*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const hrValues = [];
             let hrMatch;
             while ((hrMatch = hrRegex.exec(text)) !== null) {
@@ -6877,7 +6877,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract systolic BP with timestamps
-            const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const sbpRegex = /Systolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const sbpValues = [];
             let sbpMatch;
             while ((sbpMatch = sbpRegex.exec(text)) !== null) {
@@ -6891,7 +6891,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract diastolic BP with timestamps
-            const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const dbpRegex = /Diastolic Blood Pressure(?:\s+Invasive)?:\s*(\d+)\s*mmHg(?:\s+(?:Low|High))?\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const dbpValues = [];
             let dbpMatch;
             while ((dbpMatch = dbpRegex.exec(text)) !== null) {
@@ -6905,7 +6905,7 @@ if ((data.ventModeRaw || data.ventFiO2Raw || data.ventFrequencyRaw || data.ventT
             }
             
             // Extract O2 saturation with timestamps
-            const o2SatRegex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+            const o2SatRegex = /O2 Saturation.*?:\s*(\d+).*?\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
             const o2Values = [];
             let o2Match;
             while ((o2Match = o2SatRegex.exec(text)) !== null) {
@@ -7610,7 +7610,7 @@ const ioData = {
             const rate = parts[4];
 
             // Extract datetime from the feeding info
-            const nutritionDateMatch = feedingInfo.match(/(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})/);
+            const nutritionDateMatch = feedingInfo.match(/(\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)/);
             let nutritionDateTime = null;
             let nutritionDateTimeStr = '';
 
@@ -7738,7 +7738,7 @@ const ioData = {
 // Process count entries
 const countData = {};
 if (outputSection) {
-    const countRegex = /(Stool Count|Urine Count|Vomit Count|.*?Count):\s*(\d+)\s*\((\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\)/gi;
+    const countRegex = /(Stool Count|Urine Count|Vomit Count|.*?Count):\s*(\d+)\s*\((\d{2}\/\d{2}\/\d{2,4})\s+(\d{2}:\d{2}(?::\d{2})?)\)/gi;
     let countMatch;
     while ((countMatch = countRegex.exec(outputSection)) !== null) {
         const countType = countMatch[1];
