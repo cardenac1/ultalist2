@@ -3758,7 +3758,11 @@ case 'chartcheck':
                 
                 input.id = `field_${header.replace(/\s+/g, '_')}`;
                 input.value = patient[header] || '';
-                
+
+                if (header === 'ORDERS') {
+                    input.placeholder = 'DVT PPX: | ABX: | PAIN: | LTD: | DISPO:';
+                }
+
                 input.addEventListener('input', function() {
                     patient[header] = this.value;
                     if (header === 'Name') {
@@ -4066,9 +4070,9 @@ if (header === 'VIOLIN') {
     input.value = patient[header] || '';
 }
 
-
-
-				
+if (header === 'ORDERS') {
+    input.placeholder = 'DVT PPX: | ABX: | PAIN: | LTD: | DISPO:';
+}
 
 input.addEventListener('input', function() {
     patient[header] = this.value;
@@ -6173,11 +6177,16 @@ function saveLTD() {
     }
 
     ordersField.value = currentOrders.trim();
+
+    // Persist to patient data and localStorage
+    if (currentPatientIndex >= 0 && patientData[currentPatientIndex]) {
+        patientData[currentPatientIndex].ORDERS = ordersField.value;
+        saveToLocalStorage();
+    }
+
     closeLTDModal();
     renderOrdersTable();
 }
-
-// Edit DISPO
 function editDISPO() {
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingDispo = '';
@@ -6233,6 +6242,13 @@ function saveDISPO() {
     }
 
     ordersField.value = currentOrders.trim();
+
+    // Persist to patient data and localStorage
+    if (currentPatientIndex >= 0 && patientData[currentPatientIndex]) {
+        patientData[currentPatientIndex].ORDERS = ordersField.value;
+        saveToLocalStorage();
+    }
+
     closeDISPOModal();
     renderOrdersTable();
 }
