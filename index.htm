@@ -3760,7 +3760,7 @@ case 'chartcheck':
                 input.value = patient[header] || '';
 
                 if (header === 'ORDERS') {
-                    input.placeholder = 'DVT PPX: | ABX: | PAIN: | LTD: | DISPO:';
+                    input.placeholder = 'Pain: | N/F: | LTD: | Abx: | AC: | dispo:';
                 }
 
                 input.addEventListener('input', function() {
@@ -4071,7 +4071,7 @@ if (header === 'VIOLIN') {
 }
 
 if (header === 'ORDERS') {
-    input.placeholder = 'DVT PPX: | ABX: | PAIN: | LTD: | DISPO:';
+    input.placeholder = 'Pain: | N/F: | LTD: | Abx: | AC: | dispo:';
 }
 
 input.addEventListener('input', function() {
@@ -5042,7 +5042,8 @@ function showImportModal() {
         autoResizeTextarea(violinField);
     }
 
-
+    // Auto-populate abbreviated orders (PAIN, AC, ABX) preserving LTD/DISPO
+    updateOrders();
 
     saveToLocalStorage();
     closeImportModal();
@@ -5864,14 +5865,12 @@ countTypes.forEach(countType => {
                 alert('Please import data first using the Import Data button');
                 return;
             }
-            
+
             const orders = extractOrders(lastImportedData);
             const ordersField = document.getElementById('field_ORDERS');
             if (ordersField) {
-                // Keep the ORDERS field blank but preserve the extracted data in memory
-                ordersField.value = '';
-                // Store extracted orders in patientData but don't display in field
-                patientData[currentPatientIndex].ORDERS = '';
+                ordersField.value = orders;
+                patientData[currentPatientIndex].ORDERS = orders;
                 autoResizeTextarea(ordersField);
                 saveToLocalStorage();
             }
