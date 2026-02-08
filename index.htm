@@ -3760,7 +3760,7 @@ case 'chartcheck':
                 input.value = patient[header] || '';
 
                 if (header === 'ORDERS') {
-                    input.placeholder = 'PAIN: | AC: | ABX: | LTD: | DISPO:';
+                    input.placeholder = 'PAIN:\nAC:\nABX:\nN/F:\nLTD:\nDISPO:';
                 }
 
                 input.addEventListener('input', function() {
@@ -4071,7 +4071,7 @@ if (header === 'VIOLIN') {
 }
 
 if (header === 'ORDERS') {
-    input.placeholder = 'DVT PPX: | ABX: | LTD: | DISPO:';
+    input.placeholder = 'PAIN:\nAC:\nABX:\nN/F:\nLTD:\nDISPO:';
 }
 
 input.addEventListener('input', function() {
@@ -6131,7 +6131,7 @@ function editLTD() {
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingLTD = '';
 
-    const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
+    const ltdMatch = currentOrders.match(/LTD:\s*([^\n]*)/);
     if (ltdMatch) existingLTD = ltdMatch[1].trim();
 
     const modalHTML = `
@@ -6173,13 +6173,13 @@ function saveLTD() {
 
     let currentOrders = ordersField.value;
 
-    // Replace LTD section in the pipe-delimited single-line format
-    if (currentOrders.match(/LTD:\s*[^|]*/)) {
-        currentOrders = currentOrders.replace(/LTD:\s*[^|]*/, 'LTD: ' + newLTD);
+    // Replace LTD line in the multi-line format
+    if (currentOrders.match(/LTD:\s*[^\n]*/)) {
+        currentOrders = currentOrders.replace(/LTD:\s*[^\n]*/, 'LTD: ' + newLTD);
     } else if (newLTD) {
         // Append if not present
         currentOrders = currentOrders.trim();
-        if (currentOrders) currentOrders += ' | ';
+        if (currentOrders) currentOrders += '\n';
         currentOrders += 'LTD: ' + newLTD;
     }
 
@@ -6198,7 +6198,7 @@ function editDISPO() {
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingDispo = '';
 
-    const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
+    const dispoMatch = currentOrders.match(/DISPO:\s*([^\n]*)/i);
     if (dispoMatch) existingDispo = dispoMatch[1].trim();
 
     const modalHTML = `
@@ -6240,13 +6240,13 @@ function saveDISPO() {
 
     let currentOrders = ordersField.value;
 
-    // Replace DISPO section in the pipe-delimited single-line format
-    if (currentOrders.match(/DISPO:\s*[^|]*/i)) {
-        currentOrders = currentOrders.replace(/DISPO:\s*[^|]*/i, 'DISPO: ' + newDispo);
+    // Replace DISPO line in the multi-line format
+    if (currentOrders.match(/DISPO:\s*[^\n]*/i)) {
+        currentOrders = currentOrders.replace(/DISPO:\s*[^\n]*/i, 'DISPO: ' + newDispo);
     } else if (newDispo) {
         // Append if not present
         currentOrders = currentOrders.trim();
-        if (currentOrders) currentOrders += ' | ';
+        if (currentOrders) currentOrders += '\n';
         currentOrders += 'DISPO: ' + newDispo;
     }
 
@@ -6633,8 +6633,8 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
         let existingDispo = '';
 
         if (currentOrders) {
-            const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
-            const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
+            const ltdMatch = currentOrders.match(/LTD:\s*([^\n]*)/);
+            const dispoMatch = currentOrders.match(/DISPO:\s*([^\n]*)/i);
             if (ltdMatch) existingLTD = ltdMatch[1].trim();
             if (dispoMatch) existingDispo = dispoMatch[1].trim();
         }
@@ -8822,8 +8822,8 @@ function extractOrders(text) {
     let existingDispo = '';
 
     if (currentOrders) {
-        const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
-        const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
+        const ltdMatch = currentOrders.match(/LTD:\s*([^\n]*)/);
+        const dispoMatch = currentOrders.match(/DISPO:\s*([^\n]*)/i);
         if (ltdMatch) existingLTD = ltdMatch[1].trim();
         if (dispoMatch) existingDispo = dispoMatch[1].trim();
     }
@@ -8831,12 +8831,13 @@ function extractOrders(text) {
     if (!medsMatch) {
         // Still return the template with preserved LTD/DISPO
         const parts = [];
-        parts.push('PAIN: ');
-        parts.push('AC: ');
-        parts.push('ABX: ');
+        parts.push('PAIN:');
+        parts.push('AC:');
+        parts.push('ABX:');
+        parts.push('N/F:');
         parts.push(`LTD: ${existingLTD}`);
         parts.push(`DISPO: ${existingDispo}`);
-        return parts.join(' | ');
+        return parts.join('\n');
     }
 
     const medsText = medsMatch[1];
@@ -9422,15 +9423,16 @@ medLines.forEach(line => {
     }
 });
     
-    // Format final orders as single line with pipe separators
+    // Format final orders as multi-line, one category per line
     const parts = [];
     parts.push(`PAIN: ${orders['Pain'].length > 0 ? orders['Pain'].join(', ') : ''}`);
     parts.push(`AC: ${orders['AC'].length > 0 ? orders['AC'].join(', ') : '*NO DVT PPX*'}`);
     parts.push(`ABX: ${orders['Abx'].length > 0 ? orders['Abx'].join(', ') : ''}`);
+    parts.push(`N/F: ${orders['N/F'].length > 0 ? orders['N/F'].join(', ') : ''}`);
     parts.push(`LTD: ${existingLTD}`);
     parts.push(`DISPO: ${existingDispo}`);
 
-    return parts.join(' | ');
+    return parts.join('\n');
 }
 
 
