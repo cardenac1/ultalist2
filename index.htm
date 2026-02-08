@@ -3760,7 +3760,7 @@ case 'chartcheck':
                 input.value = patient[header] || '';
 
                 if (header === 'ORDERS') {
-                    input.placeholder = 'DVT PPX: | ABX: | LTD: | DISPO:';
+                    input.placeholder = 'PAIN: | AC: | ABX: | LTD: | DISPO:';
                 }
 
                 input.addEventListener('input', function() {
@@ -5078,9 +5078,16 @@ setTimeout(() => {
 showFullOrders = true;
 renderOrdersTable();
 
-			
+// Auto-populate the ORDERS field with single-line abbreviated summary
+const ordersSummary = extractOrders(importText);
+const ordersField = document.getElementById('field_ORDERS');
+if (ordersField) {
+    ordersField.value = ordersSummary;
+    patient.ORDERS = ordersSummary;
+    autoResizeTextarea(ordersField);
+}
 
-			
+saveToLocalStorage();
 }
 
 
@@ -5864,14 +5871,12 @@ countTypes.forEach(countType => {
                 alert('Please import data first using the Import Data button');
                 return;
             }
-            
+
             const orders = extractOrders(lastImportedData);
             const ordersField = document.getElementById('field_ORDERS');
             if (ordersField) {
-                // Keep the ORDERS field blank but preserve the extracted data in memory
-                ordersField.value = '';
-                // Store extracted orders in patientData but don't display in field
-                patientData[currentPatientIndex].ORDERS = '';
+                ordersField.value = orders;
+                patientData[currentPatientIndex].ORDERS = orders;
                 autoResizeTextarea(ordersField);
                 saveToLocalStorage();
             }
@@ -6126,7 +6131,7 @@ function editLTD() {
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingLTD = '';
 
-    const ltdMatch = currentOrders.match(/^LTD:[ \t]*([^\r\n]*)/m);
+    const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
     if (ltdMatch) existingLTD = ltdMatch[1].trim();
 
     const modalHTML = `
@@ -6168,12 +6173,14 @@ function saveLTD() {
 
     let currentOrders = ordersField.value;
 
-    // Remove existing LTD line if present
-    currentOrders = currentOrders.replace(/^LTD:[ \t]*[^\r\n]*/m, '');
-
-    // Add new LTD at the beginning
-    if (newLTD) {
-        currentOrders = 'LTD: ' + newLTD + '\n' + currentOrders.trim();
+    // Replace LTD section in the pipe-delimited single-line format
+    if (currentOrders.match(/LTD:\s*[^|]*/)) {
+        currentOrders = currentOrders.replace(/LTD:\s*[^|]*/, 'LTD: ' + newLTD);
+    } else if (newLTD) {
+        // Append if not present
+        currentOrders = currentOrders.trim();
+        if (currentOrders) currentOrders += ' | ';
+        currentOrders += 'LTD: ' + newLTD;
     }
 
     ordersField.value = currentOrders.trim();
@@ -6191,7 +6198,7 @@ function editDISPO() {
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingDispo = '';
 
-    const dispoMatch = currentOrders.match(/dispo:\s*([^\n]+)/i);
+    const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
     if (dispoMatch) existingDispo = dispoMatch[1].trim();
 
     const modalHTML = `
@@ -6233,12 +6240,14 @@ function saveDISPO() {
 
     let currentOrders = ordersField.value;
 
-    // Remove existing dispo line if present
-    currentOrders = currentOrders.replace(/dispo:\s*[^\n]+/gi, '');
-
-    // Add new dispo at the end
-    if (newDispo) {
-        currentOrders = currentOrders.trim() + '\ndispo: ' + newDispo;
+    // Replace DISPO section in the pipe-delimited single-line format
+    if (currentOrders.match(/DISPO:\s*[^|]*/i)) {
+        currentOrders = currentOrders.replace(/DISPO:\s*[^|]*/i, 'DISPO: ' + newDispo);
+    } else if (newDispo) {
+        // Append if not present
+        currentOrders = currentOrders.trim();
+        if (currentOrders) currentOrders += ' | ';
+        currentOrders += 'DISPO: ' + newDispo;
     }
 
     ordersField.value = currentOrders.trim();
@@ -6624,8 +6633,8 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
         let existingDispo = '';
 
         if (currentOrders) {
-            const ltdMatch = currentOrders.match(/^LTD:[ \t]*([^\r\n]*)/m);
-            const dispoMatch = currentOrders.match(/dispo:\s*([^\n]+)/);
+            const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
+            const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
             if (ltdMatch) existingLTD = ltdMatch[1].trim();
             if (dispoMatch) existingDispo = dispoMatch[1].trim();
         }
@@ -8806,24 +8815,33 @@ fishbone += `Ca:${caStr}, Mg:${mgStr}, P:${phosStr}\n`;
 function extractOrders(text) {
     // Extract medications section
     const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
-    if (!medsMatch) return '';
-    
-    const medsText = medsMatch[1];
-    
-    // Get existing LTD and dispo
+
+    // Get existing LTD and dispo (preserved across imports) even if no meds found
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
     let existingLTD = '';
     let existingDispo = '';
-    
+
     if (currentOrders) {
-        const ltdMatch = currentOrders.match(/^LTD:[ \t]*([^\r\n]*)/m);
-        const dispoMatch = currentOrders.match(/dispo:\s*([^\n]+)/);
+        const ltdMatch = currentOrders.match(/LTD:\s*([^|]*)/);
+        const dispoMatch = currentOrders.match(/DISPO:\s*([^|]*)/i);
         if (ltdMatch) existingLTD = ltdMatch[1].trim();
         if (dispoMatch) existingDispo = dispoMatch[1].trim();
     }
-    
+
+    if (!medsMatch) {
+        // Still return the template with preserved LTD/DISPO
+        const parts = [];
+        parts.push('PAIN: ');
+        parts.push('AC: ');
+        parts.push('ABX: ');
+        parts.push(`LTD: ${existingLTD}`);
+        parts.push(`DISPO: ${existingDispo}`);
+        return parts.join(' | ');
+    }
+
+    const medsText = medsMatch[1];
     fullOrdersText = medsText;
-    
+
     // Extract diet order
     const dietMatch = text.match(/DIET ORDER:\s*([^\n]+)/i);
     
@@ -9404,16 +9422,15 @@ medLines.forEach(line => {
     }
 });
     
-    // Format final orders
-    const formattedOrders = [];
-    formattedOrders.push(`Pain: ${orders['Pain'].length > 0 ? orders['Pain'].join(', ') : ''}`);
-    formattedOrders.push(`N/F: ${orders['N/F'].length > 0 ? orders['N/F'].join(', ') : ''}`);
-    formattedOrders.push(existingLTD ? `LTD: ${existingLTD}` : `LTD:`);
-    formattedOrders.push(`Abx: ${orders['Abx'].length > 0 ? orders['Abx'].join(', ') : ''}`);
-    formattedOrders.push(`AC: ${orders['AC'].length > 0 ? orders['AC'].join(', ') : '*NO DVT PPX*'}`);
-    formattedOrders.push(`dispo: ${existingDispo}`);
-    
-    return formattedOrders.join('\n');
+    // Format final orders as single line with pipe separators
+    const parts = [];
+    parts.push(`PAIN: ${orders['Pain'].length > 0 ? orders['Pain'].join(', ') : ''}`);
+    parts.push(`AC: ${orders['AC'].length > 0 ? orders['AC'].join(', ') : '*NO DVT PPX*'}`);
+    parts.push(`ABX: ${orders['Abx'].length > 0 ? orders['Abx'].join(', ') : ''}`);
+    parts.push(`LTD: ${existingLTD}`);
+    parts.push(`DISPO: ${existingDispo}`);
+
+    return parts.join(' | ');
 }
 
 
