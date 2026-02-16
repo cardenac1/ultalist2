@@ -6338,6 +6338,120 @@ function saveLabsMisc() {
     renderOrdersTable();
 }
 
+// Edit VITALS/INTAKE/OUTPUTS
+function editVitalsIO() {
+    const currentOrders = document.getElementById('field_ORDERS')?.value || '';
+    let existing = '';
+
+    const match = currentOrders.match(/VITALS\/INTAKE\/OUTPUTS:\s*([\s\S]*?)(?=\n(?:LABS\/IMAGING:|NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i);
+    if (match) existing = match[1].trim();
+
+    const modalHTML = `
+        <div id="editVitalsIOModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid #10b981; max-width: 500px; width: 90%;">
+                <h3 style="color: #10b981; margin-top: 0;">Edit Vitals/Intake/Outputs</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Vitals, Intake & Output Orders:</label>
+                    <textarea id="vitalsIOText" rows="6" placeholder="e.g., VS q4h, Strict I&Os, Foley to gravity, Daily weights, HOB 30 degrees..." style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;">${existing}</textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeVitalsIOModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="saveVitalsIO()" style="padding: 0.6rem 1.2rem; background: #10b981; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('vitalsIOText')?.focus(), 50);
+}
+
+function closeVitalsIOModal() {
+    const modal = document.getElementById('editVitalsIOModal');
+    if (modal) modal.remove();
+}
+
+function saveVitalsIO() {
+    const newVal = document.getElementById('vitalsIOText')?.value.trim() || '';
+    const ordersField = document.getElementById('field_ORDERS');
+    if (!ordersField) { alert('Orders field not found'); closeVitalsIOModal(); return; }
+
+    let currentOrders = ordersField.value;
+
+    if (currentOrders.match(/VITALS\/INTAKE\/OUTPUTS:\s*[\s\S]*?(?=\n(?:LABS\/IMAGING:|NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i)) {
+        currentOrders = currentOrders.replace(/VITALS\/INTAKE\/OUTPUTS:\s*[\s\S]*?(?=\n(?:LABS\/IMAGING:|NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i, 'VITALS/INTAKE/OUTPUTS: ' + newVal);
+    } else if (newVal) {
+        // Prepend at top
+        currentOrders = 'VITALS/INTAKE/OUTPUTS: ' + newVal + '\n' + currentOrders.trim();
+    }
+
+    ordersField.value = currentOrders.trim();
+    if (currentPatientIndex >= 0 && patientData[currentPatientIndex]) {
+        patientData[currentPatientIndex].ORDERS = ordersField.value;
+        saveToLocalStorage();
+    }
+    closeVitalsIOModal();
+    renderOrdersTable();
+}
+
+// Edit LABS/IMAGING
+function editLabsImaging() {
+    const currentOrders = document.getElementById('field_ORDERS')?.value || '';
+    let existing = '';
+
+    const match = currentOrders.match(/LABS\/IMAGING:\s*([\s\S]*?)(?=\n(?:NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i);
+    if (match) existing = match[1].trim();
+
+    const modalHTML = `
+        <div id="editLabsImagingModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; border: 2px solid #f59e0b; max-width: 500px; width: 90%;">
+                <h3 style="color: #f59e0b; margin-top: 0;">Edit Labs/Imaging</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Lab & Imaging Orders:</label>
+                    <textarea id="labsImagingText" rows="6" placeholder="e.g., BMP q6h, CBC in AM, Type & Screen, CXR portable, CT abdomen, UA with culture..." style="width: 100%; padding: 0.5rem; background: #1e1e1e; color: white; border: 1px solid #444; border-radius: 4px; font-family: monospace;">${existing}</textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeLabsImagingModal()" style="padding: 0.6rem 1.2rem; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" onclick="saveLabsImaging()" style="padding: 0.6rem 1.2rem; background: #f59e0b; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('labsImagingText')?.focus(), 50);
+}
+
+function closeLabsImagingModal() {
+    const modal = document.getElementById('editLabsImagingModal');
+    if (modal) modal.remove();
+}
+
+function saveLabsImaging() {
+    const newVal = document.getElementById('labsImagingText')?.value.trim() || '';
+    const ordersField = document.getElementById('field_ORDERS');
+    if (!ordersField) { alert('Orders field not found'); closeLabsImagingModal(); return; }
+
+    let currentOrders = ordersField.value;
+
+    if (currentOrders.match(/LABS\/IMAGING:\s*[\s\S]*?(?=\n(?:NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i)) {
+        currentOrders = currentOrders.replace(/LABS\/IMAGING:\s*[\s\S]*?(?=\n(?:NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i, 'LABS/IMAGING: ' + newVal);
+    } else if (newVal) {
+        // Insert after VITALS/INTAKE/OUTPUTS if present, otherwise prepend
+        if (currentOrders.match(/VITALS\/INTAKE\/OUTPUTS:/i)) {
+            currentOrders = currentOrders.replace(/(VITALS\/INTAKE\/OUTPUTS:\s*[\s\S]*?)(?=\n(?:NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i, '$1\nLABS/IMAGING: ' + newVal);
+        } else {
+            currentOrders = 'LABS/IMAGING: ' + newVal + '\n' + currentOrders.trim();
+        }
+    }
+
+    ordersField.value = currentOrders.trim();
+    if (currentPatientIndex >= 0 && patientData[currentPatientIndex]) {
+        patientData[currentPatientIndex].ORDERS = ordersField.value;
+        saveToLocalStorage();
+    }
+    closeLabsImagingModal();
+    renderOrdersTable();
+}
+
 
 
 
@@ -6692,6 +6806,41 @@ else {
         tableHTML += '</div>';
 
         tableHTML += '<div style="font-family: \'Courier New\', monospace; font-size: 11.5px; background: #252525; border-radius: 8px; padding: 0.5rem;">';
+
+        // Fetch current orders to read top sections
+        const currentOrdersForTop = document.getElementById('field_ORDERS')?.value || '';
+        let existingVitalsIO = '';
+        let existingLabsImaging = '';
+        if (currentOrdersForTop) {
+            const vioMatch = currentOrdersForTop.match(/VITALS\/INTAKE\/OUTPUTS:\s*([\s\S]*?)(?=\n(?:LABS\/IMAGING:|NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i);
+            const liMatch = currentOrdersForTop.match(/LABS\/IMAGING:\s*([\s\S]*?)(?=\n(?:NEURO|PULM|CV|GI|RENAL|HEME|INFECTION|ENDOCRINE|SKIN|LABS\/MISC:|LTD:|DISPO:)|$)/i);
+            if (vioMatch) existingVitalsIO = vioMatch[1].trim();
+            if (liMatch) existingLabsImaging = liMatch[1].trim();
+        }
+
+        // VITALS/INTAKE/OUTPUTS Section
+        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="color: #10b981; font-weight: 600; font-size: 13px;">VITALS/INTAKE/OUTPUTS:</div>`;
+        tableHTML += `<button type="button" onclick="editVitalsIO()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: #10b981;" title="Edit Vitals/Intake/Outputs">✏️</button>`;
+        tableHTML += `</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2; white-space: pre-wrap;">`;
+        tableHTML += existingVitalsIO || '<em style="color: var(--text-secondary);">No vitals/IO orders</em>';
+        tableHTML += `</div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += '</div>';
+
+        // LABS/IMAGING Section
+        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="color: #f59e0b; font-weight: 600; font-size: 13px;">LABS/IMAGING:</div>`;
+        tableHTML += `<button type="button" onclick="editLabsImaging()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: #f59e0b;" title="Edit Labs/Imaging">✏️</button>`;
+        tableHTML += `</div>`;
+        tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2; white-space: pre-wrap;">`;
+        tableHTML += existingLabsImaging || '<em style="color: var(--text-secondary);">No labs/imaging orders</em>';
+        tableHTML += `</div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += '</div>';
 
       tableHTML += createCategoryRow('NEURO/PAIN/SEDATION', categorizedMeds['neuro']);
 tableHTML += createCategoryRow('PULM', categorizedMeds['pulm']);
