@@ -5929,13 +5929,38 @@ function toggleFullOrdersDisplay() {
 }
 
 // Toggle medication status (delete)
-function toggleMedStatus(event, medId, action) {
+function toggleMedStatus(event, medId, action, medName) {
     event.stopPropagation();
     event.preventDefault();
 
     if (action === 'stop') {
         if (confirm('Remove this medication from the display?')) {
             deletedOrders.add(medId);
+
+            // Push "- dc [medname]" to the To do textarea
+            if (medName) {
+                const patient = patientData[currentPatientIndex];
+                if (patient) {
+                    const dcText = `- dc ${medName}`;
+                    const existingTodo = patient['To do'] || '';
+                    const marker = '=== AUTO-GENERATED SUGGESTIONS ===';
+                    const markerIdx = existingTodo.indexOf(marker);
+                    if (markerIdx !== -1) {
+                        const beforeMarker = existingTodo.substring(0, markerIdx).trimEnd();
+                        const afterMarker = existingTodo.substring(markerIdx);
+                        patient['To do'] = beforeMarker + '\n' + dcText + '\n\n' + afterMarker;
+                    } else {
+                        patient['To do'] = (existingTodo.trimEnd() ? existingTodo.trimEnd() + '\n' : '') + dcText;
+                    }
+                    const todoField = document.getElementById('field_To_do');
+                    if (todoField) {
+                        todoField.value = patient['To do'];
+                        if (typeof autoResizeTextarea === 'function') autoResizeTextarea(todoField);
+                    }
+                    saveToLocalStorage();
+                }
+            }
+
             renderOrdersTable();
         }
     }
@@ -6714,6 +6739,7 @@ else {
                     const displayText = editedIndicator + manualIndicator + '💊 ' + baseText + (medIsPRN ? ' PRN' : '');
 
                     const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    const medNameForDC = medText.trim().split(/\s+/)[0].toLowerCase();
                     html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
@@ -6721,7 +6747,7 @@ else {
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
-                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medNameForDC}')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
@@ -6761,6 +6787,7 @@ else {
                     const displayText = editedIndicator + manualIndicator + '💉 ' + baseText + (medIsPRN ? ' PRN' : '');
 
                     const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                    const medNameForDC = medText.trim().split(/\s+/)[0].toLowerCase();
                     html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
@@ -6768,7 +6795,7 @@ else {
                             class="med-edit-btn"
                             style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
                             title="Edit this medication">✏️</button>`;
-                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop')"
+                    html += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medNameForDC}')"
                             class="med-status-btn"
                             data-med-id="${medId}"
                             data-status="stop"
@@ -6851,6 +6878,35 @@ tableHTML += createCategoryRow('HEME/AC', categorizedMeds['heme']);
 tableHTML += createCategoryRow('INFECTION/ABX', categorizedMeds['infection']);
 tableHTML += createCategoryRow('ENDOCRINE/INSULIN', categorizedMeds['endocrine']);
 tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
+
+        // HOME MEDS section
+        const homeMedsRaw = lastImportedData ? extractHomeMeds(lastImportedData) : '';
+        if (homeMedsRaw) {
+            const homeMedLines = homeMedsRaw.split('\n').filter(l => l.trim());
+            if (homeMedLines.length > 0) {
+                tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+                tableHTML += `<div style="color: #a78bfa; font-weight: 600; font-size: 13px; margin-bottom: 0.1rem;">HOME MEDS:</div>`;
+                homeMedLines.forEach((line, idx) => {
+                    const medId = `homed_${idx}`;
+                    if (deletedOrders.has(medId)) return;
+                    const displayLine = showAbbreviatedTable ? abbreviateMedText(line.trim()) : line.trim();
+                    const medName = line.trim().split(/\s+/)[0].toLowerCase();
+                    tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
+                    tableHTML += `<span>💊 ${displayLine}</span>`;
+                    tableHTML += `<div style="display: flex; gap: 4px;">`;
+                    tableHTML += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medName}')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Remove this medication">🟥</button>`;
+                    tableHTML += `</div>`;
+                    tableHTML += '</div>';
+                });
+                tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.15rem;"></div>`;
+                tableHTML += '</div>';
+            }
+        }
 
         // Add LABS/MISC, LTD and DISPO sections
         const currentOrders = document.getElementById('field_ORDERS')?.value || '';
@@ -9681,6 +9737,17 @@ medLines.forEach(line => {
         function extractFullMeds(text) {
             const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
             return medsMatch ? medsMatch[1] : '';
+        }
+
+        function extractHomeMeds(text) {
+            // Find <HOME MEDICATIONS> section
+            const sectionIdx = text.search(/<HOME MEDICATIONS>/i);
+            if (sectionIdx === -1) return '';
+            const afterSection = text.substring(sectionIdx);
+            // Grab lines after the "Active" header until the next <SECTION> or end
+            const activeMatch = afterSection.match(/Active\s*\n([\s\S]*?)(?=\n<[A-Z]|$)/i);
+            if (!activeMatch) return '';
+            return activeMatch[1].split('\n').map(l => l.trim()).filter(l => l.length > 0).join('\n');
         }
 
 
