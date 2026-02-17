@@ -12028,12 +12028,28 @@ function updateViolinDisplay(ctx = {}) {
   const _coagWarn = getCoagsDateWarning(_labData); if (_coagWarn) preDateWarnings.push(_coagWarn);
   const _abgWarn = getABGDateWarning(_labData); if (_abgWarn) preDateWarnings.push(_abgWarn);
   warningsToAdd.push(...preDateWarnings);
-  
-  if (warningsToAdd.length) {
-    output.push('=== ⚠️ WARNINGS ===');
-    output.push('');
-    warningsToAdd.forEach(w => output.push(w));
-    output.push('');
+
+  // Update the To do textarea with all warnings (replaces red box display)
+  {
+    const suggestionsMarker = '=== AUTO-GENERATED SUGGESTIONS ===';
+    const existingTodo = patient['To do'] || '';
+    const markerIndex = existingTodo.indexOf(suggestionsMarker);
+    const cleanTodo = markerIndex !== -1 ? existingTodo.substring(0, markerIndex).trim() : existingTodo.trim();
+
+    if (warningsToAdd.length > 0) {
+      const warningsText = '\n\n' + suggestionsMarker + '\n' + warningsToAdd.join('\n');
+      patient['To do'] = cleanTodo ? cleanTodo + warningsText : warningsText.trimStart();
+    } else if (markerIndex !== -1) {
+      // No warnings — clear the old auto-generated section
+      patient['To do'] = cleanTodo;
+    }
+
+    const todoField = document.getElementById('field_To_do');
+    if (todoField) {
+      todoField.value = patient['To do'];
+      if (typeof autoResizeTextarea === 'function') autoResizeTextarea(todoField);
+    }
+    saveToLocalStorage();
   }
 
   // Extract vitals/I/O section (up to and including Fluid Balance line)
@@ -12071,31 +12087,7 @@ while (i < fishboneLines.length && !foundFluidBalance) {
   violinDisplay.innerHTML = '';
 
 
-	// === ADD WARNINGS SECTION HERE ===
-if (warningsToAdd.length > 0) {
-  const warningsDiv = document.createElement('div');
-  warningsDiv.style.cssText = `
-    background: #2a1a1a;
-    padding: 0.75rem;
-    border-left: 3px solid #ff6b6b;
-    margin-bottom: 1rem;
-    border-radius: 0.25rem;
-  `;
-  
-  let warningsHTML = '<strong style="color: #ff6b6b; font-size: 14px;">⚠️ WARNINGS & ALERTS:</strong><br><br>';
-  
-  warningsToAdd.forEach(warning => {
-    const isCritical = warning.includes('*') || warning.includes('!');
-    const color = isCritical ? '#ff6b6b' : '#ffa726';
-    const fontWeight = isCritical ? 'bold' : 'normal';
-    const displayWarning = warning.replace(/\*/g, '');
-    
-    warningsHTML += `<div style="color: ${color}; margin-top: 0.35rem; font-weight: ${fontWeight}; line-height: 1.4;">• ${displayWarning}</div>`;
-  });
-  
-  warningsDiv.innerHTML = warningsHTML;
-  violinDisplay.appendChild(warningsDiv);
-}
+	// Warnings are now displayed in the To do textarea (not the red box)
 
 	
 
