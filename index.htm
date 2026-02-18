@@ -6879,35 +6879,6 @@ tableHTML += createCategoryRow('INFECTION/ABX', categorizedMeds['infection']);
 tableHTML += createCategoryRow('ENDOCRINE/INSULIN', categorizedMeds['endocrine']);
 tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
 
-        // HOME MEDS section
-        const homeMedsRaw = lastImportedData ? extractHomeMeds(lastImportedData) : '';
-        if (homeMedsRaw) {
-            const homeMedLines = homeMedsRaw.split('\n').filter(l => l.trim());
-            if (homeMedLines.length > 0) {
-                tableHTML += `<div style="margin-bottom: 0.15rem;">`;
-                tableHTML += `<div style="color: #a78bfa; font-weight: 600; font-size: 13px; margin-bottom: 0.1rem;">HOME MEDS:</div>`;
-                homeMedLines.forEach((line, idx) => {
-                    const medId = `homed_${idx}`;
-                    if (deletedOrders.has(medId)) return;
-                    const displayLine = showAbbreviatedTable ? abbreviateMedText(line.trim()) : line.trim();
-                    const medName = line.trim().split(/\s+/)[0].toLowerCase();
-                    tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
-                    tableHTML += `<span>💊 ${displayLine}</span>`;
-                    tableHTML += `<div style="display: flex; gap: 4px;">`;
-                    tableHTML += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medName}')"
-                            class="med-status-btn"
-                            data-med-id="${medId}"
-                            data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
-                            title="Remove this medication">🟥</button>`;
-                    tableHTML += `</div>`;
-                    tableHTML += '</div>';
-                });
-                tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.15rem;"></div>`;
-                tableHTML += '</div>';
-            }
-        }
-
         // Add LABS/MISC, LTD and DISPO sections
         const currentOrders = document.getElementById('field_ORDERS')?.value || '';
         let existingLabsMisc = '';
@@ -6957,6 +6928,34 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
         tableHTML += existingDispo || '<em style="color: var(--text-secondary);">No dispo data</em>';
         tableHTML += `</div>`;
         tableHTML += '</div>';
+
+        // HOME MEDS section (at the very end for comparison with inpatient meds)
+        const homeMedsRaw = lastImportedData ? extractHomeMeds(lastImportedData) : '';
+        if (homeMedsRaw) {
+            const homeMedLines = homeMedsRaw.split('\n').filter(l => l.trim());
+            if (homeMedLines.length > 0) {
+                tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+                tableHTML += `<div style="color: #a78bfa; font-weight: 600; font-size: 13px; margin-bottom: 0.1rem;">HOME MEDS:</div>`;
+                homeMedLines.forEach((line, idx) => {
+                    const medId = `homed_${idx}`;
+                    if (deletedOrders.has(medId)) return;
+                    const displayLine = showAbbreviatedTable ? abbreviateMedText(line.trim()) : line.trim();
+                    const medName = line.trim().split(/\s+/)[0].toLowerCase();
+                    tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
+                    tableHTML += `<span>💊 ${displayLine}</span>`;
+                    tableHTML += `<div style="display: flex; gap: 4px;">`;
+                    tableHTML += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medName}')"
+                            class="med-status-btn"
+                            data-med-id="${medId}"
+                            data-status="stop"
+                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                            title="Remove this medication">🟥</button>`;
+                    tableHTML += `</div>`;
+                    tableHTML += '</div>';
+                });
+                tableHTML += '</div>';
+            }
+        }
 
         tableHTML += '</div>';
         tableHTML += '</div>';
@@ -9110,7 +9109,7 @@ fishbone += `Ca:${caStr}, Mg:${mgStr}, P:${phosStr}\n`;
 
 function extractOrders(text) {
     // Extract medications section
-    const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
+    const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|<HOME MEDICATIONS>|$))/i);
 
     // Get existing LTD and dispo (preserved across imports) even if no meds found
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
@@ -9735,7 +9734,7 @@ medLines.forEach(line => {
 
 
         function extractFullMeds(text) {
-            const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
+            const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|<HOME MEDICATIONS>|$))/i);
             return medsMatch ? medsMatch[1] : '';
         }
 
@@ -12088,13 +12087,7 @@ function updateViolinDisplay(ctx = {}) {
     warningsToAdd.push(...ioWarns);
   }
 
-  const preDateWarnings = [];
-  const _cbcWarn = getCBCDateWarning(_labData); if (_cbcWarn) preDateWarnings.push(_cbcWarn);
-  const _bmpWarn = getBMPDateWarning(_labData); if (_bmpWarn) preDateWarnings.push(_bmpWarn);
-  const _lftWarn = getLFTsDateWarning(_labData); if (_lftWarn) preDateWarnings.push(_lftWarn);
-  const _coagWarn = getCoagsDateWarning(_labData); if (_coagWarn) preDateWarnings.push(_coagWarn);
-  const _abgWarn = getABGDateWarning(_labData); if (_abgWarn) preDateWarnings.push(_abgWarn);
-  warningsToAdd.push(...preDateWarnings);
+  // Lab date warnings (CBC stale, BMP stale, etc.) are intentionally excluded from the To do textarea
 
   // Update the To do textarea with all warnings (replaces red box display)
   {
