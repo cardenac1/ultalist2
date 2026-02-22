@@ -18,6 +18,8 @@
 
 	
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -27,66 +29,106 @@
         :root {
             --primary: #3b82f6;
             --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
             --secondary: #06b6d4;
+            --secondary-dark: #0891b2;
             --danger: #ef4444;
+            --danger-light: #fca5a5;
             --success: #10b981;
-            --dark-bg: #121212;
-            --card-bg: #1e1e1e;
-            --card-hover: #333333;
-            --border: #444444;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --accent-1: #00e5ff;
-            --accent-2: #f26363;
-            --accent-3: #79e89f;
-            --accent-4: #ffffff;
-            --accent-5: #ff8000;
+            --success-light: #6ee7b7;
+            --warning: #f59e0b;
+            --warning-light: #fcd34d;
+            --dark-bg: #000000;
+            --dark-bg-2: #0a0a0a;
+            --card-bg: rgba(12, 12, 12, 0.85);
+            --card-bg-solid: #0d0d0d;
+            --card-hover: rgba(25, 25, 25, 0.95);
+            --glass-bg: rgba(10, 10, 10, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --border: rgba(255, 255, 255, 0.15);
+            --border-strong: rgba(255, 255, 255, 0.25);
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-muted: #5f6368;
+            --accent-1: #00f0ff;
+            --accent-2: #ff3333;
+            --accent-3: #00ff00;
+            --accent-4: #fbbf24;
+            --accent-5: #fb923c;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.25rem;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             background-color: var(--dark-bg);
             color: var(--text-primary);
-            font-family: monospace;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.5); }
 
         /* Header */
         .header {
-            background: var(--card-bg);
-            padding: 1rem;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            padding: 0.75rem 1rem;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
         }
 
         .census {
-            font-size: 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 500;
             color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .census-number {
-            font-size: 2rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1;
         }
 
         /* Container */
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 1rem 2rem 1rem;
+            padding: 0.75rem 1rem 2rem 1rem;
         }
 
         /* File Input */
@@ -106,13 +148,97 @@
         .file-input-label {
             display: block;
             padding: 0.75rem 1.5rem;
-            background: var(--card-bg);
-            border: 2px dashed var(--primary);
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            border: 1px dashed var(--primary);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
             text-align: center;
             width: 100%;
+            backdrop-filter: blur(10px);
         }
+        .file-input-label:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: var(--glass-shadow);
+            animation: toastSlideIn 0.3s ease-out, toastFadeOut 0.3s ease-in 2.7s forwards;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 350px;
+        }
+        .toast.toast-success { border-left: 3px solid var(--success); }
+        .toast.toast-error { border-left: 3px solid var(--danger); }
+        .toast.toast-info { border-left: 3px solid var(--primary); }
+
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Keyboard shortcuts overlay */
+        .kbd-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .kbd-overlay-content {
+            background: var(--card-bg-solid);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+        .kbd-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .kbd-key {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--primary-light);
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 
 
@@ -288,38 +414,46 @@ const VIOLIN_DASHBOARD_CSS = `
         /* Controls */
   /* Controls */
 .controls {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);  
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
 }
 
 /* Navigation buttons */
 .nav-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);  /* Changed to exact 4-column grid */
-    gap: 0.75rem;
-    margin: 1rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
 }
 
         /* Buttons */
         button {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.9rem;
+            background: rgba(10, 10, 10, 0.7);
+            color: #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            font-family: inherit;
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(8px);
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.15);
+            border-color: #3b82f6;
+            color: #60a5fa;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
 
         button:active {
@@ -327,64 +461,64 @@ const VIOLIN_DASHBOARD_CSS = `
         }
 
         button:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
+            transform: none;
         }
 
         /* Select */
         select {
-            background: var(--card-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.9rem;
+            background: rgba(10, 10, 10, 0.7);
+            color: #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
             cursor: pointer;
-            font-family: inherit;
+            font-family: 'Inter', sans-serif;
         }
 
      
 
       /* Fixed hover rule - removes border-left-color override */
 		.row-item:hover {
-		    background: var(--card-hover);
-		    transform: translateX(5px);
-		    /* border-left-color: var(--primary); ← REMOVED THIS LINE */
-		    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-		    border-left-width: 6px; /* Keep the width increase on hover */
+		    background: rgba(59, 130, 246, 0.06);
+		    transform: translateY(-2px);
+		    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.15);
+		    border-left-width: 4px;
 		}
 
         /* Colored Text */
         .colored-text-1 { color: var(--accent-1); }
         .colored-text-2 { color: var(--accent-2); }
         .colored-text-3 { color: var(--accent-3); }
-        .colored-text-4 { color: var(--accent-4); }
+        .colored-text-4 { color: white; font-size: 1rem; font-weight: 600; }
         .colored-text-5 { color: var(--accent-5); }
 
         /* Floating Action Button */
         .fab {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: white;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            transition: all 250ms ease;
             z-index: 1000;
             border: none;
         }
 
         .fab:hover {
             transform: scale(1.1) rotate(90deg);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+            box-shadow: 0 6px 28px rgba(59, 130, 246, 0.6);
         }
 
         /* Modal */
@@ -396,8 +530,8 @@ const VIOLIN_DASHBOARD_CSS = `
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            animation: fadeIn 0.3s ease;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
         }
 
         @keyframes fadeIn {
@@ -405,17 +539,23 @@ const VIOLIN_DASHBOARD_CSS = `
             to { opacity: 1; }
         }
 
+        @keyframes modalSlideIn {
+            from { transform: translateY(-30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
         .modal-content {
-            background: var(--card-bg);
-            margin: 5% auto;
+            background: #0d0d0d;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin: 4% auto;
             padding: 1.5rem;
-            border-radius: 0.5rem;
+            border-radius: 1.25rem;
             width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
+            max-width: 520px;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            animation: slideIn 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
 
@@ -480,25 +620,42 @@ const VIOLIN_DASHBOARD_CSS = `
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--dark-bg);
+            background: #000000;
             z-index: 1500;
             overflow-y: auto;
-	     padding: 0.5rem; 
+            padding: 0;
         }
 
         .details-header {
-            background: var(--card-bg);
-            padding: 1rem;
+            background: rgba(10, 10, 20, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            padding: 0.75rem 1rem;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
         }
 
         .sticky-text {
             font-size: 1.5rem;
             font-weight: bold;
             color: var(--primary);
+        }
+
+        .details-header-top {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .sticky-meta-badges {
+            display: none;
+        }
+
+        .sticky-copy-btn {
+            display: none;
         }
 
         .view-selector {
@@ -509,21 +666,32 @@ const VIOLIN_DASHBOARD_CSS = `
         }
 
         .view-button {
-            padding: 0.5rem 1rem;
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-            border-radius: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 100px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 150ms ease;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .view-button:hover {
+            background: rgba(59,130,246,0.1);
+            border-color: #3b82f6;
+            color: #60a5fa;
         }
 
         .view-button.active {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 2px 12px rgba(59,130,246,0.3);
         }
 
         #editForm {
-   		 padding: 0.5rem;
+   		 padding: 0.5rem 0.5rem 0 0.5rem;
     		max-width: none;
     		margin: 0;
    		 width: 100%;
@@ -533,16 +701,19 @@ const VIOLIN_DASHBOARD_CSS = `
 
         textarea:focus, input[type="text"]:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
         }
 
         label {
             display: block;
-            margin-top: 0.75rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.9rem;
+            margin-top: 0.85rem;
+            margin-bottom: 0.3rem;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.7rem;
             text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
 
@@ -560,18 +731,18 @@ const VIOLIN_DASHBOARD_CSS = `
         }
 
         .warning-messages {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 2px solid var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .warning-message {
-            color: var(--danger);
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 1.2em;
+            color: #f87171;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         /* Search Container */
@@ -653,6 +824,236 @@ const VIOLIN_DASHBOARD_CSS = `
 
 
 
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.toast {
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #f1f5f9;
+    backdrop-filter: blur(12px);
+    animation: toastSlideIn 0.3s ease, toastFadeOut 0.3s ease 2.7s;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+.toast-info { background: rgba(59, 130, 246, 0.85); }
+.toast-success { background: rgba(34, 197, 94, 0.85); }
+.toast-error { background: rgba(239, 68, 68, 0.85); }
+.toast-warning { background: rgba(234, 179, 8, 0.85); color: #0a0a0a; }
+@keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* Keyboard Shortcuts Overlay */
+.kbd-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+.kbd-overlay-content {
+    background: #0d0d0d;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.kbd-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+.kbd-key {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 0.375rem;
+    padding: 0.2rem 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: #60a5fa;
+}
+
+/* Dashboard Cards for Detail View */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+}
+.dashboard-card {
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 200ms ease;
+}
+.dashboard-card:hover {
+    border-color: rgba(59,130,246,0.35);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.dashboard-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    user-select: none;
+}
+.dashboard-card-header .card-icon {
+    font-size: 0.9rem;
+}
+.dashboard-card-header .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    flex: 1;
+}
+.dashboard-card-body {
+    padding: 0.75rem 0.85rem;
+}
+.patient-header-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.10), rgba(6,182,212,0.07));
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.25rem;
+}
+.patient-header-card .patient-name-display {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.35rem;
+}
+.patient-header-card .patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.patient-header-card .meta-badge {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* ChartCheck Two-Panel Layout */
+.chartcheck-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    min-height: calc(100vh - 80px);
+}
+.chartcheck-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+.chartcheck-sidebar {
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.chartcheck-section {
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+.chartcheck-section.violin-section {
+    overflow: visible;
+}
+.chartcheck-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.chartcheck-section-header .section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    flex: 1;
+}
+.chartcheck-section-body {
+    padding: 0.75rem 0.85rem;
+}
+.progress-ring-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1rem;
+}
+.progress-ring-label {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+.inline-action-btn {
+    padding: 0.25rem 0.5rem;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 0.5rem;
+    color: #60a5fa;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.inline-action-btn:hover {
+    background: rgba(59,130,246,0.2);
+    border-color: #3b82f6;
+}
+
+@media (max-width: 768px) {
+    .chartcheck-layout {
+        grid-template-columns: 1fr;
+    }
+    .chartcheck-sidebar {
+        position: static;
+        max-height: none;
+    }
+}
 
 /* Help Modal */
 .help-modal {
@@ -801,18 +1202,18 @@ const VIOLIN_DASHBOARD_CSS = `
 		
 
 textarea, input[type="text"] {
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    color: #f1f5f9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
     width: 100%;
-    padding: 0.75rem;
-    background: var(--card-bg);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    border-radius: 0.25rem;
-    font-size: 1rem;
-    font-family: inherit;
+    transition: all 150ms ease;
     margin: 0.5rem 0 1rem;
     resize: none;
-    transition: all 0.3s ease;
-    overflow-y: hidden;  /* ← CHANGED FROM auto TO hidden */
+    overflow-y: hidden;
     text-align: left;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -1005,6 +1406,327 @@ textarea, input[type="text"] {
     color: var(--text-primary);
     font-family: inherit;
     font-size: 0.9rem;
+}
+
+/* Interactive Todo List */
+.todo-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.todo-add-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+}
+.todo-add-input {
+    flex: 1;
+    background: var(--dark-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    padding: 0.4rem 0.6rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.todo-add-input:focus {
+    border-color: #22c55e;
+}
+.todo-add-input::placeholder {
+    color: rgba(148,163,184,0.5);
+    font-style: italic;
+}
+.todo-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+}
+.todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.3rem;
+    transition: background 0.15s, opacity 0.25s;
+    cursor: default;
+    position: relative;
+    min-height: 1.3rem;
+}
+.todo-item:hover {
+    background: rgba(255,255,255,0.04);
+}
+.todo-item.completed {
+    opacity: 0.5;
+}
+.todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: #64748b;
+}
+.todo-checkbox {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border: 1.5px solid #475569;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+    background: transparent;
+    flex-shrink: 0;
+}
+.todo-checkbox:hover {
+    border-color: #22c55e;
+    background: rgba(34,197,94,0.1);
+}
+.todo-checkbox.checked {
+    background: #22c55e;
+    border-color: #22c55e;
+}
+.todo-checkbox.checked::after {
+    content: '';
+    width: 4px;
+    height: 8px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}
+.todo-text {
+    flex: 1;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+.todo-text-input {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #22c55e;
+    border-radius: 0.2rem;
+    padding: 0.1rem 0.3rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    outline: none;
+}
+.todo-edit-btn {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: background 0.15s, color 0.15s;
+}
+.todo-edit-btn:hover {
+    background: rgba(59,130,246,0.2);
+    color: #60a5fa;
+}
+.todo-delete {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    color: #64748b;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.todo-item:hover .todo-delete {
+    opacity: 1;
+}
+.todo-delete:hover {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
+}
+.todo-plain-line {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    padding: 0.15rem 0.35rem;
+    word-break: break-word;
+}
+.todo-suggestions-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #f59e0b;
+    padding: 0.5rem 0.35rem 0.2rem;
+    border-top: 1px solid rgba(245,158,11,0.2);
+    margin-top: 0.4rem;
+}
+.todo-suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.8rem;
+    color: #fbbf24;
+    line-height: 1.4;
+}
+.todo-suggestion-item .todo-promote-btn {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #f59e0b;
+    font-size: 0.7rem;
+    transition: background 0.15s;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.todo-suggestion-item .todo-promote-btn:hover {
+    background: rgba(245,158,11,0.2);
+}
+.todo-mode-btn {
+    font-size: 0.65rem;
+    margin-left: 0.15rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.2rem;
+    transition: color 0.15s, background 0.15s;
+    border: none;
+    background: none;
+    font-family: inherit;
+}
+.todo-mode-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.06);
+}
+.todo-mode-btn.active {
+    color: #22c55e;
+    background: rgba(34,197,94,0.1);
+}
+.todo-item-enter {
+    animation: todoSlideIn 0.2s ease-out;
+}
+@keyframes todoSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.todo-item-remove {
+    animation: todoSlideOut 0.2s ease-in forwards;
+}
+@keyframes todoSlideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(20px); }
+}
+.todo-count-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.6rem;
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+/* Mobile-responsive todo list */
+@media (max-width: 768px) {
+    .todo-add-input {
+        font-size: 1rem;
+        padding: 0.6rem 0.75rem;
+        min-height: 44px;
+    }
+    .todo-item {
+        padding: 0.45rem 0.4rem;
+        gap: 0.6rem;
+        min-height: 44px;
+    }
+    .todo-checkbox {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-width: 2px;
+        border-radius: 5px;
+        margin-top: 0;
+    }
+    .todo-checkbox.checked::after {
+        width: 6px;
+        height: 12px;
+        border-width: 0 2.5px 2.5px 0;
+        margin-bottom: 3px;
+    }
+    .todo-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    .todo-edit-btn {
+        display: flex;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 1rem;
+        opacity: 0.6;
+    }
+    .todo-delete {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 1rem;
+        opacity: 0.6;
+    }
+    .todo-text-input {
+        font-size: 0.95rem;
+        padding: 0.3rem 0.5rem;
+        min-height: 36px;
+    }
+    .todo-suggestion-item {
+        font-size: 0.9rem;
+        padding: 0.4rem;
+        min-height: 40px;
+        align-items: center;
+    }
+    .todo-suggestion-item .todo-promote-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 1rem;
+    }
+    .todo-plain-line {
+        font-size: 0.9rem;
+        padding: 0.3rem 0.4rem;
+        min-height: 36px;
+    }
+    .todo-mode-btn {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        min-height: 32px;
+    }
+    .todo-count-badge {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.5rem;
+    }
 }
 
 
@@ -1263,7 +1985,7 @@ textarea, input[type="text"] {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.4rem;
-    margin: 1rem 0;
+    margin: 0.75rem 0 0.2rem 0;
     padding: 0.5rem;
     background: rgba(30, 30, 30, 0.3);
     border: 1px solid var(--border);
@@ -1309,18 +2031,112 @@ select,
   .chart-check-controls           { display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(3,1fr); gap:0.4rem; margin:1rem 0; }
 
 .details-header {
-    padding: 0.75rem;
-    position: sticky;  /* Changed from relative to sticky */
-    top: 0;           /* Add this to ensure it sticks to top */
-    z-index: 100;     /* Add this to ensure it stays above content */
-    background: var(--card-bg);
+    padding: 0.5rem 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(5, 5, 15, 0.95);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
   }
 
-	
+  .details-header-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+  }
+
   .sticky-text {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  /* Show RM/MRN badges in sticky header on mobile */
+  .sticky-meta-badges {
+    display: flex !important;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+  .sticky-meta-badges .sticky-badge {
+    padding: 0.15rem 0.4rem;
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .sticky-badge-rm {
+    background: rgba(59,130,246,0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59,130,246,0.3);
+  }
+  .sticky-badge-mrn {
+    background: rgba(6,182,212,0.12);
+    color: #22d3ee;
+    border: 1px solid rgba(6,182,212,0.3);
+  }
+
+  /* Copy button in sticky header */
+  .sticky-copy-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(59,130,246,0.12);
+    color: #60a5fa;
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 28px;
+    white-space: nowrap;
+  }
+  .sticky-copy-btn:active {
+    background: var(--success);
+    color: #fff;
+    border-color: var(--success);
+  }
+
+  /* Hide the patient-header-card display elements on mobile (name + badges are in sticky header) */
+  .patient-header-card .patient-name-display {
+    display: none;
+  }
+  .patient-header-card .patient-meta {
+    display: none;
+  }
+  .patient-header-card {
+    padding: 0.6rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Make edit fields in patient header compact on mobile */
+  .patient-header-card .mobile-edit-fields {
+    gap: 0.3rem;
+  }
+
+  /* Compact dashboard cards on mobile */
+  .dashboard-grid {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+  .dashboard-card {
+    border-radius: 0.75rem;
+  }
+  .dashboard-card-header {
+    padding: 0.5rem 0.65rem;
+  }
+  .dashboard-card-body {
+    padding: 0.5rem 0.65rem;
   }
 
 /* MOBILE VIEW SELECTOR */
@@ -1612,31 +2428,10 @@ select,
 
 
 @media (max-width: 768px) {
-    /* ... existing mobile styles ... */
-    
-    /* Compact first three button spans - keep separate lines but reduce height */
+    /* Hide first-three-btn on mobile - info already shown in topRow */
     .first-three-btn {
-        white-space: normal !important;
-        text-align: left !important;
-        line-height: 1.1 !important;
-        height: auto !important;
-        min-height: 44px !important;  /* Reduced from 60px */
-        padding: 0.3rem 0.4rem !important;  /* Much less padding */
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
+        display: none !important;
     }
-    
-    .first-three-btn span {
-        display: block !important;
-        width: 100% !important;
-        line-height: 1.1 !important;  /* Tighter line height */
-        margin-bottom: 1px !important;  /* Minimal spacing between lines */
-        white-space: normal !important;
-        word-wrap: break-word !important;
-    }
-    
- 
 }
 
 
@@ -2279,7 +3074,11 @@ async function testOCRAvailability() {
         <!-- Details View -->
         <div class="details-view" id="detailsView">
             <div class="details-header">
-                <div id="stickyTextContainer" class="sticky-text"></div>
+                <div class="details-header-top">
+                    <div id="stickyTextContainer" class="sticky-text"></div>
+                    <div id="stickyMetaBadges" class="sticky-meta-badges"></div>
+                    <button id="stickyCopyBtn" class="sticky-copy-btn" onclick="copyStickyPatientInfo()" title="Copy Name/RM/MRN">Copy</button>
+                </div>
                 <div class="view-selector">
                     <button class="view-button active" onclick="switchView('basic')">Details</button>
                     <button class="view-button" onclick="switchView('chartcheck')">📊 Chart Check</button>
@@ -2292,8 +3091,8 @@ async function testOCRAvailability() {
             <div class="nav-buttons">
                 <button id="prevButton" onclick="navigateDetails(-1)">← Previous</button>
                 <button id="nextButton" onclick="navigateDetails(1)">Next →</button>
-                <button onclick="backToList()">Back to List</button>
                 <button class="delete-button" onclick="deleteCurrentEntry()">🗑️ Delete Entry</button>
+                <button onclick="backToList()">Back to List</button>
             </div>
 
             <!-- Consult-specific buttons (shown in consult mode) -->
@@ -2456,7 +3255,7 @@ const helpContent = {
 `, 
 	'ICS': '<ul><li><strong>Diagnostic imaging</strong></li><li><strong>Pathology + Microbiology</strong></li>  <li><strong>Overnight events</strong></li><li><strong>Latest consult notes</strong></li><li><strong>Procedures/Interventions</strong></li><li><strong>Non Primary: plan of care</strong></li></ul>',
     'VIOLIN': '<ul><li><strong>Vitals (HR, SBP, DBP, MAP, Temp, RR, SPO2, O2 therapy, Vent: Mode, RR, Vt, PEEP, FIO2, PIP, ETCO2, Cardiac: CVP, PASP/PADP, PAMAP, CO, CI, SvO2, SV, SVI, SVR) </strong></li> <li><strong> Intake (Blood products, oral, IVF, meds, tube feeds) and Outputs (BM, ostomy, urostomy, drains/tubes, UOP, emesis, blood loss, dialysis), Fluid balance </strong></li> <li><strong> CBC and left shift, BMP, Ca, Mg, P, Tbil, Dbili, ALK, GGT, AST/ALT, PT, PTT, INR, pH, PO2, PCO2, Bicarb, Base excess, Lactate, Trops, Misc: albumin, prealbumin, Procal, UA, Urine studies</strong></li><li><strong>Replete electrolytes: electrolytes</strong></li></ul> <li><strong> <a href="//docs.google.com/document/d/12lbPO5K7jMPhruuoedT-piCaQSr9dja2OObAeMD2NWk/edit?tab=t.0"> Review Imaging https:</a> </strong></li>', 
-'ORDERS': '<ul><li><strong>Renew orders</strong></li><li><strong>Nutrition/fluids:</strong><ul><li><strong>Diet order/IVFs/tube feeds/TPN</strong></li></ul></li><li><strong>Pain medications:</strong></li><li><strong>LTD:</strong><ul><li><strong>Orders for any lines (central line, PICC, peripheral IVs, arterial line, chest tubes, drains, ports, NG tubes, respiratory support NC or facemask, ETT)</strong></li><li><strong>Inc. Types of trach and size ex. #8 cuffed subglottic tracheostomy, date placed</strong></li><li><strong>Record accurate outputs, suction/maintenance settings ex. CT -20 mmHg suction, quality of output</strong></li></ul></li><li><strong>Antibiotics/special medications/home meds:</strong><ul><li><strong>Note any IV or oral antibiotics or special therapies and the duration required.</strong></li><li><strong>Record doses of all pressors and sedation</strong></li></ul></li><li><strong>Anticoagulation/DVT prophylaxis:</strong><ul></ul></li><li><strong>Disposition</strong></li></ul>',   
+'ORDERS': '<div style="font-size:0.85rem;line-height:1.3;"><h3 style="margin:0.3rem 0;font-size:0.95rem;">Medical Checklists</h3><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">VIOLIN</div><div style="margin-left:0.5rem;"><div style="margin:0.1rem 0;"><strong>Labs:</strong> CBC/COAGS: WBC, Hgb, HCT, PLT, Diff, PT, PTT/INR, Fibrinogen, ROTEM; Lytes: BMP, Ca, Mg, P; GI Labs: ALT/AST, Tbil, Dbili, ALK, GGT, Amylase, Lipase; ABG: pH, PO2, PCO2, Bicarb, Base excess, Lactate; MISC: Trops, CK, CKMB, Hgb A1C, albumin, prealbumin, Procal, UA, Urine studies; Microbiology/pathology results</div><div style="margin:0.1rem 0;"><strong>VITALS:</strong> HR, SBP, DBP, MAP, Temp, RR, SPO2, O2 therapy, Vent: Mode, RR, Vt, PEEP, FIO2, PIP, ETCO2</div><div style="margin:0.1rem 0;"><strong>I/Os:</strong> Blood products, oral, IVF, meds, tube feeds / BM, ostomy, urostomy, drains/tubes, UOP, emesis, blood loss, dialysis, Fluid balance</div><div style="margin:0.1rem 0;"><strong>PAC Values:</strong> CVP, PASP/PADP, PAMAP, CO, CI, SvO2, SV, SVI, SVR</div><div style="margin:0.1rem 0;"><strong>Review imaging</strong></div></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">NEURO</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Exam:</strong> GCS 15, PERRLA, strength and sensation intact BUE+BLE, CN II-XII grossly intact, EOMI, minimal pain; <strong>Meds:</strong> wean off sedation, convert pain meds to PO, sedation holiday; <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">PULM</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Exam:</strong> CTAB, O2 sat, RR, ABG, RSBI, Trach #8 cuffed subglottic, Wean to decannulation, Chest tube outputs; <strong>Meds:</strong> convert nebs to dc regimen; <strong>Wean off support;</strong> <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">CV</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Exam:</strong> HR, BP, MAP, CVP, PAC values, Radial/Ulnar pulses, BLE edema; <strong>Remove/replace</strong> central lines, PICC, peripheral IVs, arterial line; <strong>Wean</strong> off pressors, convert to PO; <strong>Restart cardiac meds;</strong> <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">GI</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Exam:</strong> Abdominal, incision, drains/NGT output, BM quality/quantity; <strong>Diet:</strong> Advance as tolerated; <strong>TPN/PPN:</strong> Within 36-48 hours if critically ill; <strong>Tube Feeds:</strong> For severe dysphagia/prolonged bowel rest; <strong>Stress ulcer prophylaxis; Bowel regimen;</strong> <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">RENAL/FLUIDS</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Labs:</strong> BMP/Ca/Mag/Phos; <strong>I/Os, fluid balance, UOP;</strong> <strong>IVF</strong> maintenance rate; <strong>Dc foley</strong> vs void; <strong>Wean from HD;</strong> <strong>AKI management; Replete lytes; DC IVF;</strong> <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">HEME</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Coags:</strong> Hgb, Hct, PLT, PT, PTT/INR, Fibrinogen, ROTEM; <strong>Check/start DVT</strong> prophylaxis or home AC; <strong>DC IV</strong> anticoagulants, start PO; <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">INFECTION</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Exam:</strong> WBC, Diff, Cultures, Tmax/Tcurr; <strong>Abx:</strong> Duration, type, route; <strong>Order Vancomycin</strong> troughs; <strong>DC antibiotics</strong> or set up long term IV access; <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">ENDO</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Glucose range:</strong> 140-180; <strong>Convert</strong> ISS/insulin gtt to basal bolus when stable; <strong>Dc home</strong> oral hypoglycemics; <strong>Evidence based mx</strong></div></div><div style="margin:0.2rem 0;"><div style="font-weight:bold;margin:0.2rem 0;">SKIN/OTHER</div><div style="margin-left:0.5rem;margin:0.1rem 0;"><strong>Wounds/wound care; PT/OT OOB;</strong> <strong>RESTART HOME MEDS;</strong> <strong>HCP/GOALS OF CARE; DISPO:</strong> Downgrade or discharge; <strong>Evidence based mx</strong></div></div></div></div>',   
 	'Priority': '',
     'CC': '<b>Chief Complaint/Level</b><br><br>• Primary reason for consultation<br>• Trauma level if applicable<br>• Brief description of problem',
 'HPI': '<ul><li><strong>Trauma</strong><ul><li><strong>Time of injury</strong></li><li><strong>Mechanism:</strong> MVC/MCC: Speed, Location of force transfer</li><li><strong>Seatbelt / helmet / airbags / protective devices</strong></li><li><strong>Post-injury course</strong></li><li><strong>Identified injuries</strong></li><li><strong>Therapies/interventions</strong></li></ul></li><li><strong>STORY → !!FOCUS ON WHAT IS RELEVANT TO THE SURGICAL CONSULTATION!! → WHAT IS THE DDX before seeing, and what possible surgical interventions or assistance may actually be required?</strong><ul><li><strong>Onset</strong><ul><li><strong>Sequence of events, WHY are you coming today, Did you see a doctor for it?</strong></li><li><strong>Where coming from</strong></li><li><strong>What did they do there? Interventions, medications, studies, consultations</strong></li><li><strong>If they have tubes, drains or devices are they functioning? What has the outputs been?</strong></li></ul></li><li><strong>Palliating, provoking</strong></li><li><strong>Quality, radiation, severity</strong></li><li><strong>Prior episodes, evolution over time</strong></li></ul></li></ul>',
@@ -2489,6 +3288,399 @@ const helpContent = {
 
 
 	
+
+        // ============ INTERACTIVE TODO LIST ============
+        const TODO_SUGGESTIONS_MARKER = '=== AUTO-GENERATED SUGGESTIONS ===';
+
+        // Parse the plain-text To do field into structured items
+        function parseTodoText(text) {
+            if (!text) return { tasks: [], suggestions: [] };
+            const markerIdx = text.indexOf(TODO_SUGGESTIONS_MARKER);
+            const userPart = markerIdx !== -1 ? text.substring(0, markerIdx).trimEnd() : text;
+            const sugPart = markerIdx !== -1 ? text.substring(markerIdx + TODO_SUGGESTIONS_MARKER.length).trim() : '';
+
+            const tasks = [];
+            const userLines = userPart.split('\n');
+            for (let i = 0; i < userLines.length; i++) {
+                const line = userLines[i];
+                if (line.match(/^\[x\]\s/i)) {
+                    tasks.push({ type: 'task', text: line.substring(4), done: true, lineIndex: i });
+                } else if (line.match(/^\[ \]\s/)) {
+                    tasks.push({ type: 'task', text: line.substring(4), done: false, lineIndex: i });
+                } else if (line.trim() !== '') {
+                    tasks.push({ type: 'plain', text: line, lineIndex: i });
+                }
+            }
+
+            const suggestions = [];
+            if (sugPart) {
+                sugPart.split('\n').forEach(line => {
+                    if (line.trim()) suggestions.push(line.trim());
+                });
+            }
+
+            return { tasks, suggestions };
+        }
+
+        // Serialize structured items back to plain text
+        function serializeTodoItems(tasks, suggestions) {
+            const lines = [];
+            for (const item of tasks) {
+                if (item.type === 'task') {
+                    lines.push((item.done ? '[x] ' : '[ ] ') + item.text);
+                } else {
+                    lines.push(item.text);
+                }
+            }
+            let result = lines.join('\n');
+            if (suggestions.length > 0) {
+                result += '\n\n' + TODO_SUGGESTIONS_MARKER + '\n' + suggestions.join('\n');
+            }
+            return result;
+        }
+
+        // Current todo mode: 'interactive' or 'raw'
+        let todoViewMode = 'interactive';
+
+        // Render the interactive todo list into a container
+        function renderTodoList(container, patient) {
+            if (!container || !patient) return;
+            container.innerHTML = '';
+
+            const todoText = patient['To do'] || '';
+
+            if (todoViewMode === 'raw') {
+                // Raw textarea mode
+                const textarea = document.createElement('textarea');
+                textarea.id = 'field_To_do';
+                textarea.value = todoText;
+                textarea.style.cssText = 'width:100%;margin:0;min-height:60px;resize:none;overflow:hidden;box-sizing:border-box;word-wrap:break-word;white-space:pre-wrap;';
+                function autoSizeRawTodo() {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                }
+                textarea.addEventListener('input', function() {
+                    patient['To do'] = this.value;
+                    saveToLocalStorage();
+                    autoSizeRawTodo();
+                });
+                container.appendChild(textarea);
+                setTimeout(autoSizeRawTodo, 0);
+                return;
+            }
+
+            const parsed = parseTodoText(todoText);
+
+            // Task list
+            const listEl = document.createElement('div');
+            listEl.className = 'todo-list';
+
+            // Render pending tasks first, then completed
+            const pending = parsed.tasks.filter(t => t.type === 'task' && !t.done);
+            const completed = parsed.tasks.filter(t => t.type === 'task' && t.done);
+            const plains = parsed.tasks.filter(t => t.type === 'plain');
+
+            // Plain text lines (like "- dc medname")
+            plains.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'todo-item';
+                // Allow promoting plain lines to tasks
+                const promoteBtn = document.createElement('div');
+                promoteBtn.className = 'todo-checkbox';
+                promoteBtn.title = 'Convert to task';
+                promoteBtn.addEventListener('click', () => {
+                    item.type = 'task';
+                    item.done = false;
+                    // Clean up leading "- " from plain text
+                    if (item.text.match(/^-\s+/)) item.text = item.text.replace(/^-\s+/, '');
+                    patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                    saveToLocalStorage();
+                    renderTodoList(container, patient);
+                    updateTodoBadge(patient);
+                });
+
+                const textEl = document.createElement('span');
+                textEl.className = 'todo-text';
+                textEl.style.color = '#94a3b8';
+                textEl.textContent = item.text;
+
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'todo-delete';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.title = 'Remove';
+                deleteBtn.addEventListener('click', () => {
+                    const idx = parsed.tasks.indexOf(item);
+                    if (idx !== -1) {
+                        el.classList.add('todo-item-remove');
+                        setTimeout(() => {
+                            parsed.tasks.splice(idx, 1);
+                            patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                            saveToLocalStorage();
+                            renderTodoList(container, patient);
+                            updateTodoBadge(patient);
+                        }, 200);
+                    }
+                });
+
+                el.appendChild(promoteBtn);
+                el.appendChild(textEl);
+                el.appendChild(deleteBtn);
+                listEl.appendChild(el);
+            });
+
+            // Pending tasks
+            pending.forEach(item => {
+                listEl.appendChild(buildTaskElement(item, parsed, container, patient));
+            });
+
+            // Completed tasks
+            completed.forEach(item => {
+                listEl.appendChild(buildTaskElement(item, parsed, container, patient));
+            });
+
+            // Auto-suggestions section
+            if (parsed.suggestions.length > 0) {
+                const sugHeader = document.createElement('div');
+                sugHeader.className = 'todo-suggestions-header';
+                sugHeader.textContent = 'Auto-Suggestions';
+                listEl.appendChild(sugHeader);
+
+                parsed.suggestions.forEach((sug, sugIdx) => {
+                    const sugEl = document.createElement('div');
+                    sugEl.className = 'todo-suggestion-item';
+
+                    const promoteBtn = document.createElement('div');
+                    promoteBtn.className = 'todo-promote-btn';
+                    promoteBtn.innerHTML = '+';
+                    promoteBtn.title = 'Add as task';
+                    promoteBtn.addEventListener('click', () => {
+                        // Promote suggestion to task
+                        const cleanText = sug.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '');
+                        parsed.tasks.push({ type: 'task', text: cleanText, done: false });
+                        parsed.suggestions.splice(sugIdx, 1);
+                        patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                        saveToLocalStorage();
+                        renderTodoList(container, patient);
+                        updateTodoBadge(patient);
+                    });
+
+                    const textEl = document.createElement('span');
+                    textEl.textContent = sug;
+
+                    sugEl.appendChild(promoteBtn);
+                    sugEl.appendChild(textEl);
+                    listEl.appendChild(sugEl);
+                });
+            }
+
+            container.appendChild(listEl);
+
+            // Quick-add input row (at bottom)
+            const addRow = document.createElement('div');
+            addRow.className = 'todo-add-row';
+            const addInput = document.createElement('input');
+            addInput.type = 'text';
+            addInput.className = 'todo-add-input';
+            addInput.placeholder = 'Add task... (Enter)';
+            addInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && this.value.trim()) {
+                    e.preventDefault();
+                    const newText = this.value.trim();
+                    this.value = '';
+                    parsed.tasks.push({ type: 'task', text: newText, done: false });
+                    patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                    saveToLocalStorage();
+                    renderTodoList(container, patient);
+                    const newInput = container.querySelector('.todo-add-input');
+                    if (newInput) newInput.focus();
+                    updateTodoBadge(patient);
+                }
+            });
+            addRow.appendChild(addInput);
+            container.appendChild(addRow);
+
+            // Hidden field to maintain the field_To_do id for external code
+            const hiddenField = document.createElement('input');
+            hiddenField.type = 'hidden';
+            hiddenField.id = 'field_To_do';
+            hiddenField.value = todoText;
+            container.appendChild(hiddenField);
+
+            updateTodoBadge(patient);
+        }
+
+        // Detect touch device
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+        // Inline edit helper — enters edit mode for a task item
+        function startTodoEdit(item, parsed, container, patient, textEl) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'todo-text-input';
+            input.value = item.text;
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    item.text = this.value.trim() || item.text;
+                    patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                    saveToLocalStorage();
+                    renderTodoList(container, patient);
+                } else if (e.key === 'Escape') {
+                    renderTodoList(container, patient);
+                }
+            });
+            input.addEventListener('blur', function() {
+                item.text = this.value.trim() || item.text;
+                patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                saveToLocalStorage();
+                renderTodoList(container, patient);
+            });
+            textEl.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        // Build a single task element (checkbox + text + edit + delete)
+        function buildTaskElement(item, parsed, container, patient) {
+            const el = document.createElement('div');
+            el.className = 'todo-item' + (item.done ? ' completed' : '');
+            el.classList.add('todo-item-enter');
+            el.style.cursor = 'pointer';
+
+            // Toggle done on row click (except buttons/edit)
+            function toggleDone() {
+                item.done = !item.done;
+                patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                saveToLocalStorage();
+                renderTodoList(container, patient);
+                updateTodoBadge(patient);
+            }
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('.todo-edit-btn') || e.target.closest('.todo-delete')) return;
+                toggleDone();
+            });
+
+            // Checkbox (visual only, click handled by row)
+            const checkbox = document.createElement('div');
+            checkbox.className = 'todo-checkbox' + (item.done ? ' checked' : '');
+            checkbox.title = item.done ? 'Mark incomplete' : 'Mark complete';
+
+            // Text (double-click to edit on desktop)
+            const textEl = document.createElement('span');
+            textEl.className = 'todo-text';
+            textEl.textContent = item.text;
+            if (!isTouchDevice) {
+                textEl.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    startTodoEdit(item, parsed, container, patient, textEl);
+                });
+            }
+
+            // Edit button (visible on mobile, hidden on desktop via CSS)
+            const editBtn = document.createElement('div');
+            editBtn.className = 'todo-edit-btn';
+            editBtn.innerHTML = '&#9998;';
+            editBtn.title = 'Edit task';
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startTodoEdit(item, parsed, container, patient, textEl);
+            });
+
+            // Delete
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'todo-delete';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Delete task';
+            deleteBtn.addEventListener('click', () => {
+                const idx = parsed.tasks.indexOf(item);
+                if (idx !== -1) {
+                    el.classList.add('todo-item-remove');
+                    setTimeout(() => {
+                        parsed.tasks.splice(idx, 1);
+                        patient['To do'] = serializeTodoItems(parsed.tasks, parsed.suggestions);
+                        saveToLocalStorage();
+                        renderTodoList(container, patient);
+                        updateTodoBadge(patient);
+                    }, 200);
+                }
+            });
+
+            el.appendChild(checkbox);
+            el.appendChild(textEl);
+            el.appendChild(editBtn);
+            el.appendChild(deleteBtn);
+            return el;
+        }
+
+        // Inject List/Raw toggle buttons into a header element
+        function injectTodoModeButtons(headerEl) {
+            const interactiveBtn = document.createElement('button');
+            interactiveBtn.className = 'todo-mode-btn' + (todoViewMode === 'interactive' ? ' active' : '');
+            interactiveBtn.textContent = 'List';
+            interactiveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                todoViewMode = 'interactive';
+                interactiveBtn.classList.add('active');
+                rawBtn.classList.remove('active');
+                const container = document.getElementById('todoContainer');
+                if (container && patientData[currentPatientIndex]) {
+                    renderTodoList(container, patientData[currentPatientIndex]);
+                }
+            });
+
+            const rawBtn = document.createElement('button');
+            rawBtn.className = 'todo-mode-btn' + (todoViewMode === 'raw' ? ' active' : '');
+            rawBtn.textContent = 'Raw';
+            rawBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                todoViewMode = 'raw';
+                rawBtn.classList.add('active');
+                interactiveBtn.classList.remove('active');
+                const container = document.getElementById('todoContainer');
+                if (container && patientData[currentPatientIndex]) {
+                    renderTodoList(container, patientData[currentPatientIndex]);
+                }
+            });
+
+            headerEl.appendChild(interactiveBtn);
+            headerEl.appendChild(rawBtn);
+        }
+
+        // Update the count badge in the To Do header
+        function updateTodoBadge(patient) {
+            const badge = document.getElementById('todoBadge');
+            if (!badge) return;
+            const parsed = parseTodoText(patient['To do'] || '');
+            const taskItems = parsed.tasks.filter(t => t.type === 'task');
+            const doneCount = taskItems.filter(t => t.done).length;
+            const totalCount = taskItems.length;
+            if (totalCount === 0) {
+                badge.textContent = '';
+                badge.style.display = 'none';
+            } else {
+                badge.textContent = doneCount + '/' + totalCount;
+                badge.style.display = 'inline';
+                if (doneCount === totalCount) {
+                    badge.style.background = 'rgba(34,197,94,0.25)';
+                    badge.style.color = '#22c55e';
+                } else {
+                    badge.style.background = 'rgba(59,130,246,0.15)';
+                    badge.style.color = '#60a5fa';
+                }
+            }
+        }
+
+        // Refresh the todo display from patient data (called by external code)
+        function refreshTodoDisplay(patient) {
+            const container = document.getElementById('todoContainer');
+            if (container && patient) {
+                renderTodoList(container, patient);
+            }
+            // Also update hidden field for backward compat
+            const hiddenField = document.getElementById('field_To_do');
+            if (hiddenField && patient) {
+                hiddenField.value = patient['To do'] || '';
+            }
+        }
 
         // ============ DATA MANAGEMENT ============
         function saveToLocalStorage() {
@@ -2788,7 +3980,7 @@ function getChecklistStatus(patient, patientIndex) {
 
     if (!priority) {
         console.log('getPriorityStatus: No priority, returning default');
-        return { color: 'var(--card-bg)', title: 'No priority set' }; // Gray
+        return { color: '#444444', title: 'No priority set' };
     }
 
     // Handle priority "C" explicitly for green (ANSI GREEN - RESERVED)
@@ -2847,7 +4039,7 @@ function getChecklistStatus(patient, patientIndex) {
     }
 
     console.log('getPriorityStatus: Unrecognized priority, returning default:', priority);
-    return { color: 'var(--card-bg)', title: `${priority}` }; // Default gray
+    return { color: '#444444', title: `${priority}` };
 }
 		
 
@@ -2970,11 +4162,12 @@ function displayRows(data = patientData) {
     const rowList = document.getElementById('rowList');
     rowList.innerHTML = '';
 
-    patientData.forEach((patient, index) => {
+    data.forEach((patient) => {
+        const index = patientData.indexOf(patient);
         // Get priority status and color from getPriorityStatus
         const { color, title } = getPriorityStatus(patient);
 
-        // Determine priority class for additional styling (optional)
+        // Determine priority class for additional styling
         const priority = patient.Priority || '';
         const priorityNum = parseInt(priority);
         let priorityClass = 'priority-default';
@@ -2984,105 +4177,216 @@ function displayRows(data = patientData) {
             priorityClass = 'priority-complete';
         }
 
-        // Create main list item
+        // Extract key patient fields
+        const patientName = patient['Name'] || patient['Pt Name'] || '';
+        const room = patient['RM'] || patient['Room'] || '';
+        const mrn = patient['MRN'] || '';
+        const problems = patient['Problems'] || patient['Diagnosis'] || '';
+        const attending = patient['Att'] || patient['Attending'] || '';
+
+        // Create main list item - modern glass card with grid layout
         const listItem = document.createElement('li');
         listItem.className = `row-item ${priorityClass}`;
         listItem.style.cssText = `
             position: relative;
-            display: flex;
-            align-items: stretch;
-            background: var(--card-bg);
-            border-radius: 0.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr 20px;
+            align-items: start;
+            min-height: 0;
+            gap: 0;
+            background: rgba(10, 10, 10, 0.65);
+            border-radius: 0.85rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 4px solid ${color}; /* Use color from getPriorityStatus */
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
+            transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 5px solid ${color};
+            border-right: 5px solid ${color};
+            font-size: 0.82rem;
+            margin-bottom: 0.15rem;
             padding: 0;
+            border-top: 1px solid rgba(255,255,255,0.14);
+            border-bottom: 1px solid rgba(255,255,255,0.14);
+            backdrop-filter: blur(8px);
         `;
 
-        // Content container
+        // Content container - now just holds the button
         const contentContainer = document.createElement('div');
         contentContainer.style.cssText = `
-            flex: 1;
-            padding: 0.75rem;
+            padding: 0.25rem 0.35rem;
             display: flex;
             flex-direction: column;
-            gap: 0.2rem;
+            gap: 0.1rem;
+            min-width: 0;
+            justify-content: flex-start;
         `;
 
-        // First three columns button
-        const firstThreeButton = document.createElement('button');
-        firstThreeButton.className = 'first-three-btn';
-        firstThreeButton.style.cssText = `
-            width: fit-content;
-            text-align: left;
+        // To do column container
+        const toDoContainer = document.createElement('div');
+        toDoContainer.style.cssText = `
+            padding: 0.25rem 0.35rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 0.1rem;
+            min-width: 0;
+            overflow: hidden;
+        `;
+
+        // Top row: patient name + badges as a clickable vertical stack button
+        const topRow = document.createElement('button');
+        topRow.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.06rem;
             background: transparent;
             border: 1px solid transparent;
-            border-radius: 0.25rem;
-            padding: 0.2rem 0.4rem;
+            border-radius: 0.375rem;
+            padding: 0.1rem 0.3rem;
             cursor: pointer;
             color: inherit;
-            align-self: flex-start;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Inter', sans-serif;
             white-space: normal;
-            font-family: inherit;
-            font-size: 0.9rem;
-            line-height: 1.2;
-            gap: 0.1rem;
+            text-align: left;
+            width: fit-content;
         `;
 
-        // Store data for copy functionality
-        firstThreeButton.patientData = patient;
-        firstThreeButton.columnIndexes = selectedColumns.slice(0, 3);
-        firstThreeButton.colorClasses = colors;
+        // Patient name (prominent)
+        if (patientName) {
+            const nameEl = document.createElement('span');
+            nameEl.style.cssText = `
+                font-weight: 700;
+                font-size: 0.87rem;
+                color: #00f0ff;
+                letter-spacing: -0.01em;
+            `;
+            nameEl.textContent = patientName;
+            topRow.appendChild(nameEl);
+        }
 
-        firstThreeButton.onclick = (e) => {
+        // Room badge
+        if (room) {
+            const roomBadge = document.createElement('span');
+            roomBadge.style.cssText = `
+                background: rgba(255,51,51,0.12);
+                color: #ff3333;
+                padding: 0.05rem 0.32rem;
+                border-radius: 100px;
+                font-size: 0.74rem;
+                font-weight: 600;
+                font-family: 'JetBrains Mono', monospace;
+                border: 1px solid rgba(255,51,51,0.3);
+            `;
+            roomBadge.textContent = room;
+            topRow.appendChild(roomBadge);
+        }
+
+        // MRN badge
+        if (mrn) {
+            const mrnBadge = document.createElement('span');
+            mrnBadge.style.cssText = `
+                background: rgba(0,255,0,0.12);
+                color: #00ff00;
+                padding: 0.05rem 0.32rem;
+                border-radius: 100px;
+                font-size: 0.74rem;
+                font-weight: 600;
+                font-family: 'JetBrains Mono', monospace;
+                border: 1px solid rgba(0,255,0,0.3);
+            `;
+            mrnBadge.textContent = mrn;
+            topRow.appendChild(mrnBadge);
+        }
+
+        // Store data for copy functionality on the topRow button
+        topRow.patientData = patient;
+        topRow.columnIndexes = [1, 2, 3]; // Name, RM, MRN indexes
+        topRow.colorClasses = colors;
+
+        topRow.onclick = (e) => {
             e.stopPropagation();
-            copyPatientInfoImproved(firstThreeButton);
+            const name = patient.Name || 'Unknown';
+            const rm = patient.RM || 'Unknown';
+            const mrn = patient.MRN || 'Unknown';
+            const textToCopy = `${name}\n${rm}\n${mrn}`;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalContent = topRow.innerHTML;
+                topRow.innerHTML = '<span style="color: var(--success); font-weight: bold;">COPIED!</span>';
+                setTimeout(() => {
+                    topRow.innerHTML = originalContent;
+                }, 200);
+            }).catch(err => {
+                const ta = document.createElement('textarea');
+                ta.value = textToCopy;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    const originalContent = topRow.innerHTML;
+                    topRow.innerHTML = '<span style="color: var(--success); font-weight: bold;">COPIED!</span>';
+                    setTimeout(() => {
+                        topRow.innerHTML = originalContent;
+                    }, 200);
+                } catch (e) {
+                    console.error('Failed to copy:', e);
+                }
+                document.body.removeChild(ta);
+            });
         };
 
-        // Add first three columns to button
-        const firstThreeColumns = selectedColumns.slice(0, 3);
-        firstThreeColumns.forEach((colIndex, idx) => {
-            const header = MASTER_HEADERS[colIndex];
-            const value = patient[header] || '';
-            if (value) {
-                const span = document.createElement('span');
-                span.className = colors[idx % colors.length];
-                span.textContent = value;
-                span.style.cssText = `
-                    display: block;
-                    font-family: inherit;
-                    font-size: 0.9rem;
-                    line-height: 1.2;
-                    margin-bottom: 0.05rem;
-                `;
-                firstThreeButton.appendChild(span);
-            }
-        });
+        // Add button to content container
+        contentContainer.appendChild(topRow);
 
-        contentContainer.appendChild(firstThreeButton);
-
-        // Remaining columns
+        // Check if there's a "To do" field and add it to the to do container
+        let toDoElement = null;
         if (selectedColumns.length > 3) {
             const remainingColumns = selectedColumns.slice(3);
             remainingColumns.forEach((colIndex, idx) => {
                 const header = MASTER_HEADERS[colIndex];
                 const value = patient[header] || '';
-                if (value) {
+                if (header === 'To do' && value) {
+                    const toDoSpan = document.createElement('span');
+                    toDoSpan.style.cssText = `
+                        font-size: 0.78rem;
+                        line-height: 1.2;
+                        font-family: 'Inter', sans-serif;
+                        color: #ffffff;
+                        word-wrap: break-word;
+                        white-space: pre-wrap;
+                        overflow-wrap: break-word;
+                    `;
+                    toDoSpan.textContent = value;
+                    toDoElement = toDoSpan;
+                }
+            });
+        }
+
+        if (toDoElement) {
+            toDoContainer.appendChild(toDoElement);
+        }
+
+        // Remaining columns (beyond standard fields, excluding "To do" which is now in top row)
+        if (selectedColumns.length > 3) {
+            const remainingColumns = selectedColumns.slice(3);
+            let hasExtra = false;
+
+            remainingColumns.forEach((colIndex, idx) => {
+                const header = MASTER_HEADERS[colIndex];
+                const value = patient[header] || '';
+                if (value && header !== 'Name' && header !== 'Pt Name' && header !== 'RM' && header !== 'Room' && header !== 'MRN' && header !== 'Problems' && header !== 'Diagnosis' && header !== 'To do') {
+                    hasExtra = true;
                     const span = document.createElement('span');
                     span.className = colors[(idx + 3) % colors.length];
-                    span.textContent = value;
+
                     span.style.cssText = `
-                        display: block;
-                        margin-left: 0.5rem;
-                        margin-bottom: 0.1rem;
-                        font-family: inherit;
-                        font-size: 0.9rem;
-                        line-height: 1.2;
+                        font-size: 0.7rem;
+                        line-height: 1.3;
+                        font-family: 'Inter', sans-serif;
                     `;
+                    span.textContent = value;
                     contentContainer.appendChild(span);
                 }
             });
@@ -3092,16 +4396,16 @@ function displayRows(data = patientData) {
         const prioritySidebar = document.createElement('div');
         prioritySidebar.className = 'priority-sidebar';
         prioritySidebar.style.cssText = `
-            width: 12px;
-            background: ${color}; /* Use color from getPriorityStatus */
-            border-radius: 0 0.5rem 0.5rem 0;
+            width: 20px;
+            background: ${color};
+            border-radius: 0 0.85rem 0.85rem 0;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 200ms ease;
             flex-shrink: 0;
             align-self: stretch;
         `;
 
-        // Priority sidebar click handler
+        // Priority sidebar click handler — stopPropagation as backup
         prioritySidebar.onclick = (e) => {
             e.stopPropagation();
             showStatusSelector(patient, index, prioritySidebar);
@@ -3109,11 +4413,11 @@ function displayRows(data = patientData) {
 
         // Priority sidebar hover effects
         prioritySidebar.onmouseenter = () => {
-            prioritySidebar.style.width = '14px';
-            prioritySidebar.style.boxShadow = '0 0 8px rgba(0,0,0,0.3)';
+            prioritySidebar.style.width = '26px';
+            prioritySidebar.style.boxShadow = `0 0 12px ${color}40`;
         };
         prioritySidebar.onmouseleave = () => {
-            prioritySidebar.style.width = '12px';
+            prioritySidebar.style.width = '20px';
             prioritySidebar.style.boxShadow = 'none';
         };
 
@@ -3123,28 +4427,34 @@ function displayRows(data = patientData) {
 
         // Row hover effects
         listItem.onmouseenter = () => {
-            listItem.style.background = 'var(--card-hover)';
-            listItem.style.transform = 'translateX(5px)';
-            listItem.style.borderLeftWidth = '6px';
-            listItem.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+            listItem.style.background = 'rgba(59, 130, 246, 0.06)';
+            listItem.style.transform = 'translateY(-2px)';
+            listItem.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15), 0 0 0 1px rgba(59,130,246,0.15)';
         };
 
         listItem.onmouseleave = () => {
-            listItem.style.background = 'var(--card-bg)';
-            listItem.style.transform = 'translateX(0)';
-            listItem.style.borderLeftWidth = '4px';
+            listItem.style.background = 'rgba(10, 10, 10, 0.65)';
+            listItem.style.transform = 'translateY(0)';
             listItem.style.boxShadow = 'none';
         };
 
-        // Main row click handler (for details view)
+        // Main row click handler
         listItem.onclick = (e) => {
-            if (!e.target.closest('.priority-sidebar') && !e.target.closest('.first-three-btn')) {
+            // Treat the rightmost 32px of the card as the priority sidebar zone,
+            // catching clicks on rounded corners that miss the sidebar div itself
+            const rect = listItem.getBoundingClientRect();
+            const inSidebarZone = (e.clientX >= rect.right - 32);
+
+            if (inSidebarZone || e.target.closest('.priority-sidebar')) {
+                showStatusSelector(patient, index, prioritySidebar);
+            } else if (!e.target.closest('button')) {
                 showDetails(index);
             }
         };
 
         // Assemble the row
         listItem.appendChild(contentContainer);
+        listItem.appendChild(toDoContainer);
         listItem.appendChild(prioritySidebar);
 
         // Add to list
@@ -3459,27 +4769,43 @@ function clearSearch() {
         alert('Error: Patient not found');
         return;
     }
-    
+
     currentPatientIndex = index;
     const detailsView = document.getElementById('detailsView');
-    
+
     // Ensure detailsView exists
     if (!detailsView) {
         console.error('Details view element not found');
         return;
     }
-    
+
     const patient = patientData[index];
     if (!patient) {
         console.error('Patient data not found at index:', index);
         return;
     }
-    
+
     document.getElementById('stickyTextContainer').textContent = patient.Name || 'Unnamed Patient';
-    
+
+    // Populate mobile sticky meta badges (RM + MRN)
+    const stickyBadges = document.getElementById('stickyMetaBadges');
+    stickyBadges.innerHTML = '';
+    if (patient.RM) {
+        const rmBadge = document.createElement('span');
+        rmBadge.className = 'sticky-badge sticky-badge-rm';
+        rmBadge.textContent = patient.RM;
+        stickyBadges.appendChild(rmBadge);
+    }
+    if (patient.MRN) {
+        const mrnBadge = document.createElement('span');
+        mrnBadge.className = 'sticky-badge sticky-badge-mrn';
+        mrnBadge.textContent = patient.MRN;
+        stickyBadges.appendChild(mrnBadge);
+    }
+
     // Reset view mode to basic if it's invalid
     if (!currentViewMode) currentViewMode = 'basic';
-    
+
     // Show appropriate view based on current mode
     try {
         switchView(currentViewMode);
@@ -3487,12 +4813,32 @@ function clearSearch() {
         console.error('Error switching view:', e);
         switchView('basic');
     }
-    
+
     detailsView.style.display = 'block';
     updateNavButtons();
 
+    // Auto-copy patient info to clipboard
+    const name = patient.Name || 'Unknown';
+    const rm = patient.RM || 'Unknown';
+    const mrn = patient.MRN || 'Unknown';
+    const textToCopy = `${name}\n${rm}\n${mrn}`;
 
-	 
+    navigator.clipboard.writeText(textToCopy).catch(err => {
+        // Fallback method if clipboard API fails
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+        } catch (e) {
+            console.error('Failed to copy patient info:', e);
+        }
+        document.body.removeChild(ta);
+    });
+
 }
  
 
@@ -3546,9 +4892,213 @@ function switchView(mode) {
     let isChartCheckMode = false;
 
     switch(mode) {
-        case 'basic':
-            fieldsToShow = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do', 'Priority'];
+        case 'basic': {
+            // Modern dashboard layout for basic/details mode
+            const dashGrid = document.createElement('div');
+            dashGrid.className = 'dashboard-grid';
+
+            // Patient header card
+            const headerCard = document.createElement('div');
+            headerCard.className = 'patient-header-card';
+            const pNameDisplay = document.createElement('div');
+            pNameDisplay.className = 'patient-name-display';
+            pNameDisplay.textContent = patient['Name'] || 'Unnamed Patient';
+            headerCard.appendChild(pNameDisplay);
+
+            const metaRow = document.createElement('div');
+            metaRow.className = 'patient-meta';
+            ['RM', 'MRN', 'Att', 'Priority'].forEach(key => {
+                if (patient[key]) {
+                    const badge = document.createElement('span');
+                    badge.className = 'meta-badge';
+                    badge.textContent = key + ': ' + patient[key];
+                    metaRow.appendChild(badge);
+                }
+            });
+            headerCard.appendChild(metaRow);
+
+            // Editable short fields row inside header
+            const shortFieldsRow = document.createElement('div');
+            shortFieldsRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.65rem;';
+            ['Name', 'RM', 'MRN', 'Att'].forEach(header => {
+                const fieldWrap = document.createElement('div');
+                fieldWrap.style.cssText = 'flex:1;min-width:80px;';
+                const lbl = document.createElement('label');
+                lbl.textContent = header;
+                lbl.style.cssText = 'margin-top:0;';
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.id = `field_${header.replace(/\s+/g, '_')}`;
+                inp.value = patient[header] || '';
+                inp.style.cssText = 'margin:0.2rem 0 0;padding:0.45rem 0.65rem;font-size:0.8rem;';
+                inp.addEventListener('input', function() {
+                    patient[header] = this.value;
+                    if (header === 'Name') {
+                        pNameDisplay.textContent = this.value || 'Unnamed Patient';
+                        document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
+                    }
+                    // Update sticky RM/MRN badges on mobile
+                    if (header === 'RM' || header === 'MRN') {
+                        const stickyBadges = document.getElementById('stickyMetaBadges');
+                        stickyBadges.innerHTML = '';
+                        if (patient.RM) {
+                            const rmB = document.createElement('span');
+                            rmB.className = 'sticky-badge sticky-badge-rm';
+                            rmB.textContent = patient.RM;
+                            stickyBadges.appendChild(rmB);
+                        }
+                        if (patient.MRN) {
+                            const mrnB = document.createElement('span');
+                            mrnB.className = 'sticky-badge sticky-badge-mrn';
+                            mrnB.textContent = patient.MRN;
+                            stickyBadges.appendChild(mrnB);
+                        }
+                    }
+                    saveToLocalStorage();
+                });
+                fieldWrap.appendChild(lbl);
+                fieldWrap.appendChild(inp);
+                shortFieldsRow.appendChild(fieldWrap);
+            });
+            headerCard.appendChild(shortFieldsRow);
+            dashGrid.appendChild(headerCard);
+
+            // Dashboard cards for text fields
+            const cardIcons = { 'Problems': '🩺', 'ICS': '📋', 'VIOLIN': '🎻', 'ORDERS': '💊', 'To do': '✅', 'Priority': '⚡' };
+            const cardColors = { 'Problems': '#3b82f6', 'ICS': '#06b6d4', 'VIOLIN': '#8b5cf6', 'ORDERS': '#f59e0b', 'To do': '#22c55e', 'Priority': '#ef4444' };
+            const textFields = ['Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do', 'Priority'];
+
+            textFields.forEach(header => {
+                const card = document.createElement('div');
+                card.className = 'dashboard-card';
+
+                // Card header
+                const cardHeader = document.createElement('div');
+                cardHeader.className = 'dashboard-card-header';
+                cardHeader.innerHTML = `<span class="card-icon">${cardIcons[header] || '📄'}</span><span class="card-title" style="color:${cardColors[header] || '#94a3b8'}">${header}</span>`;
+
+                // Help button
+                if (helpContent[header]) {
+                    const helpBtn = document.createElement('button');
+                    helpBtn.className = 'help-button';
+                    helpBtn.textContent = '?';
+                    helpBtn.style.cssText = 'padding:0.15rem 0.4rem;font-size:0.7rem;backdrop-filter:none;box-shadow:none;';
+                    helpBtn.onclick = function(e) { e.stopPropagation(); e.preventDefault(); showHelpModal(header); };
+                    cardHeader.appendChild(helpBtn);
+                }
+
+                // Action buttons for specific fields
+                if (header === 'ORDERS') {
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'inline-action-btn';
+                    toggleBtn.textContent = 'Full Orders';
+                    toggleBtn.onclick = function(e) { e.stopPropagation(); e.preventDefault(); toggleFullOrdersDisplay(); };
+                    cardHeader.appendChild(toggleBtn);
+                } else if (header === 'VIOLIN') {
+                    const labBtn = document.createElement('button');
+                    labBtn.className = 'inline-action-btn';
+                    labBtn.textContent = 'Labs';
+                    labBtn.onclick = function(e) { e.stopPropagation(); e.preventDefault(); showTableView(); };
+                    cardHeader.appendChild(labBtn);
+                } else if (header === 'To do') {
+                    injectTodoModeButtons(cardHeader);
+                }
+
+                // Collapse toggle
+                const collapseIcon = document.createElement('span');
+                collapseIcon.textContent = '▾';
+                collapseIcon.style.cssText = 'color:#64748b;font-size:0.75rem;transition:transform 200ms ease;cursor:pointer;';
+                cardHeader.appendChild(collapseIcon);
+                cardHeader.onclick = function() {
+                    const body = card.querySelector('.dashboard-card-body');
+                    if (body.style.display === 'none') {
+                        body.style.display = 'block';
+                        collapseIcon.style.transform = 'rotate(0deg)';
+                        body.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
+                    } else {
+                        body.style.display = 'none';
+                        collapseIcon.style.transform = 'rotate(-90deg)';
+                    }
+                };
+
+                card.appendChild(cardHeader);
+
+                // Card body
+                const cardBody = document.createElement('div');
+                cardBody.className = 'dashboard-card-body';
+
+                // Collapse all cards by default except To do and Priority
+                const startExpanded = (header === 'To do' || header === 'Priority');
+                if (!startExpanded) {
+                    cardBody.style.display = 'none';
+                    collapseIcon.style.transform = 'rotate(-90deg)';
+                }
+
+                if (header === 'Priority') {
+                    // Visual priority selector button
+                    const { color } = getPriorityStatus(patient);
+                    const priorityBtn = document.createElement('button');
+                    priorityBtn.id = 'detailPriorityBtn';
+                    priorityBtn.style.cssText = `margin:0;padding:0.6rem 0.85rem;font-size:0.85rem;width:100%;text-align:left;background:var(--card-bg);border:2px solid ${color};border-radius:0.5rem;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;gap:0.6rem;`;
+                    const colorBox = document.createElement('div');
+                    colorBox.id = 'detailPriorityColorBox';
+                    colorBox.style.cssText = `width:16px;height:16px;border-radius:0.25rem;background:${color};border:1px solid rgba(255,255,255,0.3);flex-shrink:0;`;
+                    const priorityText = document.createElement('span');
+                    priorityText.id = 'detailPriorityText';
+                    priorityText.textContent = patient['Priority'] ? getPriorityName(patient['Priority']) : 'Set Priority';
+                    priorityBtn.appendChild(colorBox);
+                    priorityBtn.appendChild(priorityText);
+                    priorityBtn.onclick = (e) => {
+                        e.preventDefault();
+                        showStatusSelector(patient, currentPatientIndex, priorityBtn);
+                    };
+                    cardBody.appendChild(priorityBtn);
+                } else if (header === 'To do') {
+                    // Interactive todo component
+                    const todoDiv = document.createElement('div');
+                    todoDiv.id = 'todoContainer';
+                    todoDiv.className = 'todo-container';
+                    todoDiv.style.cssText = 'min-height:100px;';
+                    renderTodoList(todoDiv, patient);
+                    cardBody.appendChild(todoDiv);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.id = `field_${header.replace(/\s+/g, '_')}`;
+                    textarea.value = patient[header] || '';
+                    textarea.style.cssText = 'margin:0;';
+                    if (header === 'ORDERS') {
+                        textarea.placeholder = 'PAIN:\nAC:\nABX:\nN/F:\nLTD:\nDISPO:';
+                    }
+                    textarea.addEventListener('input', function() {
+                        patient[header] = this.value;
+                        saveToLocalStorage();
+                        autoResizeTextarea(this);
+                    });
+
+                    cardBody.appendChild(textarea);
+
+                    // Full orders display for ORDERS card
+                    if (header === 'ORDERS') {
+                        const fullOrdersDiv = document.createElement('div');
+                        fullOrdersDiv.id = 'fullOrdersDisplay';
+                        fullOrdersDiv.className = 'orders-section hidden';
+                        fullOrdersDiv.style.marginTop = '0.5rem';
+                        cardBody.appendChild(fullOrdersDiv);
+                    }
+
+                    // Only auto-resize now if the body is visible; collapsed cards resize when expanded
+                    if (startExpanded) {
+                        setTimeout(() => autoResizeTextarea(textarea), 0);
+                    }
+                }
+
+                card.appendChild(cardBody);
+                dashGrid.appendChild(card);
+            });
+
+            form.appendChild(dashGrid);
             break;
+        }
 
       
 
@@ -3565,189 +5115,91 @@ function switchView(mode) {
 
 
 
-case 'chartcheck':
+case 'chartcheck': {
             isChartCheckMode = true;
-            
-            const chartCheckContainer = document.createElement('div');
-            chartCheckContainer.className = 'chart-check-layout';
-            chartCheckContainer.id = 'chartCheckMainContainer';
-            chartCheckContainer.style.cssText = `
-                display: flex;
-                gap: 1rem;
-                height: calc(100vh - 250px);
-                border: 3px solid var(--border);
-                border-radius: 0.5rem;
-                transition: border-color 0.3s ease, box-shadow 0.3s ease;
-                padding: 1rem;
-                background: var(--dark-bg);
-            `;
-            
-            const leftPanel = document.createElement('div');
-            leftPanel.className = 'chart-check-left-panel';
-            leftPanel.style.cssText = `
-                flex: 2;
-                overflow-y: auto;
-                padding-right: 1rem;
-                border-right: 1px solid var(--border);
-            `;
-            
+
+            // Modern two-panel ChartCheck layout
+            const ccLayout = document.createElement('div');
+            ccLayout.className = 'chartcheck-layout';
+            ccLayout.id = 'chartCheckMainContainer';
+
+            // LEFT: Main content with section cards
+            const ccMain = document.createElement('div');
+            ccMain.className = 'chartcheck-main';
+
             const checkboxFields = ['Problems', 'ICS', 'VIOLIN', 'ORDERS', 'To do'];
             const fieldsToShowChartCheck = ['Name', 'RM', 'MRN', 'Att', 'Problems', 'ICS', 'VIOLIN', 'ORDERS', 'Priority'];
-            
+            const ccSectionIcons = { 'Name': '\u{1F464}', 'RM': '\u{1F3E5}', 'MRN': '\u{1F522}', 'Att': '\u{1F468}\u{200D}\u{2695}\u{FE0F}', 'Problems': '\u{1FA7A}', 'ICS': '\u{1F4CB}', 'VIOLIN': '\u{1F3BB}', 'ORDERS': '\u{1F48A}', 'Priority': '\u{26A1}' };
+            const ccSectionColors = { 'Problems': '#3b82f6', 'ICS': '#06b6d4', 'VIOLIN': '#8b5cf6', 'ORDERS': '#f59e0b', 'Priority': '#ef4444' };
+
             fieldsToShowChartCheck.forEach(header => {
-                const label = document.createElement('label');
-                label.style.cssText = `
-                    display: block;
-                    margin-top: 0.75rem;
-                    margin-bottom: 0.25rem;
-                    color: var(--text-secondary);
-                    font-weight: 500;
-                    font-size: 0.9rem;
-                    text-transform: uppercase;
-                `;
-                
-                let labelHTML = header;
-                
-                if (checkboxFields.includes(header)) {
-                    labelHTML += `<input type="checkbox" class="chart-check-field-checkbox" data-field="${header}" 
-                         style="width: 18px; height: 18px; margin-left: 0.5rem; cursor: pointer; accent-color: var(--primary);" />`;
-                }
-                
+                const section = document.createElement('div');
+                section.className = 'chartcheck-section' + (header === 'VIOLIN' ? ' violin-section' : '');
+
+                // Section header
+                const secHeader = document.createElement('div');
+                secHeader.className = 'chartcheck-section-header';
+                const iconColor = ccSectionColors[header] || '#94a3b8';
+                secHeader.innerHTML = '<span style="font-size:0.85rem;">' + (ccSectionIcons[header] || '') + '</span><span class="section-title" style="color:' + iconColor + '">' + header + '</span>';
+
+                // Help button
                 if (helpContent[header]) {
-                    labelHTML += `<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('${header}')">?</button>`;
+                    const helpBtn = document.createElement('button');
+                    helpBtn.className = 'inline-action-btn';
+                    helpBtn.textContent = '?';
+                    helpBtn.style.cssText = 'padding:0.15rem 0.4rem;font-size:0.7rem;';
+                    helpBtn.onclick = function(e) { e.stopPropagation(); e.preventDefault(); showHelpModal(header); };
+                    secHeader.appendChild(helpBtn);
                 }
-                
-                label.innerHTML = labelHTML;
-                
-                // Handle checkbox state and listeners
-                if (checkboxFields.includes(header)) {
-                    const fieldKey = `chartcheck_${header}_${currentPatientIndex}`;
-                    try {
-                        const savedState = localStorage.getItem(fieldKey);
-                        const checkbox = label.querySelector('.chart-check-field-checkbox');
-                        if (checkbox && savedState === 'true') {
-                            checkbox.checked = true;
-                        }
-                        if (checkbox) {
-                            checkbox.addEventListener('change', function() {
-                                try {
-                                    localStorage.setItem(fieldKey, this.checked);
-                                    updateChartCheckProgress();
-                                } catch (e) {
-                                    console.error('Failed to save checkbox state:', e);
-                                }
-                            });
-                        }
-                    } catch (e) {
-                        console.error('Error loading checkbox state:', e);
-                    }
-                }
-                
-                // ADD SPECIAL BUTTONS FOR SPECIFIC FIELDS
+
+                // Action buttons for specific fields
                 if (header === 'Problems') {
                     const podBtn = document.createElement('button');
+                    podBtn.className = 'inline-action-btn';
                     podBtn.textContent = 'Update POD';
-                    podBtn.style.marginLeft = '10px';
-                    podBtn.style.padding = '0.3rem 0.6rem';
-                    podBtn.style.fontSize = '0.8rem';
-                    podBtn.onclick = function(e) {
-                        e.preventDefault();
-                        updatePOD();
-                    };
-                    label.appendChild(podBtn);
-                
-
-
-
-
-
-
-
-} else if (header === 'VIOLIN') {
-                   
-                    
-                    const btnContainer = document.createElement('div');
-                    btnContainer.className = 'violin-button-container';
-                    btnContainer.style.marginLeft = '10px';
-                    
+                    podBtn.onclick = function(e) { e.preventDefault(); updatePOD(); };
+                    secHeader.appendChild(podBtn);
+                } else if (header === 'VIOLIN') {
                     const importBtn = document.createElement('button');
-                    importBtn.textContent = '⬇️ Import';
-                    importBtn.onclick = function(e) {
-                        e.preventDefault();
-                        showImportModal();
-                    };
-                    
-                    const tableBtn = document.createElement('button');
-                    tableBtn.textContent = '📊 Labs';
-                    tableBtn.onclick = function(e) {
-                        e.preventDefault();
-                        showTableView();
-                    };
-                    
-                    const graphBtn = document.createElement('button');
-                    graphBtn.textContent = '📊 Vitals';
-                    graphBtn.onclick = function(e) {
-                        e.preventDefault();
-                        showVitalsTable();
-                    };
-                    
-                    const fishboneBtn = document.createElement('button');
-                    fishboneBtn.textContent = '🐟 Fishbone';
-                    fishboneBtn.id = 'violinToggleBtn';
-                    fishboneBtn.onclick = function(e) {
-                        e.preventDefault();
-                        toggleViolinMode();
-                    };
-                    
-                    btnContainer.appendChild(importBtn);
-                    btnContainer.appendChild(tableBtn);
-                    btnContainer.appendChild(graphBtn);
-                    btnContainer.appendChild(fishboneBtn);
-                    label.appendChild(btnContainer);
-
-
-
+                    importBtn.className = 'inline-action-btn';
+                    importBtn.textContent = 'Import';
+                    importBtn.onclick = function(e) { e.preventDefault(); showImportModal(); };
+                    secHeader.appendChild(importBtn);
+                    const labBtn = document.createElement('button');
+                    labBtn.className = 'inline-action-btn';
+                    labBtn.textContent = 'Labs';
+                    labBtn.onclick = function(e) { e.preventDefault(); showTableView(); };
+                    secHeader.appendChild(labBtn);
+                    const vitalsBtn = document.createElement('button');
+                    vitalsBtn.className = 'inline-action-btn';
+                    vitalsBtn.textContent = 'Vitals';
+                    vitalsBtn.onclick = function(e) { e.preventDefault(); showVitalsTable(); };
+                    secHeader.appendChild(vitalsBtn);
+                    const fishBtn = document.createElement('button');
+                    fishBtn.className = 'inline-action-btn';
+                    fishBtn.textContent = 'Fishbone';
+                    fishBtn.id = 'violinToggleBtn';
+                    fishBtn.onclick = function(e) { e.preventDefault(); toggleViolinMode(); };
+                    secHeader.appendChild(fishBtn);
                 } else if (header === 'ORDERS') {
-                    const btnContainer = document.createElement('span');
-                    btnContainer.style.marginLeft = '10px';
-                    
                     const abbrevBtn = document.createElement('button');
-                    abbrevBtn.textContent = 'Abbrev Orders';
-                    abbrevBtn.style.margin = '0 2px';
-                    abbrevBtn.style.padding = '0.3rem 0.6rem';
-                    abbrevBtn.style.fontSize = '0.8rem';
-                    abbrevBtn.onclick = function(e) {
-                        e.preventDefault();
-                        updateOrders();
-                    };
-                    
+                    abbrevBtn.className = 'inline-action-btn';
+                    abbrevBtn.textContent = 'Abbrev';
+                    abbrevBtn.onclick = function(e) { e.preventDefault(); updateOrders(); };
+                    secHeader.appendChild(abbrevBtn);
                     const fullBtn = document.createElement('button');
-                    fullBtn.textContent = 'Full Orders';
-                    fullBtn.style.margin = '0 2px';
-                    fullBtn.style.padding = '0.3rem 0.6rem';
-                    fullBtn.style.fontSize = '0.8rem';
-                    fullBtn.onclick = function(e) {
-                        e.preventDefault();
-                        toggleOrdersView();
-                    };
-                    
-                    btnContainer.appendChild(abbrevBtn);
-                    btnContainer.appendChild(fullBtn);
-                    label.appendChild(btnContainer);
+                    fullBtn.className = 'inline-action-btn';
+                    fullBtn.textContent = 'Full';
+                    fullBtn.onclick = function(e) { e.preventDefault(); toggleOrdersView(); };
+                    secHeader.appendChild(fullBtn);
                 }
-                
-                leftPanel.appendChild(label);
 
-				        // Add full orders display below ORDERS field
-                if (header === 'ORDERS') {
-                    const fullOrdersDiv = document.createElement('div');
-                    fullOrdersDiv.id = 'fullOrdersDisplay';
-                    fullOrdersDiv.className = 'orders-section hidden';
-                    fullOrdersDiv.style.marginTop = '0.75rem';
-                    leftPanel.appendChild(fullOrdersDiv);
-                }
-                
-                // Create input field
+                section.appendChild(secHeader);
+
+                // Section body with input
+                const secBody = document.createElement('div');
+                secBody.className = 'chartcheck-section-body';
+
                 let input;
                 if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
                     input = document.createElement('input');
@@ -3755,95 +5207,88 @@ case 'chartcheck':
                 } else {
                     input = document.createElement('textarea');
                 }
-                
                 input.id = `field_${header.replace(/\s+/g, '_')}`;
                 input.value = patient[header] || '';
-
+                input.style.cssText = 'margin:0;';
                 if (header === 'ORDERS') {
                     input.placeholder = 'PAIN:\nAC:\nABX:\nN/F:\nLTD:\nDISPO:';
                 }
-
                 input.addEventListener('input', function() {
                     patient[header] = this.value;
                     if (header === 'Name') {
                         document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
                     }
                     saveToLocalStorage();
-                    if (input.tagName === 'TEXTAREA') {
-                        autoResizeTextarea(this);
-                    }
+                    if (input.tagName === 'TEXTAREA') autoResizeTextarea(this);
                 });
-                
-                leftPanel.appendChild(input);
-                
+
+                secBody.appendChild(input);
+
+                // Full orders display
+                if (header === 'ORDERS') {
+                    const fullOrdersDiv = document.createElement('div');
+                    fullOrdersDiv.id = 'fullOrdersDisplay';
+                    fullOrdersDiv.className = 'orders-section hidden';
+                    fullOrdersDiv.style.marginTop = '0.5rem';
+                    secBody.appendChild(fullOrdersDiv);
+                }
+
+                section.appendChild(secBody);
+                ccMain.appendChild(section);
+
                 if (input.tagName === 'TEXTAREA') {
                     setTimeout(() => autoResizeTextarea(input), 0);
                 }
-                
-        
             });
-            
-            // RIGHT PANEL - Shows "To do" field
-            const rightPanel = document.createElement('div');
-            rightPanel.className = 'chart-check-right-panel';
-            rightPanel.style.cssText = `
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                background: var(--dark-bg);
-                border-radius: 0.5rem;
-                padding: 1rem;
-                border: 2px solid var(--primary);
-            `;
-            
-            const todoLabel = document.createElement('label');
-            todoLabel.style.cssText = `
-                display: block;
-                margin-bottom: 0.5rem;
-                color: var(--text-secondary);
-                font-weight: 500;
-                font-size: 0.9rem;
-                text-transform: uppercase;
-            `;
-            
-            todoLabel.innerHTML = `To do<button class="help-button" onclick="event.stopPropagation(); event.preventDefault(); showHelpModal('Plan')">?</button>`;
-            
-            const todoTextarea = document.createElement('textarea');
-            todoTextarea.id = 'field_To_do';
-            todoTextarea.value = patient['To do'] || '';
-            todoTextarea.style.cssText = `
-                flex: 1;
-                resize: none;
-                background: var(--card-bg);
-                border: 1px solid var(--border);
-                border-radius: 0.25rem;
-                padding: 0.75rem;
-                color: var(--text-primary);
-                font-family: inherit;
-                font-size: 0.9rem;
-				overflow-y: auto; 
-            `;
-            
-            todoTextarea.addEventListener('input', function() {
-                patient['To do'] = this.value;
-                saveToLocalStorage();
-                autoResizeTextarea(this);
-            });
-            
-            rightPanel.appendChild(todoLabel);
-            rightPanel.appendChild(todoTextarea);
-            
-            chartCheckContainer.appendChild(leftPanel);
-            chartCheckContainer.appendChild(rightPanel);
-            form.appendChild(chartCheckContainer);
 
-            // ImportedData and LabData are now loaded at the top of switchView for all modes
+            // RIGHT: Sidebar with checklist + to-do
+            const ccSidebar = document.createElement('div');
+            ccSidebar.className = 'chartcheck-sidebar';
+
+            // To-do section in sidebar — fills the remaining column height
+            const todoCard = document.createElement('div');
+            todoCard.className = 'chartcheck-section';
+            todoCard.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;';
+            const todoHeader = document.createElement('div');
+            todoHeader.className = 'chartcheck-section-header';
+            todoHeader.innerHTML = '<span style="font-size:0.85rem;">&#x2705;</span><span class="section-title" style="color:#22c55e;">To Do</span><span id="todoBadge" class="todo-count-badge" style="display:none;"></span>';
+            injectTodoModeButtons(todoHeader);
+            todoCard.appendChild(todoHeader);
+            const todoBody = document.createElement('div');
+            todoBody.className = 'chartcheck-section-body';
+            todoBody.id = 'todoContainer';
+            todoBody.style.cssText = 'flex:1;display:flex;flex-direction:column;padding:0.5rem 0.6rem;overflow:hidden;';
+            renderTodoList(todoBody, patient);
+            todoCard.appendChild(todoBody);
+            ccSidebar.appendChild(todoCard);
+
+            ccLayout.appendChild(ccMain);
+            ccLayout.appendChild(ccSidebar);
+            form.appendChild(ccLayout);
+
+            // Update progress ring function
+            window.updateCCProgressRing = function() {
+                const items = document.querySelectorAll('.checklist-item');
+                const total = items.length;
+                const checked = document.querySelectorAll('.checklist-item.checked').length;
+                const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+                const circle = document.getElementById('ccProgressCircle');
+                const text = document.getElementById('ccProgressText');
+                if (circle && text) {
+                    const offset = ringCircumference - (pct / 100) * ringCircumference;
+                    circle.style.strokeDashoffset = offset;
+                    circle.style.stroke = pct === 100 ? '#22c55e' : '#3b82f6';
+                    text.textContent = pct + '%';
+                }
+            };
 
             setTimeout(() => {
                 updateChartCheckProgress();
+                if (window.updateCCProgressRing) updateCCProgressRing();
             }, 100);
 
             break;
+        }
        
 
 
@@ -3945,11 +5390,13 @@ if (currentViewMode !== 'chartcheck') {
             showTableView();
         };
         label.appendChild(toggleBtn);
+    } else if (header === 'To do') {
+        injectTodoModeButtons(label);
     }
 }
 
-				
-				
+
+
 
 
 		    
@@ -4036,7 +5483,14 @@ if (currentViewMode !== 'chartcheck') {
                 }
                 
 let input;
-if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
+if (header === 'To do') {
+    // Use interactive todo component instead of plain textarea
+    input = document.createElement('div');
+    input.id = 'todoContainer';
+    input.className = 'todo-container';
+    input.style.cssText = 'min-height:120px;';
+}
+else if (header === 'Name' || header === 'RM' || header === 'MRN' || header === 'Att' || header === 'Priority') {
     input = document.createElement('input');
 }
 else if (header === 'VIOLIN') {
@@ -4054,11 +5508,15 @@ else {
                     input.type = 'text';
                 }
                 
-                input.id = `field_${header.replace(/\s+/g, '_')}`;
+                if (header !== 'To do') {
+                    input.id = `field_${header.replace(/\s+/g, '_')}`;
+                }
 
 
 // Set initial content
-if (header === 'VIOLIN') {
+if (header === 'To do') {
+    // Interactive todo handles its own content
+} else if (header === 'VIOLIN') {
     const content = patient[header] || '';
     // If content has HTML spans, use innerHTML to preserve red formatting
     if (content.includes('<span')) {
@@ -4074,18 +5532,20 @@ if (header === 'ORDERS') {
     input.placeholder = 'PAIN:\nAC:\nABX:\nN/F:\nLTD:\nDISPO:';
 }
 
-input.addEventListener('input', function() {
-    patient[header] = this.value;
-    
-    if (header === 'Name') {
-        document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
-    }
-    saveToLocalStorage();
-    
-    if (input.tagName === 'TEXTAREA') {
-        autoResizeTextarea(this);
-    }
-});
+if (header !== 'To do') {
+    input.addEventListener('input', function() {
+        patient[header] = this.value;
+
+        if (header === 'Name') {
+            document.getElementById('stickyTextContainer').textContent = this.value || 'Unnamed Patient';
+        }
+        saveToLocalStorage();
+
+        if (input.tagName === 'TEXTAREA') {
+            autoResizeTextarea(this);
+        }
+    });
+}
 
 
 
@@ -4101,8 +5561,10 @@ input.addEventListener('input', function() {
                 }
                 
                 form.appendChild(input);
-                
-                if (input.tagName === 'TEXTAREA') {
+
+                if (header === 'To do') {
+                    renderTodoList(input, patient);
+                } else if (input.tagName === 'TEXTAREA') {
                     setTimeout(() => autoResizeTextarea(input), 0);
                 }
             });
@@ -5024,12 +6486,8 @@ function showImportModal() {
         // Append new suggestions
         patient['To do'] = cleanTodo + suggestionsText;
 
-        // Update the To do textarea if it exists
-        const todoField = document.getElementById('field_To_do');
-        if (todoField) {
-            todoField.value = patient['To do'];
-            autoResizeTextarea(todoField);
-        }
+        // Update the To do display
+        refreshTodoDisplay(patient);
     }
 
     // Update patient data
@@ -5152,44 +6610,65 @@ saveToLocalStorage();
             }
             tableHTML += '</tr>';
             
+            // Helper to get short date/time string for a lab/vital key at index
+            const getDateTimeStr = (key, idx) => {
+                let dates = labData.datesArray?.[key] || [];
+                let times = labData.timesArray?.[key] || [];
+                if (dates.length === 0 && labData.dates?.[key]) dates = [labData.dates[key]];
+                if (times.length === 0 && labData.times?.[key]) times = [labData.times[key]];
+                const d = dates[idx] || dates[0] || '';
+                const t = times[idx] || times[0] || '';
+                if (!d) return '';
+                const dateMatch = d.match(/(\d{1,2}\/\d{1,2})(?:\/\d{2,4})?/);
+                const shortDate = dateMatch ? dateMatch[1] : d;
+                const timeMatch = t.match(/(\d{1,2}:\d{2})/);
+                const shortTime = timeMatch ? timeMatch[1] : '';
+                return shortTime ? `${shortDate} ${shortTime}` : shortDate;
+            };
+
             // Add vitals
             if (labData.vitals) {
                 if (labData.vitals.temp) {
                     tableHTML += '<tr><td>Temperature</td>';
-                    labData.vitals.temp.forEach(val => {
-                        tableHTML += `<td>${val}°C</td>`;
+                    labData.vitals.temp.forEach((val, i) => {
+                        const dt = getDateTimeStr('temp', i);
+                        tableHTML += `<td>${val}°C${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
-                
+
                 if (labData.vitals.hr) {
                     tableHTML += '<tr><td>Heart Rate</td>';
-                    labData.vitals.hr.forEach(val => {
-                        tableHTML += `<td>${val}</td>`;
+                    labData.vitals.hr.forEach((val, i) => {
+                        const dt = getDateTimeStr('hr', i);
+                        tableHTML += `<td>${val}${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
-                
+
                 if (labData.vitals.sbp) {
                     tableHTML += '<tr><td>Systolic BP</td>';
-                    labData.vitals.sbp.forEach(val => {
-                        tableHTML += `<td>${val}</td>`;
+                    labData.vitals.sbp.forEach((val, i) => {
+                        const dt = getDateTimeStr('sbp', i);
+                        tableHTML += `<td>${val}${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
-                
+
                 if (labData.vitals.dbp) {
                     tableHTML += '<tr><td>Diastolic BP</td>';
-                    labData.vitals.dbp.forEach(val => {
-                        tableHTML += `<td>${val}</td>`;
+                    labData.vitals.dbp.forEach((val, i) => {
+                        const dt = getDateTimeStr('dbp', i);
+                        tableHTML += `<td>${val}${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
-                
+
                 if (labData.vitals.o2) {
                     tableHTML += '<tr><td>O2 Saturation</td>';
-                    labData.vitals.o2.forEach(val => {
-                        tableHTML += `<td>${val}%</td>`;
+                    labData.vitals.o2.forEach((val, i) => {
+                        const dt = getDateTimeStr('o2', i);
+                        tableHTML += `<td>${val}%${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
@@ -5239,8 +6718,16 @@ saveToLocalStorage();
                 for (const [key, name] of Object.entries(labNames)) {
                     if (labData.labs[key]) {
                         tableHTML += `<tr><td>${name}</td>`;
-                        labData.labs[key].forEach(val => {
-                            tableHTML += `<td>${val}</td>`;
+                        labData.labs[key].forEach((val, i) => {
+                            // Try the key itself, then check KEY_ALIASES
+                            let dt = getDateTimeStr(key, i);
+                            if (!dt && typeof KEY_ALIASES !== 'undefined' && KEY_ALIASES[key]) {
+                                for (const alias of KEY_ALIASES[key]) {
+                                    dt = getDateTimeStr(alias, i);
+                                    if (dt) break;
+                                }
+                            }
+                            tableHTML += `<td>${val}${dt ? `<br><i style="font-size:0.6em;color:#888;">${dt}</i>` : ''}</td>`;
                         });
                         tableHTML += '</tr>';
                     }
@@ -5952,11 +7439,7 @@ function toggleMedStatus(event, medId, action, medName) {
                     } else {
                         patient['To do'] = (existingTodo.trimEnd() ? existingTodo.trimEnd() + '\n' : '') + dcText;
                     }
-                    const todoField = document.getElementById('field_To_do');
-                    if (todoField) {
-                        todoField.value = patient['To do'];
-                        if (typeof autoResizeTextarea === 'function') autoResizeTextarea(todoField);
-                    }
+                    refreshTodoDisplay(patient);
                     saveToLocalStorage();
                 }
             }
@@ -6504,6 +7987,7 @@ function saveLabsImaging() {
         const dietMatch = lastImportedData ? lastImportedData.match(/DIET ORDER:\s*([^\n]+)/i) : null;
 
         let currentSection = 'Scheduled';
+        let inHomeMedsSection = false;
         const medsLines = medsText ? medsText.split('\n') : [];
        const categorizedMeds = {
 	    'neuro': [],          // Pain, sedation, neurological, psychiatric
@@ -6529,16 +8013,35 @@ function saveLabsImaging() {
         medsLines.forEach(line => {
             const trimmedLine = line.trim();
 
-            if (trimmedLine.toLowerCase().includes('scheduled:')) {
-                currentSection = 'Scheduled';
-                return;
-            } else if (trimmedLine.toLowerCase().includes('prn:')) {
-                currentSection = 'PRN';
-                return;
-            } else if (trimmedLine.toLowerCase().includes('continuous:')) {
-                currentSection = 'Continuous';
+            // Detect Home Medications header and skip all home med lines
+            if (trimmedLine.match(/^Home\s+Medications?\s*\(/i)) {
+                inHomeMedsSection = true;
                 return;
             }
+
+            // Detect section headers (with or without colon)
+            const lineLowerTrimmed = trimmedLine.toLowerCase().replace(/:$/, '');
+            if (lineLowerTrimmed === 'scheduled' || trimmedLine.toLowerCase().includes('scheduled:')) {
+                currentSection = 'Scheduled';
+                inHomeMedsSection = false;
+                return;
+            } else if (lineLowerTrimmed === 'prn' || trimmedLine.toLowerCase().includes('prn:')) {
+                currentSection = 'PRN';
+                inHomeMedsSection = false;
+                return;
+            } else if (lineLowerTrimmed === 'continuous' || trimmedLine.toLowerCase().includes('continuous:')) {
+                currentSection = 'Continuous';
+                inHomeMedsSection = false;
+                return;
+            }
+
+            // Skip other non-medication header lines (e.g., "Active", "Active PRN", medication count lines)
+            if (trimmedLine.match(/^(Active\s*(Scheduled|PRN|Continuous)?|Medications?\s*\(\d+\))$/i)) {
+                return;
+            }
+
+            // Skip lines that belong to the Home Medications section
+            if (inHomeMedsSection) return;
 
             if (!trimmedLine) return;
 
@@ -6567,8 +8070,11 @@ function saveLabsImaging() {
                 route = 'INH';
             }
 
+            // Remove " PRN" from the end of medication text to avoid duplication
+            let cleanedMedText = trimmedLine.replace(/\s+PRN\s*$/i, '');
+
             const medObj = {
-                text: trimmedLine,
+                text: cleanedMedText,
                 route: route,
                 isPRN: isPRN
             };
@@ -6707,8 +8213,8 @@ else {
             let html = '';
 
             // Category header
-            html += `<div style="margin-bottom: 0.15rem;">`;
-            html += `<div style="color: var(--primary); font-weight: 600; font-size: 13px; margin-bottom: 0.1rem;">${categoryName}:</div>`;
+            html += `<div style="margin-bottom: 0.05rem;">`;
+            html += `<div style="color: var(--primary); font-weight: 600; font-size: 13px; margin-bottom: 0.05rem;">${categoryName}:</div>`;
 
             // PO medications
             if (poMeds.length > 0) {
@@ -6740,7 +8246,7 @@ else {
 
                     const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
                     const medNameForDC = medText.trim().split(/\s+/)[0].toLowerCase();
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.02rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
                     html += `<button type="button" onclick="editMedication(event, '${medId}', 'po', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${medRoute}', ${medIsPRN})"
@@ -6788,7 +8294,7 @@ else {
 
                     const escapedText = medText.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
                     const medNameForDC = medText.trim().split(/\s+/)[0].toLowerCase();
-                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
+                    html += `<div style="color: ${color}; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.02rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
                     html += `<span>${displayText}</span>`;
                     html += `<div style="display: flex; gap: 4px;">`;
                     html += `<button type="button" onclick="editMedication(event, '${medId}', 'iv', ${idx}, '${categoryName.replace(/'/g, "\\'")}', '${escapedText}', '${medRoute}', ${medIsPRN})"
@@ -6807,7 +8313,7 @@ else {
             }
 
             // Category separator
-            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.15rem;"></div>`;
+            html += `<div style="border-bottom: 1px solid #444; margin-top: 0.05rem;"></div>`;
             html += '</div>';
 
             return html;
@@ -6815,7 +8321,7 @@ else {
 
         // Build table HTML with toggle buttons
         let tableHTML = '<div style="background: var(--card-bg); padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--primary);">';
-        tableHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">';
+        tableHTML += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">';
         tableHTML += '<strong style="color: var(--primary); font-size: 16px;">📋 Full Orders List</strong>';
 
         // Toggle buttons
@@ -6832,7 +8338,7 @@ else {
         tableHTML += '</div>';
         tableHTML += '</div>';
 
-        tableHTML += '<div style="font-family: \'Courier New\', monospace; font-size: 11.5px; background: #252525; border-radius: 8px; padding: 0.5rem;">';
+        tableHTML += '<div style="font-family: \'Courier New\', monospace; font-size: 11.5px; background: #252525; border-radius: 8px; padding: 0.25rem 0.4rem;">';
 
         // Fetch current orders to read top sections
         const currentOrdersForTop = document.getElementById('field_ORDERS')?.value || '';
@@ -6846,27 +8352,27 @@ else {
         }
 
         // VITALS/INTAKE/OUTPUTS Section
-        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
-        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1rem;">`;
         tableHTML += `<div style="color: #10b981; font-weight: 600; font-size: 13px;">VITALS/INTAKE/OUTPUTS:</div>`;
         tableHTML += `<button type="button" onclick="editVitalsIO()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: #10b981;" title="Edit Vitals/Intake/Outputs">✏️</button>`;
         tableHTML += `</div>`;
         tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2; white-space: pre-wrap;">`;
         tableHTML += existingVitalsIO || '<em style="color: var(--text-secondary);">No vitals/IO orders</em>';
         tableHTML += `</div>`;
-        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.1rem;"></div>`;
         tableHTML += '</div>';
 
         // LABS/IMAGING Section
-        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
-        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1rem;">`;
         tableHTML += `<div style="color: #f59e0b; font-weight: 600; font-size: 13px;">LABS/IMAGING:</div>`;
         tableHTML += `<button type="button" onclick="editLabsImaging()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: #f59e0b;" title="Edit Labs/Imaging">✏️</button>`;
         tableHTML += `</div>`;
         tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2; white-space: pre-wrap;">`;
         tableHTML += existingLabsImaging || '<em style="color: var(--text-secondary);">No labs/imaging orders</em>';
         tableHTML += `</div>`;
-        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.1rem;"></div>`;
         tableHTML += '</div>';
 
       tableHTML += createCategoryRow('NEURO/PAIN/SEDATION', categorizedMeds['neuro']);
@@ -6895,32 +8401,32 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
         }
 
         // LABS/MISC Section
-        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
-        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1rem;">`;
         tableHTML += `<div style="color: #06b6d4; font-weight: 600; font-size: 13px;">LABS/MISC:</div>`;
         tableHTML += `<button type="button" onclick="editLabsMisc()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: #06b6d4;" title="Edit LABS/MISC">✏️</button>`;
         tableHTML += `</div>`;
         tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2; white-space: pre-wrap;">`;
         tableHTML += existingLabsMisc || '<em style="color: var(--text-secondary);">No labs/misc orders</em>';
         tableHTML += `</div>`;
-        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.1rem;"></div>`;
         tableHTML += '</div>';
 
         // LTD Section
-        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
-        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1rem;">`;
         tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 13px;">LTD:</div>`;
         tableHTML += `<button type="button" onclick="editLTD()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: var(--primary);" title="Edit LTD">✏️</button>`;
         tableHTML += `</div>`;
         tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; line-height: 1.2;">`;
         tableHTML += existingLTD || '<em style="color: var(--text-secondary);">No LTD data</em>';
         tableHTML += `</div>`;
-        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.3rem;"></div>`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-top: 0.1rem;"></div>`;
         tableHTML += '</div>';
 
         // DISPO Section
-        tableHTML += `<div style="margin-bottom: 0.4rem;">`;
-        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">`;
+        tableHTML += `<div style="margin-bottom: 0.15rem;">`;
+        tableHTML += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1rem;">`;
         tableHTML += `<div style="color: var(--primary); font-weight: 600; font-size: 13px;">DISPO:</div>`;
         tableHTML += `<button type="button" onclick="editDISPO()" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; color: var(--primary);" title="Edit DISPO">✏️</button>`;
         tableHTML += `</div>`;
@@ -6929,33 +8435,38 @@ tableHTML += createCategoryRow('SKIN/OTHER', categorizedMeds['skin']);
         tableHTML += `</div>`;
         tableHTML += '</div>';
 
-        // HOME MEDS section (at the very end for comparison with inpatient meds)
+        // HOME MEDS section (at the very end) — always rendered
         const homeMedsRaw = lastImportedData ? extractHomeMeds(lastImportedData) : '';
-        if (homeMedsRaw) {
-            const homeMedLines = homeMedsRaw.split('\n').filter(l => l.trim());
-            if (homeMedLines.length > 0) {
-                tableHTML += `<div style="margin-bottom: 0.15rem;">`;
-                tableHTML += `<div style="color: #a78bfa; font-weight: 600; font-size: 13px; margin-bottom: 0.1rem;">HOME MEDS:</div>`;
-                homeMedLines.forEach((line, idx) => {
-                    const medId = `homed_${idx}`;
-                    if (deletedOrders.has(medId)) return;
-                    const displayLine = showAbbreviatedTable ? abbreviateMedText(line.trim()) : line.trim();
-                    const medName = line.trim().split(/\s+/)[0].toLowerCase();
-                    tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.05rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
-                    tableHTML += `<span>💊 ${displayLine}</span>`;
-                    tableHTML += `<div style="display: flex; gap: 4px;">`;
-                    tableHTML += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medName}')"
-                            class="med-status-btn"
-                            data-med-id="${medId}"
-                            data-status="stop"
-                            style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
-                            title="Remove this medication">🟥</button>`;
-                    tableHTML += `</div>`;
-                    tableHTML += '</div>';
-                });
+        const homeMedLines = homeMedsRaw
+            ? homeMedsRaw.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 0 && !l.match(/^(PRN|Scheduled|Continuous|Active|Active\s+PRN|Active\s+Scheduled|Active\s+Continuous|Medications?\s*\(\d+\))$/i))
+            : [];
+        tableHTML += `<div style="margin-bottom: 0.1rem; margin-top: 0.2rem;">`;
+        tableHTML += `<div style="border-bottom: 1px solid #444; margin-bottom: 0.2rem;"></div>`;
+        tableHTML += `<div style="color: #a78bfa; font-weight: 600; font-size: 13px; margin-bottom: 0.05rem;">HOME MEDS:</div>`;
+        if (homeMedLines.length > 0) {
+            homeMedLines.forEach((line, idx) => {
+                const medId = `homed_${idx}`;
+                if (deletedOrders.has(medId)) return;
+                const displayLine = showAbbreviatedTable ? abbreviateMedText(line) : line;
+                const medName = line.split(/\s+/)[0].toLowerCase();
+                tableHTML += `<div style="color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; font-weight: normal; padding: 0; margin-bottom: 0.02rem; display: flex; align-items: center; justify-content: space-between; line-height: 1.1;">`;
+                tableHTML += `<span>💊 ${displayLine}</span>`;
+                tableHTML += `<div style="display: flex; gap: 4px;">`;
+                tableHTML += `<button type="button" onclick="toggleMedStatus(event, '${medId}', 'stop', '${medName}')"
+                        class="med-status-btn"
+                        data-med-id="${medId}"
+                        data-status="stop"
+                        style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; flex-shrink: 0;"
+                        title="Remove this medication">🟥</button>`;
+                tableHTML += `</div>`;
                 tableHTML += '</div>';
-            }
+            });
+        } else {
+            tableHTML += `<div style="color: var(--text-secondary); font-style: italic; font-size: 12px;">No Home Meds</div>`;
         }
+        tableHTML += '</div>';
 
         tableHTML += '</div>';
         tableHTML += '</div>';
@@ -8199,35 +9710,25 @@ function generateFishbone(data) {
 
     // ===== VITALS SECTION =====
     if (data.vitals.temp && data.vitals.temp.length > 0) {
+        const tempLatest = data.vitals.temp[0].toFixed(1);
         const tempMin = Math.min(...data.vitals.temp).toFixed(1);
         const tempMax = Math.max(...data.vitals.temp).toFixed(1);
-        const tempAvg = (data.vitals.temp.reduce((a, b) => a + b, 0) / data.vitals.temp.length).toFixed(1);
-        
-        const hadFever = data.vitals.temp.some(t => t > 38);
-        const hadHypothermia = data.vitals.temp.some(t => t < 35);
-        
-        if (hadFever || hadHypothermia) {
-            fishbone += `T ${markAbnormal(`${tempMin}-${tempMax}`)} (${tempAvg}), `;
-        } else {
-            fishbone += `T ${tempMin}-${tempMax} (${tempAvg}), `;
-        }
+        const isAbnormal = parseFloat(tempLatest) > 38 || parseFloat(tempLatest) < 35;
+        const latestDisplay = isAbnormal ? markAbnormal(tempLatest) : tempLatest;
+        const rangeStr = tempMin === tempMax ? '' : ` (${tempMin}-${tempMax})`;
+        fishbone += `T ${latestDisplay}${rangeStr}, `;
     } else {
         fishbone += 'no T, ';
     }
     
     if (data.vitals.hr && data.vitals.hr.length > 0) {
+        const hrLatest = data.vitals.hr[0];
         const hrMin = Math.min(...data.vitals.hr);
         const hrMax = Math.max(...data.vitals.hr);
-        const hrAvg = Math.round(data.vitals.hr.reduce((a, b) => a + b, 0) / data.vitals.hr.length);
-        
-        const hadTachycardia = data.vitals.hr.some(hr => hr > 100);
-        const hadBradycardia = data.vitals.hr.some(hr => hr < 60);
-        
-        if (hadTachycardia || hadBradycardia) {
-            fishbone += `HR ${markAbnormal(`${hrMin}-${hrMax}`)}(${hrAvg}), `;
-        } else {
-            fishbone += `HR ${hrMin}-${hrMax}(${hrAvg}), `;
-        }
+        const isAbnormal = hrLatest > 100 || hrLatest < 60;
+        const latestDisplay = isAbnormal ? markAbnormal(hrLatest) : hrLatest;
+        const rangeStr = hrMin === hrMax ? '' : ` (${hrMin}-${hrMax})`;
+        fishbone += `HR ${latestDisplay}${rangeStr}, `;
     } else {
         fishbone += 'no HR, ';
     }
@@ -8237,35 +9738,25 @@ function generateFishbone(data) {
 
 // Handle SBP and DBP separately
 if (data.vitals.sbp && data.vitals.sbp.length > 0) {
+    const sbpLatest = data.vitals.sbp[0];
     const sbpMin = Math.min(...data.vitals.sbp);
     const sbpMax = Math.max(...data.vitals.sbp);
-    const sbpAvg = Math.round(data.vitals.sbp.reduce((a, b) => a + b, 0) / data.vitals.sbp.length);
-    
-    const hadHypotension = data.vitals.sbp.some(sbp => sbp < 90);
-    const hadHypertension = data.vitals.sbp.some(sbp => sbp > 180);
-    
-    if (hadHypotension || hadHypertension) {
-        fishbone += `SBP ${markAbnormal(`${sbpMin}-${sbpMax}`)} (${sbpAvg}), `;
-    } else {
-        fishbone += `SBP ${sbpMin}-${sbpMax} (${sbpAvg}), `;
-    }
+    const isAbnormal = sbpLatest < 90 || sbpLatest > 180;
+    const latestDisplay = isAbnormal ? markAbnormal(sbpLatest) : sbpLatest;
+    const rangeStr = sbpMin === sbpMax ? '' : ` (${sbpMin}-${sbpMax})`;
+    fishbone += `SBP ${latestDisplay}${rangeStr}, `;
 } else {
     fishbone += 'no SBP, ';
 }
 
 if (data.vitals.dbp && data.vitals.dbp.length > 0) {
+    const dbpLatest = data.vitals.dbp[0];
     const dbpMin = Math.min(...data.vitals.dbp);
     const dbpMax = Math.max(...data.vitals.dbp);
-    const dbpAvg = Math.round(data.vitals.dbp.reduce((a, b) => a + b, 0) / data.vitals.dbp.length);
-    
-    const hadDiastolicHypertension = data.vitals.dbp.some(dbp => dbp > 120);
-    const hadDiastolicHypotension = data.vitals.dbp.some(dbp => dbp < 60);
-    
-    if (hadDiastolicHypertension || hadDiastolicHypotension) {
-        fishbone += `DBP ${markAbnormal(`${dbpMin}-${dbpMax}`)} (${dbpAvg}) `;
-    } else {
-        fishbone += `DBP ${dbpMin}-${dbpMax} (${dbpAvg}) `;
-    }
+    const isAbnormal = dbpLatest > 120 || dbpLatest < 60;
+    const latestDisplay = isAbnormal ? markAbnormal(dbpLatest) : dbpLatest;
+    const rangeStr = dbpMin === dbpMax ? '' : ` (${dbpMin}-${dbpMax})`;
+    fishbone += `DBP ${latestDisplay}${rangeStr} `;
 } else {
     fishbone += 'no DBP ';
 }
@@ -8278,16 +9769,13 @@ if (data.vitals.dbp && data.vitals.dbp.length > 0) {
 
     // O2 saturation with therapy
     if (data.vitals.o2 && data.vitals.o2.length > 0) {
+        const o2Latest = data.vitals.o2[0];
         const o2Min = Math.min(...data.vitals.o2);
         const o2Max = Math.max(...data.vitals.o2);
-        
-        const hadHypoxia = data.vitals.o2.some(o2 => o2 < 94);
-        
-        if (hadHypoxia) {
-            fishbone += `O2 ${markAbnormal(`${o2Min}-${o2Max}`)}`;
-        } else {
-            fishbone += `O2 ${o2Min}-${o2Max}`;
-        }
+        const isAbnormal = o2Latest < 94;
+        const latestDisplay = isAbnormal ? markAbnormal(o2Latest) : o2Latest;
+        const rangeStr = o2Min === o2Max ? '' : ` (${o2Min}-${o2Max})`;
+        fishbone += `O2 ${latestDisplay}${rangeStr}`;
         
         if (data.o2therapyCode && data.o2therapyCode !== 'RA') {
             fishbone += `-${markAbnormal(data.o2therapyCode)}`;
@@ -8380,7 +9868,7 @@ if (outputSummaryMatch) {
                 const isEnteral = /enteral|tube feed|nasogastric|ng tube|peg|jejunostomy|@\d+cc\/hr/i.test(intakeType);
 
                 if (isEnteral) {
-                    fishbone += `${intakeType}: ${total}mL/${elapsedHoursDisplay}hr (${hourly}mL/hr) - last: ${latest.dateTimeStr}\n`;
+                    fishbone += `${intakeType}: ${latest.volume}mL/hr - last: ${latest.dateTimeStr}\n`;
                 } else {
                     fishbone += `${intakeType}: ${total}mL/${elapsedHoursDisplay}hr - last: ${latest.dateTimeStr}\n`;
                 }
@@ -9109,7 +10597,7 @@ fishbone += `Ca:${caStr}, Mg:${mgStr}, P:${phosStr}\n`;
 
 function extractOrders(text) {
     // Extract medications section
-    const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|<HOME MEDICATIONS>|$))/i);
+    const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
 
     // Get existing LTD and dispo (preserved across imports) even if no meds found
     const currentOrders = document.getElementById('field_ORDERS')?.value || '';
@@ -9734,7 +11222,7 @@ medLines.forEach(line => {
 
 
         function extractFullMeds(text) {
-            const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|<HOME MEDICATIONS>|$))/i);
+            const medsMatch = text.match(/Medications.*?\(\d+\)\s*Active([\s\S]*?)(?=(?:\n\n)?(?:DIET ORDER:|CONSULTATION:|PROCEDURE:|IMAGING:|LABS:|$))/i);
             return medsMatch ? medsMatch[1] : '';
         }
 
@@ -9956,6 +11444,39 @@ function copyStaffPresentation() {
 
 	    
 	
+function copyStickyPatientInfo() {
+    const patient = patientData[currentPatientIndex];
+    if (!patient) return;
+    const name = patient.Name || '';
+    const rm = patient.RM || '';
+    const mrn = patient.MRN || '';
+    const textToCopy = [name, rm, mrn].filter(Boolean).join('\n');
+    const btn = document.getElementById('stickyCopyBtn');
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        btn.textContent = 'Copied!';
+        btn.style.background = 'var(--success)';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'var(--success)';
+        setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 800);
+    }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 800);
+    });
+}
+
 function copyPatientInfoImproved(button) {
     const patient = button.patientData;
     const name = patient.Name || 'Unknown';
@@ -9971,16 +11492,26 @@ function copyPatientInfoImproved(button) {
     
     const rebuildOriginalContent = () => {
         button.innerHTML = '';
-        
+
         columnIndexes.forEach((colIndex, idx) => {
             const header = MASTER_HEADERS[colIndex];
             const value = patient[header] || '';
             if (value) {
-                const span = document.createElement('span');
-                span.className = colorClasses[idx % colorClasses.length];
-                span.textContent = value;
-                span.style.display = 'block';
-                button.appendChild(span);
+                const labelValueContainer = document.createElement('div');
+                labelValueContainer.style.cssText = `display:flex;gap:0.3rem;align-items:baseline;`;
+
+                const label = document.createElement('span');
+                label.style.cssText = `font-size:0.7rem;color:#94a3b8;opacity:0.7;`;
+                label.textContent = header + ':';
+                labelValueContainer.appendChild(label);
+
+                const valueSpan = document.createElement('span');
+                valueSpan.className = colorClasses[idx % colorClasses.length];
+                valueSpan.textContent = value;
+                valueSpan.style.cssText = `display:inline;font-size:0.85rem;line-height:1.3;`;
+                labelValueContainer.appendChild(valueSpan);
+
+                button.appendChild(labelValueContainer);
             }
         });
     };
@@ -11501,16 +13032,41 @@ function getStatusColor(colorName) {
 		function setPatientPriority(priorityNum, index, modal) {
     // Set the priority number
     patientData[index].Priority = priorityNum;
-    
+
     // Remove any saved status since we're now using priority-based system
     delete patientData[index].SavedStatus;
-    
+
     // Save to localStorage
     saveToLocalStorage();
-    
-    // Refresh the display
+
+    // Refresh the list display
     displayRows();
-    
+
+    // Update the details view priority selector button if currently viewing this patient
+    if (currentPatientIndex === index) {
+        const patient = patientData[index];
+        const { color } = getPriorityStatus(patient);
+
+        const btn = document.getElementById('detailPriorityBtn');
+        if (btn) {
+            btn.style.borderColor = color;
+        }
+        const colorBox = document.getElementById('detailPriorityColorBox');
+        if (colorBox) {
+            colorBox.style.background = color;
+        }
+        const priorityText = document.getElementById('detailPriorityText');
+        if (priorityText) {
+            priorityText.textContent = priorityNum ? getPriorityName(priorityNum) : 'Set Priority';
+        }
+
+        // Also update the Priority text input in chart check / consult modes
+        const priorityInput = document.getElementById('field_Priority');
+        if (priorityInput) {
+            priorityInput.value = priorityNum;
+        }
+    }
+
     // Close the modal
     modal.remove();
 }
@@ -11683,35 +13239,6 @@ function updateChartCheckProgress() {
             mainContainer.style.boxShadow = 'none';
             mainContainer.style.borderWidth = '3px';
         }
-        
-        // Add percentage text at bottom center of container
-        let percentageDisplay = mainContainer.querySelector('.chart-check-percentage');
-        if (!percentageDisplay) {
-            percentageDisplay = document.createElement('div');
-            percentageDisplay.className = 'chart-check-percentage';
-            percentageDisplay.style.cssText = `
-                position: absolute;
-                bottom: -25px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--card-bg);
-                color: ${borderColor};
-                padding: 0.5rem 1rem;
-                border-radius: 0.5rem;
-                font-weight: bold;
-                font-size: 0.9rem;
-                white-space: nowrap;
-                border: 2px solid ${borderColor};
-                transition: color 0.3s ease, border-color 0.3s ease;
-            `;
-            mainContainer.style.position = 'relative';
-            mainContainer.appendChild(percentageDisplay);
-        } else {
-            percentageDisplay.style.color = borderColor;
-            percentageDisplay.style.borderColor = borderColor;
-        }
-        
-        percentageDisplay.textContent = `${percentage}% Complete`;
     }
 }
 
@@ -11723,11 +13250,14 @@ function toggleViolinMode() {
     const violinTextarea = document.getElementById('field_VIOLIN');
     const violinDisplay = document.getElementById('violinDisplay');
     const btn = document.getElementById('violinToggleBtn');
-    
+
     if (violinEditMode) {
         // Switch to edit mode
         if (violinDisplay) violinDisplay.style.display = 'none';
-        if (violinTextarea) violinTextarea.style.display = 'block';
+        if (violinTextarea) {
+            violinTextarea.style.display = 'block';
+            setTimeout(() => autoResizeTextarea(violinTextarea), 0);
+        }
         btn.textContent = '📝 Back to View';
     } else {
         // Switch to view mode
@@ -12087,7 +13617,7 @@ function updateViolinDisplay(ctx = {}) {
     warningsToAdd.push(...ioWarns);
   }
 
-  // Lab date warnings (CBC stale, BMP stale, etc.) are intentionally excluded from the To do textarea
+  // Lab date warnings removed from TO DO per user preference
 
   // Update the To do textarea with all warnings (replaces red box display)
   {
@@ -12104,11 +13634,7 @@ function updateViolinDisplay(ctx = {}) {
       patient['To do'] = cleanTodo;
     }
 
-    const todoField = document.getElementById('field_To_do');
-    if (todoField) {
-      todoField.value = patient['To do'];
-      if (typeof autoResizeTextarea === 'function') autoResizeTextarea(todoField);
-    }
+    refreshTodoDisplay(patient);
     saveToLocalStorage();
   }
 
@@ -12218,7 +13744,7 @@ function createVitalsVisualization(vitalsData) {
     grid-template-columns: auto 1fr;
     gap: 1rem;
     padding: 0.75rem;
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border: 2px solid #8b5cf6;
     border-radius: 0.375rem;
   `;
@@ -12713,7 +14239,7 @@ function generateModernLabTable(data) {
         padding-left: 0.5rem;
       }
 .modern-lab-table td {
-    padding: 0.35rem 0.3rem;
+    padding: 0.15rem 0.3rem;
     border-bottom: 1px solid #1a1a1a;
     background: #000000;
     text-align: center;
@@ -12721,9 +14247,20 @@ function generateModernLabTable(data) {
     font-weight: 600;
     cursor: help;
     position: relative;
-    pointer-events: auto; /* ADD THIS */
-    z-index: 1; /* ADD THIS */
+    pointer-events: auto;
+    z-index: 1;
+    line-height: 1.15;
 }
+      .modern-lab-table .lab-date-time {
+        display: block;
+        font-size: 0.5rem;
+        font-style: italic;
+        font-weight: 400;
+        color: #777;
+        margin-top: 0px;
+        line-height: 1;
+        letter-spacing: -0.3px;
+      }
       .modern-lab-table td:first-child {
         width: 60px;
         padding-left: 0.5rem;
@@ -12801,9 +14338,28 @@ const generateLabRow = (lab) => {
     // Escape quotes
     const escapedTooltip = String(tooltipText).replace(/"/g, '&quot;');
     
-    return `<td class="${abnormal ? 'abnormal' : normalClass}" title="${escapedTooltip}">${v.value}</td>`;
+    // Build date/time display string
+    let dateTimeDisplay = '';
+    if (v.date && v.value !== '--') {
+      // Format date shorter: "02/21" from "02/21/2026" or similar
+      let shortDate = v.date;
+      const dateMatch = v.date.match(/(\d{1,2}\/\d{1,2})(?:\/\d{2,4})?/);
+      if (dateMatch) shortDate = dateMatch[1];
+
+      let shortTime = '';
+      if (v.time) {
+        const timeMatch = v.time.match(/(\d{1,2}:\d{2})/);
+        if (timeMatch) shortTime = timeMatch[1];
+      }
+
+      dateTimeDisplay = shortTime ? `${shortDate} ${shortTime}` : shortDate;
+    }
+
+    const dateTimeHTML = dateTimeDisplay ? `<span class="lab-date-time">${dateTimeDisplay}</span>` : '';
+
+    return `<td class="${abnormal ? 'abnormal' : normalClass}" title="${escapedTooltip}">${v.value}${dateTimeHTML}</td>`;
   }).join('');
-  
+
   return `
     <tr>
       <td><strong>${lab.label}</strong></td>
